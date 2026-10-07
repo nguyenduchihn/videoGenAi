@@ -596,8 +596,8 @@ export default function GeneratorPanel({
         <>
             {layout === "project" ? (
                 <div className="grid min-h-full grid-cols-1 lg:h-full lg:grid-cols-[30%_70%]">
-                    <section className="min-w-0 border-b border-gray-200 lg:h-full lg:overflow-y-auto lg:border-b-0 lg:border-r">
-                        <div className="border-b border-gray-100 p-4 sm:p-5">
+                    <section className="min-w-0 border-b border-[var(--app-border)] lg:h-full lg:overflow-y-auto lg:border-b-0 lg:border-r">
+                        <div className="border-b border-[var(--app-border)] p-4 sm:p-5">
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-end">
                                 <ModeSelector
                                     value={mode}
@@ -614,7 +614,7 @@ export default function GeneratorPanel({
                                     <button
                                         type="button"
                                         onClick={() => setSettingsOpen(true)}
-                                        className="flex h-11 w-full items-center justify-center rounded-xl border border-gray-200 bg-white px-4 text-gray-600 transition hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900 sm:w-11"
+                                        className="flex h-11 w-full items-center justify-center rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] px-4 text-[var(--app-text-secondary)] transition hover:border-[var(--app-accent)]/50 hover:bg-[var(--app-surface-soft)] hover:text-[var(--app-text)] sm:w-11"
                                         aria-label="Cài đặt nâng cao"
                                     >
                                         <Settings className="h-4 w-4" />
@@ -623,13 +623,13 @@ export default function GeneratorPanel({
                             </div>
 
                             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
-                                <span className="rounded-md bg-violet-100 px-2 py-1 font-medium text-violet-700">
+                                <span className="rounded-md bg-[var(--app-accent-soft)] px-2 py-1 font-medium text-[var(--app-accent)]">
                                     Advanced
                                 </span>
 
-                                <span className="text-gray-500">
+                                <span className="text-[var(--app-text-secondary)]">
                                     Model:{" "}
-                                    <span className="font-medium text-gray-700">
+                                    <span className="font-medium text-[var(--app-text)]">
                                         {settings.model ===
                                             "nano-banana-2-lite"
                                             ? "Nano Banana 2 Lite"
@@ -637,7 +637,7 @@ export default function GeneratorPanel({
                                     </span>
                                 </span>
 
-                                <span className="text-gray-500">
+                                <span className="text-[var(--app-text-secondary)]">
                                     {settings.parallel} luồng
                                 </span>
                             </div>
@@ -666,7 +666,7 @@ export default function GeneratorPanel({
                             />
 
 
-                            <div className="mt-5 border-t border-gray-100 pt-4">
+                            <div className="mt-5 border-t border-[var(--app-border)] pt-4">
                                 {showValidation && !validation.valid && (
                                     <div className="mb-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
                                         <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-600">
@@ -688,32 +688,32 @@ export default function GeneratorPanel({
                                 <div className="flex flex-col gap-4">
                                     <div className="flex items-center gap-6">
                                         <div>
-                                            <p className="text-xs text-gray-400">
+                                            <p className="text-xs text-[var(--app-text-muted)]">
                                                 Jobs
                                             </p>
 
-                                            <p className="mt-1 text-base font-semibold text-gray-900">
+                                            <p className="mt-1 text-base font-semibold text-[var(--app-text)]">
                                                 {jobs.length}
                                             </p>
                                         </div>
 
-                                        <div className="h-8 w-px bg-gray-200" />
+                                        <div className="h-8 w-px bg-[var(--app-border)]" />
 
                                         <div>
-                                            <p className="text-xs text-gray-400">
+                                            <p className="text-xs text-[var(--app-text-muted)]">
                                                 Chi phí dự kiến
                                             </p>
 
                                             <div className="mt-1 flex items-center gap-1">
-                                                <Coins className="h-4 w-4 text-violet-500" />
+                                                <Coins className="h-4 w-4 text-[var(--app-accent)]" />
 
-                                                <span className="text-base font-semibold text-gray-900">
+                                                <span className="text-base font-semibold text-[var(--app-text)]">
                                                     {estimatedCredits.toLocaleString(
                                                         "vi-VN"
                                                     )}
                                                 </span>
 
-                                                <span className="text-xs text-gray-400">
+                                                <span className="text-xs text-[var(--app-text-muted)]">
                                                     credits
                                                 </span>
                                             </div>
@@ -726,7 +726,7 @@ export default function GeneratorPanel({
                                             jobs.length === 0 ||
                                             isGenerating
                                         }
-                                        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
+                                        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--app-accent)] px-5 text-sm font-semibold text-white transition hover:bg-[var(--app-accent-hover)] disabled:cursor-not-allowed disabled:bg-[var(--app-surface-soft)] disabled:text-[var(--app-text-muted)]"
                                     >
                                         {isGenerating ? (
                                             <>
@@ -744,21 +744,21 @@ export default function GeneratorPanel({
                             </div>
                         </div>
                     </section>
-                    <section className="min-w-0 min-h-0 overflow-y-auto bg-white">
-                        <div className="border-b border-gray-100 px-4 py-4 sm:px-6">
+                    <section className="min-w-0 min-h-0 overflow-y-auto bg-[var(--app-surface)]">
+                        <div className="border-b border-[var(--app-border)] px-4 py-4 sm:px-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h2 className="text-sm font-semibold text-gray-950">
+                                    <h2 className="text-sm font-semibold text-[var(--app-text)]">
                                         Kết quả
                                     </h2>
 
-                                    <p className="mt-0.5 text-xs text-gray-400">
+                                    <p className="mt-0.5 text-xs text-[var(--app-text-muted)]">
                                         Các video được tạo trong project này
                                     </p>
                                 </div>
 
                                 {results.length > 0 && (
-                                    <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-medium text-gray-500">
+                                    <span className="rounded-full bg-[var(--app-surface-soft)] px-2.5 py-1 text-[10px] font-medium text-[var(--app-text-secondary)]">
                                         {results.length} jobs
                                     </span>
                                 )}
@@ -776,8 +776,8 @@ export default function GeneratorPanel({
                 </div>
             ) : (
                 <>
-                    <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-                        <div className="border-b border-gray-100 p-4 sm:p-5">
+                    <section className="overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-sm">
+                        <div className="border-b border-[var(--app-border)] p-4 sm:p-5">
                             <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-end">
                                 <ModeSelector
                                     value={mode}
@@ -796,7 +796,7 @@ export default function GeneratorPanel({
                                         onClick={() =>
                                             setSettingsOpen(true)
                                         }
-                                        className="flex h-11 w-full items-center justify-center rounded-xl border border-gray-200 bg-white px-4 text-gray-600 transition hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900 md:w-11"
+                                        className="flex h-11 w-full items-center justify-center rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] px-4 text-[var(--app-text-secondary)] transition hover:bg-[var(--app-surface-soft)] hover:text-[var(--app-text)] sm:w-11"
                                         aria-label="Cài đặt nâng cao"
                                     >
                                         <Settings className="h-4 w-4" />
@@ -805,15 +805,15 @@ export default function GeneratorPanel({
                             </div>
 
                             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
-                                <span className="rounded-md bg-violet-100 px-2 py-1 font-medium text-violet-700">
+                                <span className="rounded-md bg-[var(--app-accent-soft)] px-2 py-1 font-medium text-[var(--app-accent)]">
                                     {variant === "quick"
                                         ? "Quick"
                                         : "Advanced"}
                                 </span>
 
-                                <span className="text-gray-500">
+                                <span className="text-[var(--app-text-secondary)]">
                                     Model:{" "}
-                                    <span className="font-medium text-gray-700">
+                                    <span className="font-medium text-[var(--app-text)]">
                                         {settings.model ===
                                             "nano-banana-2-lite"
                                             ? "Nano Banana 2 Lite"
@@ -822,7 +822,7 @@ export default function GeneratorPanel({
                                 </span>
 
                                 {variant === "advanced" && (
-                                    <span className="text-gray-500">
+                                    <span className="text-[var(--app-text-secondary)]">
                                         {settings.parallel} luồng
                                     </span>
                                 )}
@@ -857,19 +857,19 @@ export default function GeneratorPanel({
                                 onFilesChange={handleFilesChange}
                             />
 
-                            <div className="mt-5 border-t border-gray-100 pt-4">
+                            <div className="mt-5 border-t border-[var(--app-border)] pt-4">
                                 {showValidation && !validation.valid && (
-                                    <div className="mb-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-                                        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-600">
+                                    <div className="mb-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900/50 dark:bg-red-950/20">
+                                        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400">
                                             <AlertCircle className="h-4 w-4" />
                                         </div>
 
-                                        <div>
-                                            <p className="text-sm font-semibold text-red-800">
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-semibold text-red-800 dark:text-red-300">
                                                 Chưa thể tạo
                                             </p>
 
-                                            <p className="mt-0.5 text-xs leading-5 text-red-600">
+                                            <p className="mt-0.5 text-xs leading-5 text-red-600 dark:text-red-400">
                                                 {validation.message}
                                             </p>
                                         </div>
@@ -879,32 +879,32 @@ export default function GeneratorPanel({
                                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="flex items-center gap-4">
                                         <div>
-                                            <p className="text-xs text-gray-400">
+                                            <p className="text-xs text-[var(--app-text-muted)]">
                                                 Jobs
                                             </p>
 
-                                            <p className="mt-1 text-base font-semibold text-gray-900">
+                                            <p className="mt-1 text-base font-semibold text-[var(--app-text)]">
                                                 {jobs.length}
                                             </p>
                                         </div>
 
-                                        <div className="h-7 w-px bg-gray-200" />
+                                        <div className="h-7 w-px bg-[var(--app-border)]" />
 
                                         <div>
-                                            <p className="text-xs text-gray-400">
+                                            <p className="text-xs text-[var(--app-text-muted)]">
                                                 Chi phí dự kiến
                                             </p>
 
                                             <div className="mt-1 flex items-center gap-1">
-                                                <Coins className="h-4 w-4 text-violet-500" />
+                                                <Coins className="h-4 w-4 text-[var(--app-accent)]" />
 
-                                                <span className="text-base font-semibold text-gray-900">
+                                                <span className="text-base font-semibold text-[var(--app-text)]">
                                                     {estimatedCredits.toLocaleString(
                                                         "vi-VN",
                                                     )}
                                                 </span>
 
-                                                <span className="text-xs text-gray-400">
+                                                <span className="text-xs text-[var(--app-text-muted)]">
                                                     credits
                                                 </span>
                                             </div>
@@ -918,7 +918,7 @@ export default function GeneratorPanel({
                                             jobs.length === 0 ||
                                             isGenerating
                                         }
-                                        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400 sm:w-auto"
+                                        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--app-accent)] px-5 text-sm font-semibold text-white transition hover:bg-[var(--app-accent-hover)] disabled:cursor-not-allowed disabled:bg-[var(--app-surface-soft)] disabled:text-[var(--app-text-muted)] sm:w-auto"
                                     >
                                         {isGenerating ? (
                                             <>

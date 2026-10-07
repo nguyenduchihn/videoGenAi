@@ -93,8 +93,8 @@ export default function Projects() {
     }
 
     return (
-        <div className="h-[calc(100vh-64px)] min-h-0 overflow-hidden bg-[#f8f9fc]">
-            <header className="relative z-30 flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 sm:px-6">
+        <div className="h-[calc(100vh-64px)] min-h-0 overflow-hidden bg-[var(--app-bg)]">
+            <header className="relative z-30 flex h-16 shrink-0 items-center justify-between border-b border-[var(--app-border)] bg-[var(--app-surface)] px-4 transition-colors sm:px-6">
                 <div className="relative">
                     <button
                         type="button"
@@ -103,10 +103,10 @@ export default function Projects() {
                                 (current) => !current
                             )
                         }
-                        className="group flex max-w-[calc(100vw-100px)] items-center gap-2 rounded-xl px-2 py-1.5 text-left transition hover:bg-gray-50"
+                        className="group flex max-w-[calc(100vw-100px)] items-center gap-2 rounded-xl px-2 py-1.5 text-left transition hover:bg-[var(--app-surface-soft)]"
                     >
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-100">
-                            <FolderKanban className="h-4 w-4 text-gray-700" />
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--app-surface-soft)]">
+                            <FolderKanban className="h-4 w-4 text-[var(--app-text-secondary)]" />
                         </div>
 
                         <div className="min-w-0">
@@ -138,8 +138,7 @@ export default function Projects() {
                                 className="fixed inset-0 z-40 cursor-default bg-black/5 lg:hidden"
                             />
 
-                            <div className="absolute left-0 top-[52px] z-50 w-[min(380px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
-
+                            <div className="absolute left-0 top-[52px] z-50 w-[min(380px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-xl">
                                 <div className="border-b border-gray-100 p-3">
                                     <div className="relative">
                                         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -154,8 +153,7 @@ export default function Projects() {
                                             }
                                             placeholder="Tìm kiếm dự án..."
                                             autoFocus
-                                            className="h-10 w-full rounded-xl border border-gray-200 bg-gray-50 pl-9 pr-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-300 focus:bg-white"
-                                        />
+                                            className="h-10 w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-surface-soft)] pl-9 pr-3 text-sm text-[var(--app-text)] outline-none transition placeholder:text-[var(--app-text-muted)] focus:border-[var(--app-accent)] focus:bg-[var(--app-surface)]" />
                                     </div>
                                 </div>
                                 <div className="max-h-[320px] overflow-y-auto p-2">
@@ -176,14 +174,14 @@ export default function Projects() {
                                                             )
                                                         }
                                                         className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${active
-                                                            ? "bg-gray-100"
-                                                            : "hover:bg-gray-50"
+                                                            ? "bg-[var(--app-accent-soft)]"
+                                                            : "hover:bg-[var(--app-surface-soft)]"
                                                             }`}
                                                     >
                                                         <div
                                                             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${active
-                                                                ? "bg-gray-900 text-white"
-                                                                : "bg-gray-100 text-gray-500"
+                                                                ? "bg-[var(--app-accent)] text-white"
+                                                                : "bg-[var(--app-surface-soft)] text-[var(--app-text-secondary)]"
                                                                 }`}
                                                         >
                                                             <FolderKanban className="h-4 w-4" />
@@ -204,7 +202,7 @@ export default function Projects() {
                                                         </div>
 
                                                         {active && (
-                                                            <Check className="h-4 w-4 shrink-0 text-gray-900" />
+                                                            <Check className="h-4 w-4 shrink-0 text-[var(--app-accent)]" />
                                                         )}
                                                     </button>
                                                 );
@@ -227,9 +225,8 @@ export default function Projects() {
                                         onClick={
                                             handleCreateProject
                                         }
-                                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-gray-900 transition hover:bg-gray-50"
-                                    >
-                                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-950 text-white">
+                                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-[var(--app-text)] transition hover:bg-[var(--app-surface-soft)]">
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--app-accent)] text-white">
                                             <Plus className="h-4 w-4" />
                                         </div>
 
@@ -256,7 +253,7 @@ export default function Projects() {
                 </div>
             </header>
 
-            <main className="h-[calc(100%-64px)] min-h-0 overflow-y-auto bg-white lg:overflow-hidden">
+            <main className="h-[calc(100%-64px)] min-h-0 overflow-y-auto bg-[var(--app-surface)] transition-colors lg:overflow-hidden">
                 <GeneratorPanel
                     key={selectedProject.id}
                     variant="advanced"

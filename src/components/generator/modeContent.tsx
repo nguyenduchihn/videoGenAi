@@ -1,6 +1,4 @@
-import {
-    useCallback,
-} from "react";
+import { useCallback } from "react";
 
 import UploadField from "./uploadField";
 
@@ -27,12 +25,12 @@ function SectionTitle({
 }) {
     return (
         <div className="mb-3">
-            <h3 className="text-sm font-semibold text-gray-800">
+            <h3 className="text-sm font-semibold text-[var(--app-text)]">
                 {title}
             </h3>
 
             {description && (
-                <p className="mt-0.5 text-xs leading-5 text-gray-400">
+                <p className="mt-0.5 text-xs leading-5 text-[var(--app-text-muted)]">
                     {description}
                 </p>
             )}
@@ -42,25 +40,25 @@ function SectionTitle({
 
 function TextToVideoContent() {
     return (
-        <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/50 p-4 sm:p-5">
+        <div className="mt-5 rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface-soft)] p-4 transition-colors sm:p-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <p className="text-sm font-semibold text-gray-800">
+                    <p className="text-sm font-semibold text-[var(--app-text)]">
                         Text to Video
                     </p>
 
-                    <p className="mt-1 text-xs leading-5 text-gray-400">
+                    <p className="mt-1 text-xs leading-5 text-[var(--app-text-muted)]">
                         Tạo video từ nội dung mô tả
                         bằng văn bản.
                     </p>
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <span className="rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-gray-600 ring-1 ring-gray-200">
+                    <span className="rounded-lg bg-[var(--app-surface)] px-3 py-1.5 text-xs font-medium text-[var(--app-text-secondary)] ring-1 ring-[var(--app-border)]">
                         AI Video
                     </span>
 
-                    <span className="rounded-lg bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-600">
+                    <span className="rounded-lg bg-[var(--app-accent-soft)] px-3 py-1.5 text-xs font-medium text-[var(--app-accent)]">
                         Audio
                     </span>
                 </div>
@@ -115,13 +113,12 @@ function ImageToVideoContent({
 
             {(files.startFrame.length > 0 ||
                 files.endFrame.length > 0) && (
-                    <p className="mt-3 text-xs text-gray-400">
-                        {files.startFrame.length >
-                            0
+                    <p className="mt-3 text-xs text-[var(--app-text-muted)]">
+                        {files.startFrame.length > 0
                             ? "Đã chọn Start Frame. "
                             : ""}
-                        {files.endFrame.length >
-                            0
+
+                        {files.endFrame.length > 0
                             ? "Đã chọn End Frame."
                             : ""}
                     </p>
@@ -319,78 +316,60 @@ export default function ModeContent({
     files,
     onFilesChange,
 }: ModeContentProps) {
-    const handleFilesChange =
-        useCallback(
-            (
-                field: keyof GeneratorFilesState,
-                nextFiles: File[],
-            ) => {
-                onFilesChange(
-                    field,
-                    nextFiles,
-                );
-            },
-            [onFilesChange],
-        );
+    const handleFilesChange = useCallback(
+        (
+            field: keyof GeneratorFilesState,
+            nextFiles: File[],
+        ) => {
+            onFilesChange(field, nextFiles);
+        },
+        [onFilesChange],
+    );
 
     switch (mode) {
         case "text-to-video":
-            return (
-                <TextToVideoContent />
-            );
+            return <TextToVideoContent />;
 
         case "image-to-video":
             return (
                 <ImageToVideoContent
                     files={files}
-                    onFilesChange={
-                        handleFilesChange
-                    }
+                    onFilesChange={handleFilesChange}
                 />
             );
 
         case "components":
             return (
                 <ComponentsContent
-                    onFilesChange={
-                        handleFilesChange
-                    }
+                    onFilesChange={handleFilesChange}
                 />
             );
 
         case "text-to-image":
             return (
                 <TextToImageContent
-                    onFilesChange={
-                        handleFilesChange
-                    }
+                    onFilesChange={handleFilesChange}
                 />
             );
 
         case "batch-image":
             return (
                 <BatchImageContent
-                    onFilesChange={
-                        handleFilesChange
-                    }
+                    onFilesChange={handleFilesChange}
                 />
             );
 
         case "reference-video-voice":
             return (
                 <ReferenceVideoVoiceContent
-                    onFilesChange={
-                        handleFilesChange
-                    }
+                    onFilesChange={handleFilesChange}
                 />
             );
 
         case "batch-reference":
             return (
                 <BatchReferenceContent
-                    onFilesChange={
-                        handleFilesChange
-                    }
+                    onFilesChange={handleFilesChange}
                 />
             );
 

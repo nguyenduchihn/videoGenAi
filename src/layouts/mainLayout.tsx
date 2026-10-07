@@ -1,16 +1,20 @@
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sideBar";
+import { useAppearanceStore } from "@/stores/appearance.store";
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
-
-
 
 export default function MainLayout() {
     const [sidebarOpen, setSidebarOpen] =
         useState(false);
 
+    const compactSidebar =
+        useAppearanceStore(
+            (state) => state.compactSidebar
+        );
+
     return (
-        <div className="min-h-screen bg-[#f8f9fc]">
+        <div className="min-h-screen bg-[var(--app-bg)] text-[var(--app-text)] transition-colors">
             {sidebarOpen && (
                 <button
                     type="button"
@@ -29,7 +33,12 @@ export default function MainLayout() {
                 }
             />
 
-            <div className="min-h-screen lg:ml-[230px]">
+            <div
+                className={`min-h-screen transition-[margin] duration-200 ${compactSidebar
+                    ? "lg:ml-[84px]"
+                    : "lg:ml-[230px]"
+                    }`}
+            >
                 <Header
                     onMenuClick={() =>
                         setSidebarOpen(true)

@@ -1,7 +1,6 @@
-import { ChevronDown, Check } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { GeneratorMode } from "./types";
-
 
 interface ModeSelectorProps {
     value: GeneratorMode;
@@ -108,39 +107,39 @@ export default function ModeSelector({
             ref={containerRef}
             className="relative min-w-0"
         >
-            <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wide text-gray-500">
+            <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wide text-[var(--app-text-secondary)]">
                 Chế độ
             </label>
-
 
             <button
                 type="button"
                 onClick={() => setOpen((current) => !current)}
                 className={`
                     flex h-11 w-full items-center justify-between
-                    rounded-xl border bg-white px-3
+                    rounded-xl border bg-[var(--app-surface)] px-3
                     text-left transition
                     ${open
-                        ? "border-violet-500 ring-1 ring-violet-500/20"
-                        : "border-gray-200 hover:border-gray-300"
+                        ? "border-[var(--app-accent)] ring-1 ring-[var(--app-accent)]/20"
+                        : "border-[var(--app-border)] hover:border-[var(--app-accent)]/50"
                     }
                 `}
                 aria-haspopup="listbox"
                 aria-expanded={open}
             >
                 <span className="flex min-w-0 items-center gap-2.5">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gray-50 text-base">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--app-surface-soft)] text-base">
                         {selectedMode.icon}
                     </span>
 
-                    <span className="truncate text-sm font-medium text-gray-800">
+                    <span className="truncate text-sm font-medium text-[var(--app-text)]">
                         {selectedMode.label}
                     </span>
                 </span>
 
                 <ChevronDown
                     className={`
-                        ml-2 h-4 w-4 shrink-0 text-gray-400
+                        ml-2 h-4 w-4 shrink-0
+                        text-[var(--app-text-muted)]
                         transition-transform duration-200
                         ${open ? "rotate-180" : ""}
                     `}
@@ -151,8 +150,10 @@ export default function ModeSelector({
                 <div
                     className="
                         absolute left-0 top-full z-50 mt-2 w-full
-                        overflow-hidden rounded-xl border border-gray-200
-                        bg-white p-1.5 shadow-xl shadow-gray-200/50
+                        overflow-hidden rounded-xl
+                        border border-[var(--app-border)]
+                        bg-[var(--app-surface)]
+                        p-1.5 shadow-xl
                     "
                     role="listbox"
                 >
@@ -176,47 +177,45 @@ export default function ModeSelector({
                                     rounded-lg px-3 py-2.5
                                     text-left transition
                                     ${selected
-                                        ? "bg-violet-50"
-                                        : "hover:bg-gray-50"
+                                        ? "bg-[var(--app-accent-soft)]"
+                                        : "hover:bg-[var(--app-surface-soft)]"
                                     }
                                 `}
                             >
-                                {/* Icon */}
                                 <span
                                     className={`
                                         flex h-8 w-8 shrink-0
                                         items-center justify-center
                                         rounded-lg text-base
                                         ${selected
-                                            ? "bg-violet-100"
-                                            : "bg-gray-50"
+                                            ? "bg-[var(--app-accent-soft)]"
+                                            : "bg-[var(--app-surface-soft)]"
                                         }
                                     `}
                                 >
                                     {option.icon}
                                 </span>
 
-                                {/* Text */}
                                 <span className="min-w-0 flex-1">
                                     <span
                                         className={`
                                             block truncate text-sm font-medium
                                             ${selected
-                                                ? "text-violet-700"
-                                                : "text-gray-800"
+                                                ? "text-[var(--app-accent)]"
+                                                : "text-[var(--app-text)]"
                                             }
                                         `}
                                     >
                                         {option.label}
                                     </span>
 
-                                    <span className="mt-0.5 block truncate text-[11px] text-gray-400">
+                                    <span className="mt-0.5 block truncate text-[11px] text-[var(--app-text-muted)]">
                                         {option.description}
                                     </span>
                                 </span>
 
                                 {selected && (
-                                    <Check className="h-4 w-4 shrink-0 text-violet-600" />
+                                    <Check className="h-4 w-4 shrink-0 text-[var(--app-accent)]" />
                                 )}
                             </button>
                         );

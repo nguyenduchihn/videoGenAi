@@ -5,18 +5,17 @@ import Home from "@/pages/home/home";
 import Login from "@/pages/auth/login";
 import Register from "@/pages/auth/register";
 import VerifyEmail from "@/pages/auth/verify-email";
-
 import Dashboard from "@/pages/dashboard/dashboard";
 import Projects from "@/pages/projects/projects";
-
 import Settings from "@/pages/settings/settings";
-import Account from "@/pages/settings/account";
 import ApiKeys from "@/pages/settings/apiKeys";
 import Appearance from "@/pages/settings/appearance";
 import Notifications from "@/pages/settings/notifications";
 import Security from "@/pages/settings/security";
 import AuthLayout from "@/layouts/authLayout";
 import MainLayout from "@/layouts/mainLayout";
+import Profile from "@/pages/profile/profile";
+import MyPlan from "@/pages/pricing/myPlan";
 
 
 const router = createBrowserRouter([
@@ -54,17 +53,20 @@ const router = createBrowserRouter([
                 path: "/projects",
                 element: <Projects />,
             },
-
-
+            {
+                path: "/profile",
+                element: <Profile />,
+            },
+            {
+                path: "/pricing",
+                element: <MyPlan />,
+            },
             {
                 path: "/settings",
                 element: <Settings />,
                 children: [
                     {
                         index: true,
-                        element: <Account />,
-                    },
-                    {
                         path: "appearance",
                         element: <Appearance />,
                     },

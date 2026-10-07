@@ -5,6 +5,7 @@ import {
     Settings,
     X,
 } from "lucide-react";
+
 import {
     useEffect,
     useState,
@@ -128,19 +129,19 @@ function NumberField({
     return (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-800">
+                <p className="text-sm font-medium text-[var(--app-text)]">
                     {label}
                 </p>
 
                 {description && (
-                    <p className="mt-0.5 text-xs leading-5 text-gray-400">
+                    <p className="mt-0.5 text-xs leading-5 text-[var(--app-text-muted)]">
                         {description}
                     </p>
                 )}
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
-                <div className="flex h-10 items-center rounded-lg border border-gray-200 bg-white">
+                <div className="flex h-10 items-center rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)]">
                     <button
                         type="button"
                         onClick={decrease}
@@ -152,10 +153,10 @@ function NumberField({
                             items-center
                             justify-center
                             rounded-l-lg
-                            text-gray-400
+                            text-[var(--app-text-muted)]
                             transition
-                            hover:bg-gray-50
-                            hover:text-gray-700
+                            hover:bg-[var(--app-surface-soft)]
+                            hover:text-[var(--app-text)]
                             disabled:cursor-not-allowed
                             disabled:opacity-40
                         "
@@ -199,13 +200,13 @@ function NumberField({
                         className="
                             h-full w-16
                             border-x
-                            border-gray-200
+                            border-[var(--app-border)]
                             bg-transparent
                             px-1
                             text-center
                             text-sm
                             font-medium
-                            text-gray-800
+                            text-[var(--app-text)]
                             outline-none
                             [appearance:textfield]
                             [&::-webkit-inner-spin-button]:appearance-none
@@ -224,10 +225,10 @@ function NumberField({
                             items-center
                             justify-center
                             rounded-r-lg
-                            text-gray-400
+                            text-[var(--app-text-muted)]
                             transition
-                            hover:bg-gray-50
-                            hover:text-gray-700
+                            hover:bg-[var(--app-surface-soft)]
+                            hover:text-[var(--app-text)]
                             disabled:cursor-not-allowed
                             disabled:opacity-40
                         "
@@ -238,7 +239,7 @@ function NumberField({
                 </div>
 
                 {suffix && (
-                    <span className="w-14 text-xs text-gray-400">
+                    <span className="w-14 text-xs text-[var(--app-text-muted)]">
                         {suffix}
                     </span>
                 )}
@@ -269,12 +270,12 @@ function ToggleField({
             className="flex w-full items-center justify-between gap-4 text-left"
         >
             <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-800">
+                <p className="text-sm font-medium text-[var(--app-text)]">
                     {label}
                 </p>
 
                 {description && (
-                    <p className="mt-0.5 text-xs leading-5 text-gray-400">
+                    <p className="mt-0.5 text-xs leading-5 text-[var(--app-text-muted)]">
                         {description}
                     </p>
                 )}
@@ -286,16 +287,18 @@ function ToggleField({
                     shrink-0 rounded-full
                     transition
                     ${checked
-                        ? "bg-violet-600"
-                        : "bg-gray-200"
+                        ? "bg-[var(--app-accent)]"
+                        : "bg-[var(--app-border)]"
                     }
                 `}
             >
                 <span
                     className={`
                         absolute top-1
-                        h-4 w-4 rounded-full
-                        bg-white shadow-sm
+                        h-4 w-4
+                        rounded-full
+                        bg-white
+                        shadow-sm
                         transition-transform
                         ${checked
                             ? "translate-x-6"
@@ -317,7 +320,10 @@ export default function GeneratorSettings({
     onChange,
     onClose,
 }: GeneratorSettingsProps) {
-    const [localValue, setLocalValue] =
+    const [
+        localValue,
+        setLocalValue,
+    ] =
         useState<GeneratorSettingsState>(
             value,
         );
@@ -356,9 +362,16 @@ export default function GeneratorSettings({
         };
     }, [open, onClose]);
 
+    useEffect(() => {
+        if (open) {
+            setLocalValue(value);
+        }
+    }, [open, value]);
+
     if (!open) {
         return null;
     }
+
     const updateValue = (
         patch: Partial<GeneratorSettingsState>,
     ) => {
@@ -382,7 +395,7 @@ export default function GeneratorSettings({
                 fixed inset-0 z-[100]
                 flex items-end
                 justify-center
-                bg-gray-950/40
+                bg-black/40
                 backdrop-blur-[2px]
                 sm:items-center
             "
@@ -399,34 +412,36 @@ export default function GeneratorSettings({
                 className="
                     flex h-[100dvh] w-full
                     flex-col overflow-hidden
-                    bg-white
+                    bg-[var(--app-surface)]
+                    text-[var(--app-text)]
+                    transition-colors
                     sm:h-auto
                     sm:max-h-[90vh]
                     sm:max-w-[560px]
                     sm:rounded-2xl
                     sm:border
-                    sm:border-gray-200
+                    sm:border-[var(--app-border)]
                     sm:shadow-2xl
                 "
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="generator-settings-title"
             >
-                <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 py-4 sm:px-5">
+                <div className="flex shrink-0 items-center justify-between border-b border-[var(--app-border)] px-4 py-4 sm:px-5">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--app-accent-soft)] text-[var(--app-accent)]">
                             <Settings className="h-4 w-4" />
                         </div>
 
                         <div>
                             <h2
                                 id="generator-settings-title"
-                                className="text-sm font-semibold text-gray-900"
+                                className="text-sm font-semibold text-[var(--app-text)]"
                             >
                                 Cài đặt nâng cao
                             </h2>
 
-                            <p className="mt-0.5 text-xs text-gray-400">
+                            <p className="mt-0.5 text-xs text-[var(--app-text-muted)]">
                                 Điều chỉnh thông số
                                 generator
                             </p>
@@ -441,10 +456,10 @@ export default function GeneratorSettings({
                             items-center
                             justify-center
                             rounded-lg
-                            text-gray-400
+                            text-[var(--app-text-muted)]
                             transition
-                            hover:bg-gray-100
-                            hover:text-gray-700
+                            hover:bg-[var(--app-surface-soft)]
+                            hover:text-[var(--app-text)]
                         "
                         aria-label="Đóng cài đặt"
                     >
@@ -452,13 +467,11 @@ export default function GeneratorSettings({
                     </button>
                 </div>
 
-
                 <div className="min-h-0 flex-1 overflow-y-auto">
                     <div className="space-y-6 p-4 sm:p-5">
-
                         <section>
                             <div className="mb-3">
-                                <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--app-text-secondary)]">
                                     Model
                                 </h3>
                             </div>
@@ -494,21 +507,21 @@ export default function GeneratorSettings({
                                                     text-left
                                                     transition
                                                     ${selected
-                                                        ? "border-violet-300 bg-violet-50/70"
-                                                        : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                                                        ? "border-[var(--app-accent)] bg-[var(--app-accent-soft)]"
+                                                        : "border-[var(--app-border)] bg-[var(--app-surface)] hover:border-[var(--app-accent)]/50 hover:bg-[var(--app-surface-soft)]"
                                                     }
                                                 `}
                                             >
                                                 <span
                                                     className={`
-                                                        flex h-8
-                                                        w-8 shrink-0
+                                                        flex h-8 w-8
+                                                        shrink-0
                                                         items-center
                                                         justify-center
                                                         rounded-lg
                                                         ${selected
-                                                            ? "bg-violet-100 text-violet-600"
-                                                            : "bg-gray-100 text-gray-400"
+                                                            ? "bg-[var(--app-accent)] text-white"
+                                                            : "bg-[var(--app-surface-soft)] text-[var(--app-text-muted)]"
                                                         }
                                                     `}
                                                 >
@@ -525,8 +538,8 @@ export default function GeneratorSettings({
                                                             block text-sm
                                                             font-medium
                                                             ${selected
-                                                                ? "text-violet-700"
-                                                                : "text-gray-800"
+                                                                ? "text-[var(--app-accent)]"
+                                                                : "text-[var(--app-text)]"
                                                             }
                                                         `}
                                                     >
@@ -535,14 +548,14 @@ export default function GeneratorSettings({
                                                         }
                                                     </span>
 
-                                                    <span className="mt-0.5 block text-xs text-gray-400">
+                                                    <span className="mt-0.5 block text-xs text-[var(--app-text-muted)]">
                                                         {
                                                             model.description
                                                         }
                                                     </span>
                                                 </span>
 
-                                                <span className="shrink-0 text-[11px] font-medium text-gray-400">
+                                                <span className="shrink-0 text-[11px] font-medium text-[var(--app-text-muted)]">
                                                     {
                                                         model.credits
                                                     }
@@ -553,9 +566,10 @@ export default function GeneratorSettings({
                                 )}
                             </div>
                         </section>
-                        <section className="border-t border-gray-100 pt-6">
+
+                        <section className="border-t border-[var(--app-border)] pt-6">
                             <div className="mb-4">
-                                <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--app-text-secondary)]">
                                     Batch & hiệu năng
                                 </h3>
                             </div>
@@ -627,10 +641,9 @@ export default function GeneratorSettings({
                             </div>
                         </section>
 
-
                         {!isImageMode && (
-                            <section className="border-t border-gray-100 pt-6">
-                                <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-4">
+                            <section className="border-t border-[var(--app-border)] pt-6">
+                                <div className="rounded-xl border border-[var(--app-border)] bg-[var(--app-surface-soft)] p-4">
                                     <ToggleField
                                         label="Tạo audio cho video"
                                         description="Cho phép model tạo âm thanh cùng với video."
@@ -657,8 +670,8 @@ export default function GeneratorSettings({
                                                 text-[11px]
                                                 font-medium
                                                 ${localValue.generateAudio
-                                                    ? "bg-violet-100 text-violet-600"
-                                                    : "bg-gray-100 text-gray-400"
+                                                    ? "bg-[var(--app-accent-soft)] text-[var(--app-accent)]"
+                                                    : "bg-[var(--app-surface)] text-[var(--app-text-muted)]"
                                                 }
                                             `}
                                         >
@@ -671,10 +684,9 @@ export default function GeneratorSettings({
                             </section>
                         )}
 
-
-                        <section className="border-t border-gray-100 pt-6">
+                        <section className="border-t border-[var(--app-border)] pt-6">
                             <div className="mb-4">
-                                <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--app-text-secondary)]">
                                     Upscale
                                 </h3>
                             </div>
@@ -700,14 +712,13 @@ export default function GeneratorSettings({
                             />
                         </section>
 
-
-                        <section className="border-t border-gray-100 pt-6">
+                        <section className="border-t border-[var(--app-border)] pt-6">
                             <div className="mb-4">
-                                <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--app-text-secondary)]">
                                     Prompts
                                 </h3>
 
-                                <p className="mt-1 text-xs text-gray-400">
+                                <p className="mt-1 text-xs text-[var(--app-text-muted)]">
                                     Chọn cách chia nội dung
                                     thành nhiều job.
                                 </p>
@@ -736,12 +747,13 @@ export default function GeneratorSettings({
                                                     items-center
                                                     justify-between
                                                     rounded-lg
-                                                    border px-3
+                                                    border
+                                                    px-3
                                                     text-left
                                                     transition
                                                     ${selected
-                                                        ? "border-violet-300 bg-violet-50 text-violet-700"
-                                                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+                                                        ? "border-[var(--app-accent)] bg-[var(--app-accent-soft)] text-[var(--app-accent)]"
+                                                        : "border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-text-secondary)] hover:border-[var(--app-accent)]/50 hover:bg-[var(--app-surface-soft)]"
                                                     }
                                                 `}
                                             >
@@ -765,7 +777,7 @@ export default function GeneratorSettings({
                                     <div className="mt-3">
                                         <label
                                             htmlFor="settings-custom-separator"
-                                            className="mb-1.5 block text-xs font-medium text-gray-600"
+                                            className="mb-1.5 block text-xs font-medium text-[var(--app-text-secondary)]"
                                         >
                                             Ký tự phân tách
                                         </label>
@@ -793,17 +805,18 @@ export default function GeneratorSettings({
                                             h-10 w-full
                                             rounded-lg
                                             border
-                                            border-gray-200
-                                            bg-white px-3
+                                            border-[var(--app-border)]
+                                            bg-[var(--app-surface)]
+                                            px-3
                                             font-mono
                                             text-sm
-                                            text-gray-800
+                                            text-[var(--app-text)]
                                             outline-none
                                             transition
-                                            placeholder:text-gray-300
-                                            focus:border-violet-500
+                                            placeholder:text-[var(--app-text-muted)]
+                                            focus:border-[var(--app-accent)]
                                             focus:ring-1
-                                            focus:ring-violet-500/20
+                                            focus:ring-[var(--app-accent)]/20
                                         "
                                         />
                                     </div>
@@ -812,8 +825,8 @@ export default function GeneratorSettings({
                     </div>
                 </div>
 
-                <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-gray-100 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-                    <p className="text-center text-[11px] text-gray-400 sm:text-left">
+                <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-[var(--app-border)] bg-[var(--app-surface)] p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                    <p className="text-center text-[11px] text-[var(--app-text-muted)] sm:text-left">
                         Thay đổi được áp dụng ngay
                         vào Generator.
                     </p>
@@ -823,15 +836,17 @@ export default function GeneratorSettings({
                         onClick={handleClose}
                         className="
                             inline-flex h-10
-                            w-full items-center
+                            w-full
+                            items-center
                             justify-center
                             rounded-xl
-                            bg-gray-950
+                            bg-[var(--app-accent)]
                             px-5
-                            text-sm font-semibold
+                            text-sm
+                            font-semibold
                             text-white
                             transition
-                            hover:bg-gray-800
+                            hover:bg-[var(--app-accent-hover)]
                             sm:w-auto
                         "
                     >

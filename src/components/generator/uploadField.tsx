@@ -5,6 +5,7 @@ import {
     Upload,
     X,
 } from "lucide-react";
+
 import type {
     ChangeEvent,
     DragEvent,
@@ -30,9 +31,7 @@ interface UploadFieldProps {
     multiple?: boolean;
     maxFiles?: number;
     minHeight?: string;
-    onFilesChange?: (
-        files: File[],
-    ) => void;
+    onFilesChange?: (files: File[]) => void;
 }
 
 function createFileId(file: File) {
@@ -77,14 +76,10 @@ function getFileIcon(file: File) {
     }
 
     if (file.type.startsWith("audio/")) {
-        return (
-            <Music className="h-4 w-4" />
-        );
+        return <Music className="h-4 w-4" />;
     }
 
-    return (
-        <Upload className="h-4 w-4" />
-    );
+    return <Upload className="h-4 w-4" />;
 }
 
 function isImage(file: File) {
@@ -207,8 +202,10 @@ export default function UploadField({
                             item.file.name &&
                             candidate.file.size ===
                             item.file.size &&
-                            candidate.file.lastModified ===
-                            item.file.lastModified,
+                            candidate.file
+                                .lastModified ===
+                            item.file
+                                .lastModified,
                     ) === index,
             );
 
@@ -336,8 +333,8 @@ export default function UploadField({
                         text-center
                         transition
                         ${isDragging
-                            ? "border-violet-400 bg-violet-50"
-                            : "border-gray-200 bg-gray-50/50 hover:border-violet-300 hover:bg-violet-50/40"
+                            ? "border-[var(--app-accent)] bg-[var(--app-accent-soft)]"
+                            : "border-[var(--app-border)] bg-[var(--app-surface-soft)] hover:border-[var(--app-accent)]/60 hover:bg-[var(--app-accent-soft)]/50"
                         }
                     `}
                 >
@@ -347,37 +344,35 @@ export default function UploadField({
                             items-center
                             justify-center
                             rounded-xl
-                            bg-white
-                            text-gray-400
+                            bg-[var(--app-surface)]
+                            text-[var(--app-text-muted)]
                             shadow-sm
                             ring-1
-                            ring-gray-100
+                            ring-[var(--app-border)]
                             transition
-                            group-hover:bg-violet-100
-                            group-hover:text-violet-600
+                            group-hover:bg-[var(--app-accent-soft)]
+                            group-hover:text-[var(--app-accent)]
                         "
                     >
                         <Upload className="h-5 w-5" />
                     </span>
 
-                    <span className="mt-3 text-sm font-medium text-gray-700">
+                    <span className="mt-3 text-sm font-medium text-[var(--app-text)]">
                         {title}
                     </span>
 
-                    <span className="mt-1 max-w-[320px] text-xs leading-5 text-gray-400">
+                    <span className="mt-1 max-w-[320px] text-xs leading-5 text-[var(--app-text-muted)]">
                         {description}
                     </span>
 
-                    <span className="mt-2 text-[11px] text-gray-300">
-                        {acceptLabel ??
-                            accept}
+                    <span className="mt-2 text-[11px] text-[var(--app-text-muted)]">
+                        {acceptLabel ?? accept}
                         {multiple &&
                             ` • Tối đa ${maxFiles} file`}
                     </span>
                 </button>
             ) : (
                 <div className="space-y-3">
-                    {/* Preview */}
                     <div
                         className={`
                             grid gap-3
@@ -393,7 +388,14 @@ export default function UploadField({
                                     key={
                                         item.id
                                     }
-                                    className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gray-50"
+                                    className="
+                                        group relative
+                                        overflow-hidden
+                                        rounded-xl
+                                        border
+                                        border-[var(--app-border)]
+                                        bg-[var(--app-surface-soft)]
+                                    "
                                 >
                                     {item.preview &&
                                         isImage(
@@ -404,7 +406,8 @@ export default function UploadField({
                                                 item.preview
                                             }
                                             alt={
-                                                item.file
+                                                item
+                                                    .file
                                                     .name
                                             }
                                             className="
@@ -429,7 +432,7 @@ export default function UploadField({
                                             "
                                         />
                                     ) : (
-                                        <div className="flex aspect-video items-center justify-center text-gray-400">
+                                        <div className="flex aspect-video items-center justify-center text-[var(--app-text-muted)]">
                                             {getFileIcon(
                                                 item.file,
                                             )}
@@ -463,15 +466,16 @@ export default function UploadField({
                                         <X className="h-3.5 w-3.5" />
                                     </button>
 
-                                    <div className="border-t border-gray-200 bg-white px-3 py-2">
-                                        <p className="truncate text-xs font-medium text-gray-700">
+                                    <div className="border-t border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2">
+                                        <p className="truncate text-xs font-medium text-[var(--app-text)]">
                                             {
-                                                item.file
+                                                item
+                                                    .file
                                                     .name
                                             }
                                         </p>
 
-                                        <p className="mt-0.5 text-[11px] text-gray-400">
+                                        <p className="mt-0.5 text-[11px] text-[var(--app-text-muted)]">
                                             {formatFileSize(
                                                 item
                                                     .file
@@ -483,7 +487,6 @@ export default function UploadField({
                             ),
                         )}
                     </div>
-
 
                     {multiple &&
                         files.length <
@@ -533,8 +536,8 @@ export default function UploadField({
                                     font-medium
                                     transition
                                     ${isDragging
-                                        ? "border-violet-400 bg-violet-50 text-violet-600"
-                                        : "border-gray-200 text-gray-500 hover:border-violet-300 hover:bg-violet-50/40 hover:text-violet-600"
+                                        ? "border-[var(--app-accent)] bg-[var(--app-accent-soft)] text-[var(--app-accent)]"
+                                        : "border-[var(--app-border)] text-[var(--app-text-secondary)] hover:border-[var(--app-accent)]/60 hover:bg-[var(--app-accent-soft)]/50 hover:text-[var(--app-accent)]"
                                     }
                                 `}
                             >
@@ -546,7 +549,7 @@ export default function UploadField({
             )}
 
             {error && (
-                <p className="text-xs text-red-500">
+                <p className="text-xs text-red-500 dark:text-red-400">
                     {error}
                 </p>
             )}

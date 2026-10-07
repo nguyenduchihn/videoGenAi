@@ -1,6 +1,5 @@
 import { ChevronDown, List, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-
 import type { PromptSplitMode } from "./types";
 
 interface PromptEditorProps {
@@ -50,26 +49,28 @@ function getPlaceholder(splitMode: PromptSplitMode) {
     switch (splitMode) {
         case "newline":
             return `Nhập prompt...
-                Mỗi dòng sẽ được tính là một job.`;
+Mỗi dòng sẽ được tính là một job.`;
 
         case "blank-line":
-            return `Nhập prompt...
+            return `Nhập prompt 1
 
-                    Mỗi nhóm cách nhau bằng một dòng trống.`;
+Nhập prompt 2
+
+Mỗi nhóm cách nhau bằng một dòng trống.`;
 
         case "separator":
             return `Nhập prompt 1
-                    ====
-                    Nhập prompt 2
-                    ====
-                    Nhập prompt 3`;
+====
+Nhập prompt 2
+====
+Nhập prompt 3`;
 
         case "custom":
             return `Nhập prompt 1
-                    ===
-                    Nhập prompt 2
-                    ===
-                    Nhập prompt 3`;
+===
+Nhập prompt 2
+===
+Nhập prompt 3`;
 
         default:
             return "Nhập prompt...";
@@ -131,17 +132,16 @@ export default function PromptEditor({
     };
 
     return (
-        <div className="rounded-2xl border border-gray-200 bg-white">
+        <div className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] transition-colors">
+            <div className="flex min-w-0 items-center gap-2 border-b border-[var(--app-border)] px-4 py-3">
+                <div className="flex min-w-0 items-center gap-2">
+                    <Sparkles className="h-4 w-4 shrink-0 text-[var(--app-accent)]" />
 
-            <div className="flex min-w-0 items-center gap-2 border-b border-gray-100 px-4 py-3">
-                <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-violet-500" />
-
-                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-700">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-[var(--app-text)]">
                         {singleJob ? "Prompt" : "Prompts"}
                     </span>
 
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500">
+                    <span className="rounded-full bg-[var(--app-surface-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--app-text-secondary)]">
                         {jobCount}{" "}
                         {jobCount === 1 ? "job" : "jobs"}
                     </span>
@@ -160,21 +160,20 @@ export default function PromptEditor({
                             className={`
                                 flex h-9 w-full items-center
                                 justify-between gap-3 rounded-lg
-                                border bg-white px-3
+                                border px-3
                                 text-left transition
-                                w-full
-                            ${open
-                                    ? "border-violet-500 ring-1 ring-violet-500/20"
-                                    : "border-gray-200 hover:border-gray-300"
+                                ${open
+                                    ? "border-[var(--app-accent)] bg-[var(--app-surface)] ring-1 ring-[var(--app-accent)]/20"
+                                    : "border-[var(--app-border)] bg-[var(--app-surface)] hover:border-[var(--app-accent)]/50"
                                 }
-            `}
+                            `}
                             aria-haspopup="listbox"
                             aria-expanded={open}
                         >
                             <span className="flex min-w-0 items-center gap-2">
-                                <List className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                                <List className="h-3.5 w-3.5 shrink-0 text-[var(--app-text-muted)]" />
 
-                                <span className="truncate text-xs font-medium text-gray-700">
+                                <span className="truncate text-xs font-medium text-[var(--app-text)]">
                                     {selectedOption.label}
                                 </span>
                             </span>
@@ -182,12 +181,13 @@ export default function PromptEditor({
                             <ChevronDown
                                 className={`
                                     h-3.5 w-3.5 shrink-0
-                                    text-gray-400 transition-transform
-                            ${open
+                                    text-[var(--app-text-muted)]
+                                    transition-transform
+                                    ${open
                                         ? "rotate-180"
                                         : ""
                                     }
-                `}
+                                `}
                             />
                         </button>
 
@@ -197,15 +197,16 @@ export default function PromptEditor({
                                     absolute right-0 top-full z-50 mt-2
                                     w-full min-w-[250px]
                                     overflow-hidden rounded-xl
-                                    border border-gray-200
-                                    bg-white p-1.5
-                                    shadow-xl shadow-gray-200/50
+                                    border border-[var(--app-border)]
+                                    bg-[var(--app-surface)] p-1.5
+                                    shadow-xl
                                 "
                                 role="listbox"
                             >
                                 {SPLIT_OPTIONS.map((option) => {
                                     const selected =
-                                        option.value === splitMode;
+                                        option.value ===
+                                        splitMode;
 
                                     return (
                                         <button
@@ -219,34 +220,33 @@ export default function PromptEditor({
                                                 )
                                             }
                                             className={`
-                                flex w-full
-                                items-start gap-3
-                                rounded-lg px-3
-                                py-2.5 text-left
-                                transition
-                                ${selected
-                                                    ? "bg-violet-50"
-                                                    : "hover:bg-gray-50"
+                                                flex w-full
+                                                items-start gap-3
+                                                rounded-lg px-3
+                                                py-2.5 text-left
+                                                transition
+                                                ${selected
+                                                    ? "bg-[var(--app-accent-soft)]"
+                                                    : "hover:bg-[var(--app-surface-soft)]"
                                                 }
-                            `}
+                                            `}
                                         >
                                             <span
                                                 className={`
-                                    mt-0.5 flex
-                                    h-7 w-7
-                                    shrink-0
-                                    items-center
-                                    justify-center
-                                    rounded-md
-                                    text-xs
-                                    font-semibold
-                                    ${selected
-                                                        ? "bg-violet-100 text-violet-700"
-                                                        : "bg-gray-100 text-gray-500"
+                                                    mt-0.5 flex
+                                                    h-7 w-7 shrink-0
+                                                    items-center
+                                                    justify-center
+                                                    rounded-md text-xs
+                                                    font-semibold
+                                                    ${selected
+                                                        ? "bg-[var(--app-accent-soft)] text-[var(--app-accent)]"
+                                                        : "bg-[var(--app-surface-soft)] text-[var(--app-text-secondary)]"
                                                     }
-                                `}
+                                                `}
                                             >
-                                                {option.value === "custom"
+                                                {option.value ===
+                                                    "custom"
                                                     ? "✦"
                                                     : option.label}
                                             </span>
@@ -254,24 +254,24 @@ export default function PromptEditor({
                                             <span className="min-w-0 flex-1">
                                                 <span
                                                     className={`
-                                        block text-xs
-                                        font-medium
-                                        ${selected
-                                                            ? "text-violet-700"
-                                                            : "text-gray-800"
+                                                        block text-xs
+                                                        font-medium
+                                                        ${selected
+                                                            ? "text-[var(--app-accent)]"
+                                                            : "text-[var(--app-text)]"
                                                         }
-                                    `}
+                                                    `}
                                                 >
                                                     {option.label}
                                                 </span>
 
-                                                <span className="mt-0.5 block text-[11px] leading-4 text-gray-400">
+                                                <span className="mt-0.5 block text-[11px] leading-4 text-[var(--app-text-muted)]">
                                                     {option.description}
                                                 </span>
                                             </span>
 
                                             {selected && (
-                                                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-500" />
+                                                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--app-accent)]" />
                                             )}
                                         </button>
                                     );
@@ -279,22 +279,21 @@ export default function PromptEditor({
                             </div>
                         )}
                     </div>
-
                 )}
             </div>
 
             {!singleJob && splitMode === "custom" && (
-                <div className="border-b border-gray-100 bg-gray-50/70 px-4 py-3">
+                <div className="border-b border-[var(--app-border)] bg-[var(--app-surface-soft)] px-4 py-3">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                         <div className="min-w-0 flex-1">
                             <label
                                 htmlFor="prompt-custom-separator"
-                                className="block text-xs font-medium text-gray-700"
+                                className="block text-xs font-medium text-[var(--app-text)]"
                             >
                                 Ký tự phân tách
                             </label>
 
-                            <p className="mt-0.5 text-[11px] text-gray-400">
+                            <p className="mt-0.5 text-[11px] text-[var(--app-text-muted)]">
                                 Dùng chuỗi này để chia prompt
                                 thành nhiều job.
                             </p>
@@ -312,15 +311,15 @@ export default function PromptEditor({
                             placeholder="==="
                             className="
                                 h-9 w-full rounded-lg
-                                border border-gray-200
-                                bg-white px-3
-                                font-mono text-sm
-                                text-gray-800
+                                border border-[var(--app-border)]
+                                bg-[var(--app-surface)]
+                                px-3 font-mono text-sm
+                                text-[var(--app-text)]
                                 outline-none transition
-                                placeholder:text-gray-300
-                                focus:border-violet-500
+                                placeholder:text-[var(--app-text-muted)]
+                                focus:border-[var(--app-accent)]
                                 focus:ring-1
-                                focus:ring-violet-500/20
+                                focus:ring-[var(--app-accent)]/20
                                 sm:w-[160px]
                             "
                         />
@@ -328,7 +327,6 @@ export default function PromptEditor({
                 </div>
             )}
 
-            {/* Textarea */}
             <div className="relative">
                 <textarea
                     value={value}
@@ -344,26 +342,26 @@ export default function PromptEditor({
                         border-0 bg-transparent
                         px-4 py-4
                         text-sm leading-6
-                        text-gray-800
+                        text-[var(--app-text)]
                         outline-none
-                        placeholder:text-gray-300
+                        placeholder:text-[var(--app-text-muted)]
                         focus:ring-0
                     "
                 />
 
-                <div className="pointer-events-none absolute bottom-3 right-4 text-[11px] text-gray-300">
+                <div className="pointer-events-none absolute bottom-3 right-4 text-[11px] text-[var(--app-text-muted)]">
                     {value.length} ký tự
                 </div>
             </div>
 
-            <div className="flex flex-col gap-2 border-t border-gray-100 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
-                <span className="text-[11px] text-gray-400">
+            <div className="flex flex-col gap-2 border-t border-[var(--app-border)] px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-[11px] text-[var(--app-text-muted)]">
                     {singleJob
                         ? "Mỗi lần tạo sẽ tạo 1 job"
                         : selectedOption.description}
                 </span>
 
-                <span className="text-[11px] font-medium text-gray-500">
+                <span className="text-[11px] font-medium text-[var(--app-text-secondary)]">
                     {jobCount}{" "}
                     {jobCount === 1
                         ? "job sẵn sàng"
