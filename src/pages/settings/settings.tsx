@@ -1,5 +1,4 @@
 import {
-    Bell,
     KeyRound,
     Lock,
     Monitor,
@@ -12,12 +11,6 @@ const settingsItems = [
         description: "Tùy chỉnh giao diện",
         icon: Monitor,
         path: "/settings/appearance",
-    },
-    {
-        title: "Thông báo",
-        description: "Quản lý thông báo",
-        icon: Bell,
-        path: "/settings/notifications",
     },
     {
         title: "Bảo mật",

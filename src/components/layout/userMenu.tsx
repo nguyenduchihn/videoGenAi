@@ -71,7 +71,7 @@ export default function UserMenu({
                 <button
                     type="button"
                     onClick={() =>
-                        handleNavigate("/settings")
+                        handleNavigate("/settings/appearance")
                     }
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-[var(--app-text-secondary)] transition hover:bg-[var(--app-surface-soft)] hover:text-[var(--app-text)]"
                 >

@@ -10,7 +10,6 @@ import Projects from "@/pages/projects/projects";
 import Settings from "@/pages/settings/settings";
 import ApiKeys from "@/pages/settings/apiKeys";
 import Appearance from "@/pages/settings/appearance";
-import Notifications from "@/pages/settings/notifications";
 import Security from "@/pages/settings/security";
 import AuthLayout from "@/layouts/authLayout";
 import MainLayout from "@/layouts/mainLayout";
@@ -69,10 +68,6 @@ const router = createBrowserRouter([
                         index: true,
                         path: "appearance",
                         element: <Appearance />,
-                    },
-                    {
-                        path: "notifications",
-                        element: <Notifications />,
                     },
                     {
                         path: "security",

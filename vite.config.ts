@@ -19,6 +19,7 @@ export default defineConfig({
 
   server: {
     proxy: {
+
       "/portal": {
         target: "http://192.168.2.155:4000",
         changeOrigin: true,
