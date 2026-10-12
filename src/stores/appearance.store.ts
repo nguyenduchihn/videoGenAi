@@ -3,10 +3,10 @@ import { create } from "zustand";
 export type ThemeMode = "light" | "dark" | "system";
 
 export type AccentColor =
+    | "orange"
     | "violet"
     | "blue"
-    | "green"
-    | "orange";
+    | "green";
 
 interface AppearanceState {
     theme: ThemeMode;
@@ -22,7 +22,7 @@ const STORAGE_KEY = "videogen-appearance";
 
 const defaultState = {
     theme: "light" as ThemeMode,
-    accent: "violet" as AccentColor,
+    accent: "orange" as AccentColor,
     compactSidebar: false,
 };
 
@@ -89,6 +89,11 @@ function applyAccent(accent: AccentColor) {
             soft: string;
         }
     > = {
+        orange: {
+            accent: "#F4A261",
+            hover: "#E88945",
+            soft: "#FFF0E2",
+        },
         violet: {
             accent: "#7c3aed",
             hover: "#6d28d9",
@@ -104,11 +109,7 @@ function applyAccent(accent: AccentColor) {
             hover: "#15803d",
             soft: "#dcfce7",
         },
-        orange: {
-            accent: "#ea580c",
-            hover: "#c2410c",
-            soft: "#ffedd5",
-        },
+
     };
 
     const selected = colors[accent];

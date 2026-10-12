@@ -1,11 +1,11 @@
-import { FolderKanban, Home, Sparkles, Settings, HelpCircle, X, PanelLeftOpen, PanelLeftClose } from "lucide-react";
+import { FolderKanban, Home, Sparkles, Settings, HelpCircle, X, PanelLeftOpen, PanelLeftClose, CreditCard, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 
 import { useAppearanceStore } from "@/stores/appearance.store";
 
-import Upgrade from "../pricing/upgrade";
-
+import Upgrade from "../pricing/upgradeModal";
+import UserMenu from "./userMenu";
 interface SidebarProps {
     open: boolean;
     onClose: () => void;
@@ -21,6 +21,11 @@ const mainMenu = [
         label: "Dự án",
         path: "/projects",
         icon: FolderKanban,
+    },
+    {
+        label: "Các gói dịch vụ",
+        path: "/pricing",
+        icon: CreditCard,
     },
 ];
 
@@ -52,6 +57,7 @@ export default function Sidebar({
     const [upgradeOpen, setUpgradeOpen] =
         useState(false);
 
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
     const handleUpgradeOpen = () => {
         setUpgradeOpen(true);
     };
@@ -60,51 +66,49 @@ export default function Sidebar({
         setUpgradeOpen(false);
     };
 
-    const handleNavClick = () => {
+    const handleNavClick = (path: string) => {
         onClose();
-    };
 
+        if (path === "/projects") {
+            setCompactSidebar(true);
+        }
+    };
     return (
         <>
             <aside
                 className={`
-                    fixed
-                    inset-y-0
-                    left-0
-                    z-50
-                    flex
-                    h-screen
+                    fixed 
+                    inset-y-0 
+                    left-0 
+                    z-50 
+                    flex 
+                    h-screen 
+                    min-h-0 
                     flex-col
-                    border-r
+                    overflow-hidden 
+                    border-r 
                     border-[var(--app-border)]
-                    bg-[var(--app-surface)]
-                    transition-all
-                    duration-200
+                    bg-[var(--app-surface)] 
+                    transition-all d
+                    uration-200 
                     ease-out
                     w-[280px]
-                    ${compactSidebar
-                        ? "lg:w-[84px]"
-                        : "lg:w-[230px]"
-                    }
+                    ${compactSidebar ? "lg:w-[84px]" : "lg:w-[230px]"}
                     lg:translate-x-0
-                    ${open
-                        ? "translate-x-0"
-                        : "-translate-x-full lg:translate-x-0"
-                    }
-                `}
+                    ${open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+                    `}
             >
                 <div
-                    className={`flex h-16 shrink-0 items-center border-b border-[var(--app-border)] ${compactSidebar
+                    className={`group relative flex h-16 shrink-0 items-center border-b border-[var(--app-border)] ${compactSidebar
                         ? "justify-center px-2"
                         : "justify-between px-4 lg:px-5"
+
                         }`}
                 >
                     <NavLink
                         to="/dashboard"
-                        onClick={handleNavClick}
-                        className={`flex min-w-0 items-center ${compactSidebar
-                            ? "justify-center"
-                            : "gap-2.5"
+                        onClick={onClose}
+                        className={`flex min-w-0 items-center ${compactSidebar ? "justify-center" : "gap-2.5"
                             }`}
                     >
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--app-accent)]">
@@ -114,21 +118,27 @@ export default function Sidebar({
                         {!compactSidebar && (
                             <span className="truncate text-[15px] font-semibold tracking-tight text-[var(--app-text)]">
                                 VideoGen{" "}
-                                <span className="text-[var(--app-accent)]">
-                                    AI
-                                </span>
+                                <span className="text-[var(--app-accent)]">AI</span>
                             </span>
                         )}
                     </NavLink>
                     <button
                         type="button"
                         onClick={() => setCompactSidebar(!compactSidebar)}
-                        className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--app-text-secondary)] transition hover:bg-[var(--app-surface-soft)] hover:text-[var(--app-text)] lg:flex"
                         aria-label={
                             compactSidebar
                                 ? "Mở rộng thanh bên"
                                 : "Thu gọn thanh bên"
                         }
+                        title={
+                            compactSidebar
+                                ? "Mở rộng thanh bên"
+                                : "Thu gọn thanh bên"
+                        }
+                        className={`hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--app-text-secondary)] transition hover:bg-[var(--app-surface-soft)] hover:text-[var(--app-accent)] lg:flex ${compactSidebar
+                            ? "absolute inset-0 m-auto bg-[var(--app-surface)] opacity-0 group-hover:opacity-100"
+                            : ""
+                            }`}
                     >
                         {compactSidebar ? (
                             <PanelLeftOpen className="h-4 w-4" />
@@ -136,6 +146,7 @@ export default function Sidebar({
                             <PanelLeftClose className="h-4 w-4" />
                         )}
                     </button>
+
                     <button
                         type="button"
                         onClick={onClose}
@@ -145,6 +156,7 @@ export default function Sidebar({
                         <X className="h-5 w-5" />
                     </button>
                 </div>
+
 
                 <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-5">
                     <div>
@@ -162,7 +174,7 @@ export default function Sidebar({
                                     <NavLink
                                         key={item.path}
                                         to={item.path}
-                                        onClick={handleNavClick}
+                                        onClick={() => handleNavClick(item.path)}
                                         title={
                                             compactSidebar
                                                 ? item.label
@@ -200,7 +212,7 @@ export default function Sidebar({
                         </div>
                     </div>
 
-                    <div className="mt-7">
+                    <div className="mt-2">
                         {!compactSidebar && (
                             <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
                                 Khác
@@ -215,7 +227,7 @@ export default function Sidebar({
                                     <NavLink
                                         key={item.path}
                                         to={item.path}
-                                        onClick={handleNavClick}
+                                        onClick={() => handleNavClick(item.path)}
                                         title={
                                             compactSidebar
                                                 ? item.label
@@ -254,12 +266,7 @@ export default function Sidebar({
                     </div>
                 </nav>
 
-                <div
-                    className={`shrink-0 border-t border-[var(--app-border)] ${compactSidebar
-                        ? "p-2"
-                        : "p-3"
-                        }`}
-                >
+                <div className="min-h-0 shrink-0">
                     {compactSidebar ? (
                         <button
                             type="button"
@@ -280,10 +287,8 @@ export default function Sidebar({
                                     <p className="text-xs font-semibold text-[var(--app-text)]">
                                         Gói Pro
                                     </p>
-
                                     <p className="mt-0.5 text-[10px] leading-4 text-[var(--app-text-secondary)]">
-                                        Nâng cấp để tạo
-                                        nhiều video hơn
+                                        Nâng cấp để tạo nhiều video hơn
                                     </p>
                                 </div>
                             </div>
@@ -294,15 +299,55 @@ export default function Sidebar({
                                 className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--app-surface)] px-3 py-2.5 text-xs font-medium text-[var(--app-text-secondary)] ring-1 ring-[var(--app-border)] transition hover:bg-[var(--app-accent-soft)] hover:text-[var(--app-accent)]"
                             >
                                 <Sparkles className="h-4 w-4 text-[var(--app-accent)]" />
-
-                                <span>
-                                    Các gói nâng cấp
-                                </span>
+                                <span>Các gói nâng cấp</span>
                             </button>
                         </div>
                     )}
+
+                    <div
+                        className={`shrink-0 border-t border-[var(--app-border)] ${compactSidebar ? "p-2" : "p-3"
+                            }`}
+                    >
+                        <div className="flex min-h-0 flex-col">
+                            {userMenuOpen && !compactSidebar && (
+                                <div className="mb-2 max-h-[40vh] min-w-0 shrink overflow-y-auto overscroll-contain">
+                                    <UserMenu onClose={() => setUserMenuOpen(false)} />
+                                </div>
+                            )}
+
+                            <button
+                                type="button"
+                                onClick={() => setUserMenuOpen((prev) => !prev)}
+                                title={compactSidebar ? "Tài khoản" : undefined}
+                                className={`flex w-full shrink-0 items-center rounded-xl py-2 transition hover:bg-[var(--app-surface-soft)] ${compactSidebar ? "justify-center px-0" : "gap-3 px-2"
+                                    }`}
+                            >
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--app-accent)] text-xs font-semibold text-white">
+                                    C
+                                </div>
+
+                                {!compactSidebar && (
+                                    <>
+                                        <div className="min-w-0 flex-1 text-left">
+                                            <p className="truncate text-xs font-semibold text-[var(--app-text)]">
+                                                Chính
+                                            </p>
+                                            <p className="text-[10px] text-[var(--app-text-secondary)]">
+                                                Pro
+                                            </p>
+                                        </div>
+
+                                        <ChevronDown
+                                            className={`h-4 w-4 shrink-0 text-[var(--app-text-secondary)] transition-transform ${userMenuOpen ? "rotate-180" : ""
+                                                }`}
+                                        />
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </aside >
+            </aside>
 
             <Upgrade
                 open={upgradeOpen}

@@ -20,6 +20,7 @@ import type {
     PaymentPackagesResponse,
     PortalPricingResponse,
 } from "@/types/api";
+import UpgradeModal from "@/components/pricing/upgradeModal";
 
 interface WorkerInfo {
     key: string;
@@ -275,8 +276,12 @@ function WorkerPricingCard({
 
 function PackageCard({
     packageItem,
+    onChoose,
+    disabled,
 }: {
     packageItem: PaymentPackage;
+    onChoose: () => void;
+    disabled: boolean;
 }) {
     return (
         <div className="relative flex flex-col rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 transition hover:-translate-y-0.5 hover:border-[var(--app-accent)]/30 hover:shadow-lg hover:shadow-black/5">
@@ -322,8 +327,9 @@ function PackageCard({
 
             <button
                 type="button"
-                disabled
-                className="mt-6 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--app-surface-soft)] text-sm font-semibold text-[var(--app-text-muted)]"
+                onClick={onChoose}
+                disabled={disabled}
+                className="mt-6 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--app-accent)] text-sm font-semibold text-white transition hover:bg-[var(--app-accent-hover)] disabled:cursor-not-allowed disabled:opacity-50"
             >
                 <CreditCard className="h-4 w-4" />
                 Chọn gói
@@ -342,6 +348,8 @@ export default function Pricing() {
         useState<PaymentPackagesResponse | null>(
             null
         );
+
+    const [upgradeOpen, setUpgradeOpen] = useState(false);
 
     const [loading, setLoading] =
         useState(true);
@@ -431,20 +439,6 @@ export default function Pricing() {
                                 với nhu cầu của bạn.
                             </p>
                         </div>
-
-                        <div className="hidden items-center gap-2 rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-3 sm:flex">
-                            <Coins className="h-4 w-4 text-[var(--app-accent)]" />
-
-                            <div>
-                                <p className="text-[10px] uppercase tracking-wide text-[var(--app-text-muted)]">
-                                    Credit
-                                </p>
-
-                                <p className="text-xs font-semibold text-[var(--app-text)]">
-                                    Pay as you use
-                                </p>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -516,17 +510,14 @@ export default function Pricing() {
                         />
                     ) : (
                         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                            {paymentPackages.map(
-                                (packageItem) => (
-                                    <PackageCard
-                                        key={
-                                            packageItem.id
-                                        }
-                                        packageItem={
-                                            packageItem
-                                        }
-                                    />
-                                )
+                            {paymentPackages.map((packageItem) => (
+                                <PackageCard
+                                    key={packageItem.id}
+                                    packageItem={packageItem}
+                                    onChoose={() => setUpgradeOpen(true)}
+                                    disabled={!packages?.enabled}
+                                />
+                            )
                             )}
                         </div>
                     )}
@@ -576,6 +567,10 @@ export default function Pricing() {
                     </p>
                 </div>
             </div>
+            <UpgradeModal
+                open={upgradeOpen}
+                onClose={() => setUpgradeOpen(false)}
+            />
         </div>
     );
 }

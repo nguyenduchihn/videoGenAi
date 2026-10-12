@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { imageService } from "@/services/image.service";
 import { taskService } from "@/services/task.service";
 import type { CreateTaskItem } from "@/types/api";
@@ -10,7 +10,6 @@ import type {
     PromptSplitMode,
 } from "./types";
 import { type GeneratorResultItem } from "./generatorResult";
-
 import {
     MODEL_CREDIT_COST,
     getDefaultModel,
@@ -21,6 +20,7 @@ import {
 } from "./ultils/generatorHelpers";
 import ProjectGenerator from "./layouts/projectGenerator";
 import DefaultGenerator from "./layouts/defaultGenerator";
+import { taskStorageService } from "@/services/taskStorage.service";
 
 type GeneratorPanelProps = {
     variant?: "quick" | "advanced";
@@ -76,6 +76,20 @@ export default function GeneratorPanel({
             upscaleThreads: 1,
             customSeparator: "===",
         });
+
+    const activePollControllers = useRef(
+        new Map<string, AbortController>()
+    );
+
+    useEffect(() => {
+        return () => {
+            activePollControllers.current.forEach((controller) => {
+                controller.abort();
+            });
+
+            activePollControllers.current.clear();
+        };
+    }, []);
 
     const jobs = useMemo(() => {
         const input = prompt.trim();
@@ -173,6 +187,153 @@ export default function GeneratorPanel({
                 : "16:9",
         );
     };
+    useEffect(() => {
+        let cancelled = false;
+        const abortControllers = new Map<string, AbortController>();
+
+        const restoreBatches = async () => {
+            const batches = taskStorageService.getBatches();
+
+            for (const batch of batches) {
+                if (cancelled) return;
+
+                try {
+                    const response = await taskService.getBatch(batch.batchId);
+
+                    if (cancelled) return;
+
+                    const restoredResults: GeneratorResultItem[] =
+                        response.tasks.map((task, index) => ({
+                            id: task.id,
+                            batchId: task.batchId,
+                            jobIndex: batch.taskIds.indexOf(task.id) >= 0
+                                ? batch.taskIds.indexOf(task.id) + 1
+                                : index + 1,
+                            prompt: batch.prompts[index] ?? `Video ${index + 1}`,
+                            status:
+                                task.status === "succeeded"
+                                    ? "completed"
+                                    : task.status === "failed" ||
+                                        task.status === "cancelled"
+                                        ? "failed"
+                                        : task.status === "pending"
+                                            ? "pending"
+                                            : "processing",
+                            type: "video",
+                            url: task.result?.url ?? undefined,
+                            error: task.error
+                                ? getTaskErrorMessage(
+                                    task.error.code,
+                                    task.error.message,
+                                )
+                                : undefined,
+                        }));
+
+                    setResults((current) => {
+                        const resultMap = new Map(
+                            current.map((item) => [item.id, item]),
+                        );
+
+                        for (const restored of restoredResults) {
+                            const previous = resultMap.get(restored.id);
+
+                            resultMap.set(restored.id, {
+                                ...previous,
+                                ...restored,
+                            });
+                        }
+
+                        return Array.from(resultMap.values()).sort(
+                            (a, b) => a.jobIndex - b.jobIndex,
+                        );
+                    });
+
+                    const unfinishedTasks = response.tasks.filter(
+                        (task) =>
+                            task.status === "pending" ||
+                            task.status === "processing",
+                    );
+
+                    if (unfinishedTasks.length > 0) {
+                        const controller = new AbortController();
+                        abortControllers.set(batch.batchId, controller);
+                        void pollBatch(batch.batchId, (latestTasks) => {
+                            if (cancelled) return;
+
+                            setResults((current) => {
+                                const resultMap = new Map(
+                                    current.map((item) => [item.id, item]),
+                                );
+
+                                latestTasks.forEach((task, index) => {
+                                    const previous = resultMap.get(task.id);
+                                    const restoredPrompt =
+                                        batch.prompts[
+                                        batch.taskIds.indexOf(task.id)
+                                        ] ?? `Video ${index + 1}`;
+
+                                    resultMap.set(task.id, {
+                                        ...previous,
+                                        id: task.id,
+                                        batchId: task.batchId,
+                                        jobIndex:
+                                            batch.taskIds.indexOf(task.id) + 1 ||
+                                            index + 1,
+                                        prompt: previous?.prompt || restoredPrompt,
+                                        status:
+                                            task.status === "succeeded"
+                                                ? "completed"
+                                                : task.status === "failed" ||
+                                                    task.status === "cancelled"
+                                                    ? "failed"
+                                                    : task.status === "pending"
+                                                        ? "pending"
+                                                        : "processing",
+                                        type: "video",
+                                        url: task.result?.url ?? undefined,
+                                        error: task.error
+                                            ? getTaskErrorMessage(
+                                                task.error.code,
+                                                task.error.message,
+                                            )
+                                            : undefined,
+                                    });
+                                });
+
+                                return Array.from(resultMap.values());
+                            });
+                        },
+                            controller.signal,
+                        ).catch((error) => {
+                            if (error.name !== "AbortError") {
+                                console.error(
+                                    `Không thể tiếp tục polling batch ${batch.batchId}:`,
+                                    error,
+                                );
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error(
+                        `Không thể khôi phục batch ${batch.batchId}:`,
+                        error,
+                    );
+                }
+            }
+        };
+
+        void restoreBatches();
+
+        return () => {
+            cancelled = true;
+
+            abortControllers.forEach((controller) => {
+                controller.abort();
+            });
+
+            abortControllers.clear();
+        };
+    }, []);
 
     const handleGenerate = async () => {
         setShowValidation(true);
@@ -220,12 +381,17 @@ export default function GeneratorPanel({
                         : "video",
             }));
 
-        setResults(newResults);
-
+        setResults((currentResults) => [
+            ...currentResults,
+            ...newResults,
+        ]);
+        let createdTaskIds = new Set<string>();
+        let pollingCancelled = false;
         try {
 
             let startImageId: string | undefined;
             let endImageId: string | undefined;
+
 
             if (mode === "image-to-video") {
                 if (files.startFrame[0]) {
@@ -325,24 +491,65 @@ export default function GeneratorPanel({
                     tasks,
                 });
 
+            createdTaskIds = new Set(
+                response.tasks
+                    .map((task) => task.id)
+                    .filter((id): id is string => Boolean(id)),
+            );
+            if (response.batchId) {
+                taskStorageService.saveBatch(
+                    response.batchId,
+                    response.tasks
+                        .map((task) => task.id)
+                        .filter((id): id is string => Boolean(id)),
+                    jobs,
+                );
+            }
+
             setResults((currentResults) =>
-                currentResults.map((item, index) => ({
-                    ...item,
-                    id:
-                        response.tasks[index]?.id ??
-                        item.id,
-                    status: "processing",
-                })),
+                currentResults.map((item) => {
+                    const localIndex = newResults.findIndex(
+                        (newItem) => newItem.id === item.id,
+                    );
+
+                    if (localIndex === -1) {
+                        return item;
+                    }
+
+                    const task = response.tasks[localIndex];
+
+                    if (!task?.id) {
+                        return item;
+                    }
+
+                    return {
+                        ...item,
+                        id: task.id,
+                        batchId: response.batchId,
+                        jobIndex: currentResults.findIndex(
+                            (currentItem) => currentItem.id === item.id,
+                        ) + 1,
+                        status: "processing",
+                    };
+                }),
             );
 
 
+
             if (response.batchId) {
-                await pollBatch(
+                const controller = new AbortController();
+                activePollControllers.current.set(
                     response.batchId,
-                    (tasks) => {
+                    controller
+                );
+
+                try {
+                    await pollBatch(response.batchId, (tasks) => {
                         setResults((currentResults) =>
-                            currentResults.map((item, index) => {
-                                const task = tasks[index];
+                            currentResults.map((item) => {
+                                const task = tasks.find(
+                                    (taskItem) => taskItem.id === item.id,
+                                );
 
                                 if (!task) {
                                     return item;
@@ -350,7 +557,6 @@ export default function GeneratorPanel({
 
                                 return {
                                     ...item,
-                                    id: task.id,
                                     batchId: task.batchId,
                                     status:
                                         task.status === "succeeded"
@@ -358,32 +564,64 @@ export default function GeneratorPanel({
                                             : task.status === "failed" ||
                                                 task.status === "cancelled"
                                                 ? "failed"
-                                                : "processing",
+                                                : task.status === "pending"
+                                                    ? "pending"
+                                                    : "processing",
                                     url: task.result?.url ?? undefined,
-                                    error:
-                                        task.error
-                                            ? getTaskErrorMessage(task.error.code, task.error.message)
-                                            : undefined,
+                                    error: task.error
+                                        ? getTaskErrorMessage(
+                                            task.error.code,
+                                            task.error.message,
+                                        )
+                                        : undefined,
                                 };
                             }),
                         );
                     },
-                );
+                        controller.signal
+                    );
+                } finally {
+                    pollingCancelled = controller.signal.aborted;
+                    if (
+                        activePollControllers.current.get(response.batchId) ===
+                        controller
+                    ) {
+                        activePollControllers.current.delete(response.batchId);
+                    }
+                }
             }
         } catch (error) {
-            console.error(
-                "Generator error:",
-                error,
-            );
+            if (
+                pollingCancelled ||
+                (error instanceof Error && error.name === "AbortError")
+            ) {
+                return;
+            }
+
+            console.error("Generator error:", error);
 
             const message = getGeneratorErrorMessage(error);
 
+            const newResultIds = new Set(
+                newResults.map((item) => item.id),
+            );
+
             setResults((currentResults) =>
-                currentResults.map((item) => ({
-                    ...item,
-                    status: "failed",
-                    error: message,
-                })),
+                currentResults.map((item) => {
+                    const isNewResult =
+                        newResultIds.has(item.id) ||
+                        createdTaskIds.has(item.id);
+
+                    if (!isNewResult) {
+                        return item;
+                    }
+
+                    return {
+                        ...item,
+                        status: "failed",
+                        error: message,
+                    };
+                }),
             );
         } finally {
             setIsGenerating(false);
@@ -493,6 +731,16 @@ export default function GeneratorPanel({
                     tasks: [task],
                 });
 
+            if (response.batchId) {
+                taskStorageService.saveBatch(
+                    response.batchId,
+                    response.tasks
+                        .map((item) => item.id)
+                        .filter((id): id is string => Boolean(id)),
+                    [result.prompt],
+                );
+            }
+
             const newTaskId =
                 response.tasks[0]?.id;
 
@@ -539,15 +787,14 @@ export default function GeneratorPanel({
                                             batchId:
                                                 taskResult.batchId,
                                             status:
-                                                taskResult.status ===
-                                                    "succeeded"
+                                                taskResult.status === "succeeded"
                                                     ? "completed"
-                                                    : taskResult.status ===
-                                                        "failed" ||
-                                                        taskResult.status ===
-                                                        "cancelled"
+                                                    : taskResult.status === "failed" ||
+                                                        taskResult.status === "cancelled"
                                                         ? "failed"
-                                                        : "processing",
+                                                        : taskResult.status === "pending"
+                                                            ? "pending"
+                                                            : "processing",
                                             url:
                                                 taskResult
                                                     .result

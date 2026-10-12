@@ -43,6 +43,11 @@ const accents: {
     color: string;
 }[] = [
         {
+            value: "orange",
+            title: "Cam",
+            color: "#F4A261",
+        },
+        {
             value: "violet",
             title: "Tím",
             color: "#7c3aed",
@@ -57,11 +62,7 @@ const accents: {
             title: "Xanh lá",
             color: "#16a34a",
         },
-        {
-            value: "orange",
-            title: "Cam",
-            color: "#ea580c",
-        },
+
     ];
 
 export default function Appearance() {

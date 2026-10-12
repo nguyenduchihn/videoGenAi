@@ -198,29 +198,55 @@ export function getTaskErrorMessage(
     }
 }
 
-
 export async function pollBatch(
     batchId: string,
     onUpdate: (tasks: PortalTask[]) => void,
+    signal?: AbortSignal,
 ): Promise<PortalTask[]> {
-    const maxAttempts = 150;
-    const interval = 2000;
+    const maxAttempts = 40;
+    const interval = 3000;
 
     let lastTasks: PortalTask[] = [];
 
+    const wait = (ms: number): Promise<void> =>
+        new Promise((resolve, reject) => {
+            if (signal?.aborted) {
+                reject(new DOMException("Polling cancelled", "AbortError"));
+                return;
+            }
+
+            const timeoutId = setTimeout(() => {
+                signal?.removeEventListener("abort", onAbort);
+                resolve();
+            }, ms);
+
+            const onAbort = () => {
+                clearTimeout(timeoutId);
+                signal?.removeEventListener("abort", onAbort);
+                reject(new DOMException("Polling cancelled", "AbortError"));
+            };
+
+            signal?.addEventListener("abort", onAbort, { once: true });
+        });
+
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        if (signal?.aborted) {
+            return lastTasks;
+        }
+
         const response = await taskService.getBatch(batchId);
+
+        if (signal?.aborted) {
+            return lastTasks;
+        }
 
         lastTasks = response.tasks;
         onUpdate(lastTasks);
 
         const allFinished =
             lastTasks.length > 0 &&
-            lastTasks.every(
-                (task) =>
-                    task.status === "succeeded" ||
-                    task.status === "failed" ||
-                    task.status === "cancelled",
+            lastTasks.every((task) =>
+                ["succeeded", "failed", "cancelled"].includes(task.status),
             );
 
         if (allFinished) {
@@ -228,11 +254,21 @@ export async function pollBatch(
         }
 
         if (attempt < maxAttempts - 1) {
-            await new Promise<void>((resolve) => {
-                setTimeout(resolve, interval);
-            });
+            try {
+                await wait(interval);
+            } catch (error) {
+                if (
+                    error instanceof DOMException &&
+                    error.name === "AbortError"
+                ) {
+                    return lastTasks;
+                }
+
+                throw error;
+            }
         }
     }
 
     return lastTasks;
 }
+

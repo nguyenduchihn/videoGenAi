@@ -15,6 +15,8 @@ import AuthLayout from "@/layouts/authLayout";
 import MainLayout from "@/layouts/mainLayout";
 import Profile from "@/pages/profile/profile";
 import MyPlan from "@/pages/pricing/myPlan";
+import Pricing from "@/pages/pricing/pricing";
+import Support from "@/pages/support/support";
 
 
 const router = createBrowserRouter([
@@ -57,8 +59,16 @@ const router = createBrowserRouter([
                 element: <Profile />,
             },
             {
-                path: "/pricing",
+                path: "/my-plan",
                 element: <MyPlan />,
+            },
+            {
+                path: "/pricing",
+                element: <Pricing />,
+            },
+            {
+                path: "/support",
+                element: <Support />,
             },
             {
                 path: "/settings",

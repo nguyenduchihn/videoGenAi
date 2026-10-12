@@ -119,14 +119,6 @@ export default function UploadField({
     ] = useState("");
 
     useEffect(() => {
-        onFilesChange?.(
-            files.map(
-                (item) => item.file,
-            ),
-        );
-    }, [files, onFilesChange]);
-
-    useEffect(() => {
         return () => {
             files.forEach((item) => {
                 if (item.preview) {
@@ -138,101 +130,69 @@ export default function UploadField({
         };
     }, []);
 
-    const processFiles = (
-        selectedFiles: File[],
-    ) => {
-        if (selectedFiles.length === 0) {
-            return;
-        }
+
+    const processFiles = (selectedFiles: File[]) => {
+        if (selectedFiles.length === 0) return;
 
         setError("");
 
         const nextFiles = multiple
-            ? selectedFiles.slice(
-                0,
-                maxFiles,
-            )
+            ? selectedFiles.slice(0, maxFiles)
             : selectedFiles.slice(0, 1);
 
-        if (
-            multiple &&
-            selectedFiles.length > maxFiles
-        ) {
-            setError(
-                `Chỉ có thể chọn tối đa ${maxFiles} file.`,
-            );
+        if (multiple && selectedFiles.length > maxFiles) {
+            setError(`Chỉ có thể chọn tối đa ${maxFiles} file.`);
         }
 
-        const uploadFiles: UploadFile[] =
-            nextFiles.map((file) => ({
-                id: createFileId(file),
-                file,
-                preview:
-                    isImage(file) ||
-                        isVideo(file)
-                        ? URL.createObjectURL(
-                            file,
-                        )
-                        : undefined,
-            }));
+        const uploadFiles: UploadFile[] = nextFiles.map((file) => ({
+            id: createFileId(file),
+            file,
+            preview:
+                isImage(file) || isVideo(file)
+                    ? URL.createObjectURL(file)
+                    : undefined,
+        }));
 
-        setFiles((current) => {
-            if (!multiple) {
-                current.forEach((item) => {
-                    if (item.preview) {
-                        URL.revokeObjectURL(
-                            item.preview,
-                        );
-                    }
-                });
+        let nextState: UploadFile[];
 
-                return uploadFiles;
-            }
+        if (!multiple) {
+            files.forEach((item) => {
+                if (item.preview) {
+                    URL.revokeObjectURL(item.preview);
+                }
+            });
 
-            const merged = [
-                ...current,
-                ...uploadFiles,
-            ];
+            nextState = uploadFiles;
+        } else {
+            const merged = [...files, ...uploadFiles];
 
-            const unique = merged.filter(
+            nextState = merged.filter(
                 (item, index, array) =>
                     array.findIndex(
                         (candidate) =>
-                            candidate.file.name ===
-                            item.file.name &&
-                            candidate.file.size ===
-                            item.file.size &&
-                            candidate.file
-                                .lastModified ===
-                            item.file
-                                .lastModified,
+                            candidate.file.name === item.file.name &&
+                            candidate.file.size === item.file.size &&
+                            candidate.file.lastModified ===
+                            item.file.lastModified,
                     ) === index,
             );
 
-            if (unique.length > maxFiles) {
-                unique
-                    .slice(maxFiles)
-                    .forEach((item) => {
-                        if (item.preview) {
-                            URL.revokeObjectURL(
-                                item.preview,
-                            );
-                        }
-                    });
+            if (nextState.length > maxFiles) {
+                nextState.slice(maxFiles).forEach((item) => {
+                    if (item.preview) {
+                        URL.revokeObjectURL(item.preview);
+                    }
+                });
 
-                setError(
-                    `Chỉ có thể chọn tối đa ${maxFiles} file.`,
-                );
-
-                return unique.slice(
-                    0,
-                    maxFiles,
-                );
+                nextState = nextState.slice(0, maxFiles);
+                setError(`Chỉ có thể chọn tối đa ${maxFiles} file.`);
             }
+        }
 
-            return unique;
-        });
+        setFiles(nextState);
+        onFilesChange?.(nextState.map((item) => item.file));
     };
+
 
     const handleInputChange = (
         event: ChangeEvent<HTMLInputElement>,
@@ -262,30 +222,21 @@ export default function UploadField({
         processFiles(droppedFiles);
     };
 
-    const handleRemove = (
-        id: string,
-    ) => {
-        setFiles((current) => {
-            const target =
-                current.find(
-                    (item) =>
-                        item.id === id,
-                );
 
-            if (target?.preview) {
-                URL.revokeObjectURL(
-                    target.preview,
-                );
-            }
+    const handleRemove = (id: string) => {
+        const target = files.find((item) => item.id === id);
 
-            return current.filter(
-                (item) =>
-                    item.id !== id,
-            );
-        });
+        if (target?.preview) {
+            URL.revokeObjectURL(target.preview);
+        }
 
+        const nextFiles = files.filter((item) => item.id !== id);
+
+        setFiles(nextFiles);
+        onFilesChange?.(nextFiles.map((item) => item.file));
         setError("");
     };
+
 
     const handleChoose = () => {
         inputRef.current?.click();

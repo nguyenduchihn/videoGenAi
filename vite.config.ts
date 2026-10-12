@@ -1,35 +1,27 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import { fileURLToPath, URL } from "node:url";
+import path from "path";
 
 export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-  ],
-
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      "@": fileURLToPath(
-        new URL("./src", import.meta.url)
-      ),
+      "@": path.resolve(__dirname, "./src"),
     },
   },
-
   server: {
     proxy: {
-
       "/portal": {
-        target: "http://192.168.2.155:4000",
+        target: "https://api.169-58-141-137.sslip.io",
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
-
       "/v1": {
-        target: "http://192.168.2.155:4000",
+        target: "https://api.169-58-141-137.sslip.io",
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
     },
   },

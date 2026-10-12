@@ -50,7 +50,7 @@ const IMAGE_MODES: GeneratorMode[] = [
 const MODEL_OPTIONS = {
     video: [
         {
-            value: "veo-3.1-lite",
+            value: "Veo-3.1-lite",
             label: "Veo 3.1 - Lite",
             description:
                 "Tạo video nhanh, tối ưu chi phí",
@@ -59,7 +59,7 @@ const MODEL_OPTIONS = {
     ],
     image: [
         {
-            value: "nano-banana-2-lite",
+            value: "Nano-banana-2-lite",
             label: "Nano Banana 2 Lite",
             description:
                 "Tạo ảnh nhanh với chất lượng cao",

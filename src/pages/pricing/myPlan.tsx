@@ -5,6 +5,8 @@ import {
     Sparkles,
     Zap,
 } from "lucide-react";
+import { useState } from "react";
+import UpgradeModal from "@/components/pricing/upgradeModal";
 
 import Button from "@/components/common/button";
 
@@ -16,6 +18,7 @@ const benefits = [
 ];
 
 export default function MyPlan() {
+    const [upgradeOpen, setUpgradeOpen] = useState(false);
     return (
         <div className="min-h-full bg-[var(--app-bg)] transition-colors">
             <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
@@ -53,7 +56,7 @@ export default function MyPlan() {
                                     </p>
                                 </div>
 
-                                <Button>
+                                <Button onClick={() => setUpgradeOpen(true)}>
                                     Nâng cấp gói
                                 </Button>
                             </div>
@@ -144,26 +147,10 @@ export default function MyPlan() {
                             ))}
                         </div>
                     </section>
-
-                    <section className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5 transition-colors sm:p-6">
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                                <h3 className="text-sm font-semibold text-[var(--app-text)]">
-                                    Cần thêm credits?
-                                </h3>
-
-                                <p className="mt-1 text-sm text-[var(--app-text-secondary)]">
-                                    Nâng cấp hoặc mua thêm credits để tiếp
-                                    tục tạo nội dung.
-                                </p>
-                            </div>
-
-                            <Button>
-                                <Sparkles className="h-4 w-4" />
-                                Xem các gói
-                            </Button>
-                        </div>
-                    </section>
+                    <UpgradeModal
+                        open={upgradeOpen}
+                        onClose={() => setUpgradeOpen(false)}
+                    />
                 </div>
             </div>
         </div>

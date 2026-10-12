@@ -28,7 +28,7 @@ const formatCurrency = (amount: number) => {
     );
 };
 
-export default function Upgrade({
+export default function UpgradeModal({
     open,
     onClose,
 }: UpgradeModalProps) {

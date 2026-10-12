@@ -94,7 +94,7 @@ export default function Projects() {
 
     return (
         <div className="h-[calc(100vh-64px)] min-h-0 overflow-hidden bg-[var(--app-bg)]">
-            <header className="relative z-30 flex h-16 shrink-0 items-center justify-between border-b border-[var(--app-border)] bg-[var(--app-surface)] px-4 transition-colors sm:px-6">
+            <header className="relative z-30 flex h-12 shrink-0 items-center justify-between border-b border-[var(--app-border)] bg-[var(--app-surface)] px-4 transition-colors sm:px-6">
                 <div className="relative">
                     <button
                         type="button"
@@ -245,15 +245,9 @@ export default function Projects() {
                         </>
                     )}
                 </div>
-
-                <div className="flex items-center gap-2">
-                    <span className="hidden text-xs text-gray-400 sm:block">
-                        Workspace
-                    </span>
-                </div>
             </header>
 
-            <main className="h-[calc(100%-64px)] min-h-0 overflow-y-auto bg-[var(--app-surface)] transition-colors lg:overflow-hidden">
+            <main className="h-[calc(100%-48px)] min-h-0 overflow-y-auto bg-[var(--app-surface)] transition-colors lg:overflow-hidden">
                 <GeneratorPanel
                     key={selectedProject.id}
                     variant="advanced"

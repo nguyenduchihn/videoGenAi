@@ -26,7 +26,7 @@ export default function UserMenu({
     };
 
     return (
-        <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-[240px] overflow-hidden rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-xl shadow-black/10 transition-colors">
+        <div className="w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-lg">
             <div className="border-b border-[var(--app-border)] px-4 py-3">
                 <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--app-accent)] text-sm font-semibold text-white">

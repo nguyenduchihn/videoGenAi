@@ -1,8 +1,9 @@
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sideBar";
 import { useAppearanceStore } from "@/stores/appearance.store";
-import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Outlet, useLocation } from "react-router-dom";
+
 
 export default function MainLayout() {
     const [sidebarOpen, setSidebarOpen] =
@@ -13,6 +14,17 @@ export default function MainLayout() {
             (state) => state.compactSidebar
         );
 
+    const location = useLocation();
+
+    const setCompactSidebar = useAppearanceStore(
+        (state) => state.setCompactSidebar
+    );
+
+    useEffect(() => {
+        if (location.pathname.startsWith("/projects")) {
+            setCompactSidebar(true);
+        }
+    }, [location.pathname, setCompactSidebar]);
     return (
         <div className="min-h-screen bg-[var(--app-bg)] text-[var(--app-text)] transition-colors">
             {sidebarOpen && (
