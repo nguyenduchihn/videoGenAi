@@ -1,49 +1,47 @@
-import { create } from "zustand";
 
-import type {
-    PortalMeResponse,
-} from "@/types/api";
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+
+import type { PortalMeResponse } from "@/types/api";
 
 interface AuthState {
     user: PortalMeResponse | null;
-
     isAuthenticated: boolean;
-
     loading: boolean;
 
-    setUser: (
-        user: PortalMeResponse
-    ) => void;
-
+    setUser: (user: PortalMeResponse) => void;
     clearUser: () => void;
-
-    setLoading: (
-        loading: boolean
-    ) => void;
+    setLoading: (loading: boolean) => void;
 }
 
-export const useAuthStore =
-    create<AuthState>((set) => ({
-        user: null,
+export const useAuthStore = create<AuthState>()(
+    persist(
+        (set) => ({
+            user: null,
+            isAuthenticated: false,
+            loading: true,
 
-        isAuthenticated: false,
+            setUser: (user) =>
+                set({
+                    user,
+                    isAuthenticated: true,
+                }),
 
-        loading: false,
+            clearUser: () =>
+                set({
+                    user: null,
+                    isAuthenticated: false,
+                    loading: false,
+                }),
 
-        setUser: (user) =>
-            set({
-                user,
-                isAuthenticated: true,
+            setLoading: (loading) => set({ loading }),
+        }),
+        {
+            name: "videogen-auth",
+            partialize: (state) => ({
+                user: state.user,
+                isAuthenticated: state.isAuthenticated,
             }),
-
-        clearUser: () =>
-            set({
-                user: null,
-                isAuthenticated: false,
-            }),
-
-        setLoading: (loading) =>
-            set({
-                loading,
-            }),
-    }));
+        },
+    ),
+);

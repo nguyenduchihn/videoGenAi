@@ -34,6 +34,14 @@ export interface RegisterResponse {
     devToken: string | null;
 }
 
+export interface ResendVerificationEmailRequest {
+    email: string;
+}
+
+export interface ResendVerificationEmailResponse {
+    ok: boolean;
+}
+
 
 export type UserStatus =
     | "active"

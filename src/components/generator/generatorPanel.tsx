@@ -21,6 +21,7 @@ import {
 import ProjectGenerator from "./layouts/projectGenerator";
 import DefaultGenerator from "./layouts/defaultGenerator";
 import { taskStorageService } from "@/services/taskStorage.service";
+import { useAuthStore } from "@/stores/auth.store";
 
 type GeneratorPanelProps = {
     variant?: "quick" | "advanced";
@@ -33,6 +34,7 @@ export default function GeneratorPanel({
     const [showValidation, setShowValidation] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const [results, setResults] = useState<GeneratorResultItem[]>([]);
+    const userId = useAuthStore((state) => state.user?.user.id ?? null);
     const [mode, setMode] =
         useState<GeneratorMode>("text-to-video");
 
@@ -191,8 +193,14 @@ export default function GeneratorPanel({
         let cancelled = false;
         const abortControllers = new Map<string, AbortController>();
 
+        if (!userId) {
+            setResults([]);
+            return;
+        }
+        setResults([]);
+
         const restoreBatches = async () => {
-            const batches = taskStorageService.getBatches();
+            const batches = taskStorageService.getBatches(userId);
 
             for (const batch of batches) {
                 if (cancelled) return;
@@ -333,9 +341,14 @@ export default function GeneratorPanel({
 
             abortControllers.clear();
         };
-    }, []);
+    }, [userId]);
+
 
     const handleGenerate = async () => {
+        if (!userId) {
+            console.error("Vui lòng đăng nhập trước khi tạo video.");
+            return;
+        }
         setShowValidation(true);
 
         if (!validation.valid) {
@@ -496,8 +509,9 @@ export default function GeneratorPanel({
                     .map((task) => task.id)
                     .filter((id): id is string => Boolean(id)),
             );
-            if (response.batchId) {
+            if (response.batchId && userId) {
                 taskStorageService.saveBatch(
+                    userId,
                     response.batchId,
                     response.tasks
                         .map((task) => task.id)
@@ -628,6 +642,10 @@ export default function GeneratorPanel({
         }
     };
     const handleRetry = async (result: GeneratorResultItem) => {
+        if (!userId) {
+            console.error("Vui lòng đăng nhập trước khi tạo video.");
+            return;
+        }
         setResults((currentResults) =>
             currentResults.map((item) =>
                 item.id === result.id
@@ -731,8 +749,9 @@ export default function GeneratorPanel({
                     tasks: [task],
                 });
 
-            if (response.batchId) {
+            if (response.batchId && userId) {
                 taskStorageService.saveBatch(
+                    userId,
                     response.batchId,
                     response.tasks
                         .map((item) => item.id)

@@ -17,6 +17,7 @@ import Profile from "@/pages/profile/profile";
 import MyPlan from "@/pages/pricing/myPlan";
 import Pricing from "@/pages/pricing/pricing";
 import Support from "@/pages/support/support";
+import ProtectedRoute from "./protectedRoute";
 
 
 const router = createBrowserRouter([
@@ -44,52 +45,57 @@ const router = createBrowserRouter([
         ],
     },
     {
-        element: <MainLayout />,
+        element: <ProtectedRoute />,
         children: [
             {
-                path: "/dashboard",
-                element: <Dashboard />,
-            },
-            {
-                path: "/projects",
-                element: <Projects />,
-            },
-            {
-                path: "/profile",
-                element: <Profile />,
-            },
-            {
-                path: "/my-plan",
-                element: <MyPlan />,
-            },
-            {
-                path: "/pricing",
-                element: <Pricing />,
-            },
-            {
-                path: "/support",
-                element: <Support />,
-            },
-            {
-                path: "/settings",
-                element: <Settings />,
+                element: <MainLayout />,
                 children: [
                     {
-                        index: true,
-                        path: "appearance",
-                        element: <Appearance />,
+                        path: "/dashboard",
+                        element: <Dashboard />,
                     },
                     {
-                        path: "security",
-                        element: <Security />,
+                        path: "/projects",
+                        element: <Projects />,
                     },
                     {
-                        path: "api-keys",
-                        element: <ApiKeys />,
+                        path: "/profile",
+                        element: <Profile />,
+                    },
+                    {
+                        path: "/my-plan",
+                        element: <MyPlan />,
+                    },
+                    {
+                        path: "/pricing",
+                        element: <Pricing />,
+                    },
+                    {
+                        path: "/support",
+                        element: <Support />,
+                    },
+                    {
+                        path: "/settings",
+                        element: <Settings />,
+                        children: [
+                            {
+                                index: true,
+                                path: "appearance",
+                                element: <Appearance />,
+                            },
+                            {
+                                path: "security",
+                                element: <Security />,
+                            },
+                            {
+                                path: "api-keys",
+                                element: <ApiKeys />,
+                            },
+                        ],
                     },
                 ],
-            },
-        ],
+            }
+        ]
     },
 ]);
 

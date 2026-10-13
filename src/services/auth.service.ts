@@ -10,6 +10,8 @@ import type {
     RegisterRequest,
     RegisterResponse,
     PortalMeResponse,
+    ResendVerificationEmailRequest,
+    ResendVerificationEmailResponse,
 } from "@/types/api";
 
 const USE_MOCK_API =
@@ -34,9 +36,7 @@ export const authService = {
     },
 
     async googleLogin(): Promise<void> {
-
-        window.location.href =
-            `${import.meta.env.VITE_API_BASE_URL}/portal/auth/google`;
+        window.location.href = "/portal/auth/google/start";
     },
 
 
@@ -54,6 +54,18 @@ export const authService = {
         const response =
             await api.post<RegisterResponse>(
                 "/portal/auth/register",
+                payload
+            );
+
+        return response.data;
+    },
+
+    async resendVerificationEmail(
+        payload: ResendVerificationEmailRequest
+    ): Promise<ResendVerificationEmailResponse> {
+        const response =
+            await api.post<ResendVerificationEmailResponse>(
+                "/ENDPOINT_THUC_TE",
                 payload
             );
 
