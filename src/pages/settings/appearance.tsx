@@ -5,11 +5,7 @@ import {
     Sun,
 } from "lucide-react";
 
-import {
-    type AccentColor,
-    type ThemeMode,
-    useAppearanceStore,
-} from "@/stores/appearance.store";
+import { type AccentColor, type ThemeMode, useAppearanceStore, ACCENT_PRESETS } from "@/stores/appearance.store";
 
 const themeOptions: {
     value: ThemeMode;
@@ -37,33 +33,11 @@ const themeOptions: {
         },
     ];
 
-const accents: {
-    value: AccentColor;
-    title: string;
-    color: string;
-}[] = [
-        {
-            value: "orange",
-            title: "Cam",
-            color: "#F4A261",
-        },
-        {
-            value: "violet",
-            title: "Tím",
-            color: "#7c3aed",
-        },
-        {
-            value: "blue",
-            title: "Xanh dương",
-            color: "#2563eb",
-        },
-        {
-            value: "green",
-            title: "Xanh lá",
-            color: "#16a34a",
-        },
-
-    ];
+const accents = (Object.keys(ACCENT_PRESETS) as AccentColor[]).map((value) => ({
+    value,
+    title: ACCENT_PRESETS[value].title,
+    color: ACCENT_PRESETS[value].accent,
+}));
 
 export default function Appearance() {
     const {
@@ -74,7 +48,7 @@ export default function Appearance() {
     } = useAppearanceStore();
 
     return (
-        <div className="mx-auto w-full max-w-5xl p-4 sm:p-6 lg:p-8">
+        <div className="w-full">
             <div className="mb-8">
                 <h1 className="text-xl font-semibold text-[var(--app-text)]">
                     Giao diện
@@ -105,6 +79,7 @@ export default function Appearance() {
                             <button
                                 key={option.value}
                                 type="button"
+                                aria-pressed={selected}
                                 onClick={() =>
                                     setTheme(option.value)
                                 }
@@ -160,6 +135,7 @@ export default function Appearance() {
                             <button
                                 key={item.value}
                                 type="button"
+                                aria-pressed={active}
                                 onClick={() => setAccent(item.value)}
                                 className={[
                                     "flex items-center gap-3 rounded-xl border px-4 py-3 transition",

@@ -1,4 +1,5 @@
 const STORAGE_KEY = "videogenai_active_batches";
+const MAX_AGE_MS = 48 * 60 * 60 * 1000;
 
 export type StoredBatch = {
     batchId: string;
@@ -7,63 +8,41 @@ export type StoredBatch = {
     createdAt: string;
 };
 
+function isFresh(batch: StoredBatch, now = Date.now()): boolean {
+    const created = new Date(batch.createdAt).getTime();
+    return Number.isFinite(created) && now - created < MAX_AGE_MS;
+}
+
+function write(batches: StoredBatch[]): void {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(batches));
+    } catch {
+        /* hết quota hoặc storage bị chặn: bỏ qua, generator vẫn chạy trong bộ nhớ */
+    }
+}
+
 export const taskStorageService = {
+    /** Lô đang theo dõi, đã loại lô quá 48 giờ (tránh localStorage phình vô hạn). */
     getBatches(): StoredBatch[] {
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
-
             if (!raw) return [];
-
             const parsed: unknown = JSON.parse(raw);
-
             if (!Array.isArray(parsed)) return [];
-
-            return parsed.map((batch) => ({
-                ...batch,
-                prompts: Array.isArray(batch.prompts)
-                    ? batch.prompts
-                    : [],
-            }));
+            return (parsed as StoredBatch[])
+                .filter((batch) => typeof batch?.batchId === "string" && isFresh(batch))
+                .map((batch) => ({ ...batch, prompts: Array.isArray(batch.prompts) ? batch.prompts : [] }));
         } catch {
             return [];
         }
     },
 
-    saveBatch(
-        batchId: string,
-        taskIds: string[],
-        prompts: string[],
-    ): void {
-        const batches = this.getBatches();
-
-        const nextBatch: StoredBatch = {
-            batchId,
-            taskIds,
-            prompts,
-            createdAt: new Date().toISOString(),
-        };
-
-        const updated = [
-            nextBatch,
-            ...batches.filter(
-                (batch) => batch.batchId !== batchId,
-            ),
-        ];
-
-        localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(updated),
-        );
+    saveBatch(batchId: string, taskIds: string[], prompts: string[]): void {
+        const next: StoredBatch = { batchId, taskIds, prompts, createdAt: new Date().toISOString() };
+        write([next, ...this.getBatches().filter((batch) => batch.batchId !== batchId)]);
     },
 
     removeBatch(batchId: string): void {
-        const updated = this.getBatches().filter(
-            (batch) => batch.batchId !== batchId,
-        );
-
-        localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(updated),
-        );
+        write(this.getBatches().filter((batch) => batch.batchId !== batchId));
     },
 };

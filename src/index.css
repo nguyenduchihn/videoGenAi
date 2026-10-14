@@ -1,5 +1,6 @@
 
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --app-bg: #fff9f3;
@@ -15,6 +16,25 @@
   --app-accent: #f4a261;
   --app-accent-hover: #e88945;
   --app-accent-soft: #fff0e2;
+
+  /* Thanh trên cùng chỉ có ở < lg (sidebar cố định thay thế ở desktop). */
+  --app-header-h: 56px;
+
+  /* Semantic status */
+  --app-success: oklch(53% 0.15 145);
+  --app-success-soft: oklch(96% 0.04 145);
+  --app-danger: oklch(55% 0.2 25);
+  --app-danger-soft: oklch(97% 0.03 25);
+  --app-warning: oklch(70% 0.17 75);
+  --app-warning-soft: oklch(97% 0.04 75);
+  --app-info: oklch(58% 0.17 235);
+  --app-info-soft: oklch(96% 0.03 235);
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --app-header-h: 0px;
+  }
 }
 
 html,
@@ -42,6 +62,37 @@ html.dark {
   --app-accent: #f4a261;
   --app-accent-hover: #ffb875;
   --app-accent-soft: #3b2b20;
+
+  /* Semantic status – dark */
+  --app-success: oklch(65% 0.15 145);
+  --app-success-soft: oklch(22% 0.06 145);
+  --app-danger: oklch(65% 0.2 25);
+  --app-danger-soft: oklch(22% 0.06 25);
+  --app-warning: oklch(76% 0.17 75);
+  --app-warning-soft: oklch(22% 0.06 75);
+  --app-info: oklch(68% 0.17 235);
+  --app-info-soft: oklch(22% 0.06 235);
+}
+
+@theme {
+  --color-app-bg: var(--app-bg);
+  --color-app-surface: var(--app-surface);
+  --color-app-surface-soft: var(--app-surface-soft);
+  --color-app-border: var(--app-border);
+  --color-app-text: var(--app-text);
+  --color-app-text-secondary: var(--app-text-secondary);
+  --color-app-text-muted: var(--app-text-muted);
+  --color-app-accent: var(--app-accent);
+  --color-app-accent-hover: var(--app-accent-hover);
+  --color-app-accent-soft: var(--app-accent-soft);
+  --color-app-success: var(--app-success);
+  --color-app-success-soft: var(--app-success-soft);
+  --color-app-danger: var(--app-danger);
+  --color-app-danger-soft: var(--app-danger-soft);
+  --color-app-warning: var(--app-warning);
+  --color-app-warning-soft: var(--app-warning-soft);
+  --color-app-info: var(--app-info);
+  --color-app-info-soft: var(--app-info-soft);
 }
 
 body {
@@ -50,6 +101,7 @@ body {
     sans-serif;
   background: var(--app-bg);
   color: var(--app-text);
+  overflow-x: hidden;
 }
 
 * {
@@ -61,4 +113,15 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -1,49 +1,28 @@
 import { create } from "zustand";
 
-import type {
-    PortalMeResponse,
-} from "@/types/api";
+import { me as fetchMe } from "@/api/portal.api";
+import { storeRegistry } from "@/lib/storeRegistry";
+import type { PortalMeResponse } from "@/types/api";
 
 interface AuthState {
     user: PortalMeResponse | null;
-
     isAuthenticated: boolean;
-
-    loading: boolean;
-
-    setUser: (
-        user: PortalMeResponse
-    ) => void;
-
+    setUser: (user: PortalMeResponse) => void;
     clearUser: () => void;
-
-    setLoading: (
-        loading: boolean
-    ) => void;
+    /** Gọi lại /portal/auth/me (sau khi nạp tiền, tạo task, đổi key…) và cập nhật store. */
+    refreshMe: () => Promise<PortalMeResponse>;
 }
 
-export const useAuthStore =
-    create<AuthState>((set) => ({
-        user: null,
+export const useAuthStore = create<AuthState>((set) => ({
+    user: null,
+    isAuthenticated: false,
+    setUser: (user) => set({ user, isAuthenticated: true }),
+    clearUser: () => set({ user: null, isAuthenticated: false }),
+    refreshMe: async () => {
+        const data = await fetchMe();
+        set({ user: data, isAuthenticated: true });
+        return data;
+    },
+}));
 
-        isAuthenticated: false,
-
-        loading: false,
-
-        setUser: (user) =>
-            set({
-                user,
-                isAuthenticated: true,
-            }),
-
-        clearUser: () =>
-            set({
-                user: null,
-                isAuthenticated: false,
-            }),
-
-        setLoading: (loading) =>
-            set({
-                loading,
-            }),
-    }));
+storeRegistry.setClearUser(() => useAuthStore.getState().clearUser());

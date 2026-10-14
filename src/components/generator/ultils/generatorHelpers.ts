@@ -1,6 +1,4 @@
 
-import { taskService } from "@/services/task.service";
-import type { PortalTask } from "@/types/api";
 import type { GeneratorFilesState, GeneratorMode } from "../types";
 
 export const IMAGE_MODES: GeneratorMode[] = [
@@ -198,77 +196,5 @@ export function getTaskErrorMessage(
     }
 }
 
-export async function pollBatch(
-    batchId: string,
-    onUpdate: (tasks: PortalTask[]) => void,
-    signal?: AbortSignal,
-): Promise<PortalTask[]> {
-    const maxAttempts = 40;
-    const interval = 3000;
-
-    let lastTasks: PortalTask[] = [];
-
-    const wait = (ms: number): Promise<void> =>
-        new Promise((resolve, reject) => {
-            if (signal?.aborted) {
-                reject(new DOMException("Polling cancelled", "AbortError"));
-                return;
-            }
-
-            const timeoutId = setTimeout(() => {
-                signal?.removeEventListener("abort", onAbort);
-                resolve();
-            }, ms);
-
-            const onAbort = () => {
-                clearTimeout(timeoutId);
-                signal?.removeEventListener("abort", onAbort);
-                reject(new DOMException("Polling cancelled", "AbortError"));
-            };
-
-            signal?.addEventListener("abort", onAbort, { once: true });
-        });
-
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        if (signal?.aborted) {
-            return lastTasks;
-        }
-
-        const response = await taskService.getBatch(batchId);
-
-        if (signal?.aborted) {
-            return lastTasks;
-        }
-
-        lastTasks = response.tasks;
-        onUpdate(lastTasks);
-
-        const allFinished =
-            lastTasks.length > 0 &&
-            lastTasks.every((task) =>
-                ["succeeded", "failed", "cancelled"].includes(task.status),
-            );
-
-        if (allFinished) {
-            return lastTasks;
-        }
-
-        if (attempt < maxAttempts - 1) {
-            try {
-                await wait(interval);
-            } catch (error) {
-                if (
-                    error instanceof DOMException &&
-                    error.name === "AbortError"
-                ) {
-                    return lastTasks;
-                }
-
-                throw error;
-            }
-        }
-    }
-
-    return lastTasks;
-}
-
+export { pollBatch } from "@/lib/pollBatch";
+export type { PollBatchOptions } from "@/lib/pollBatch";

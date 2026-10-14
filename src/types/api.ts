@@ -308,7 +308,7 @@ export interface LedgerItem {
     kind: string;
 
     delta: number;
-    balanceAfter: number;
+    balanceAfter: number | null;
 
     taskId: string | null;
     refId: string | null;
@@ -405,3 +405,57 @@ export interface DashboardData {
     pricing: PortalPricingResponse;
 }
 
+export interface StoredApiKey {
+    raw: string;
+    keyId?: string;
+    last4?: string;
+}
+
+export interface ForgotPasswordRequest { email: string }
+export interface ForgotPasswordResponse { ok: boolean; devToken?: string | null }
+
+export interface ResetPasswordRequest { token: string; newPassword: string }
+export interface ResetPasswordResponse { ok: boolean; email: string }
+
+export interface ResendVerificationRequest { email: string }
+export interface ResendVerificationResponse { ok: boolean; devToken?: string | null }
+
+export interface VerifyEmailRequest { token: string }
+export interface VerifyEmailResponse {
+    ok: boolean;
+    user: PortalUser;
+    firstKey: {
+        id: string;
+        raw: string;
+        last4: string;
+        label: string;
+    } | null;
+}
+
+export interface V1Me {
+    userId: string;
+    credits: number;
+    status: UserStatus;
+    emailVerified: boolean;
+    planExpiresAt: string | null;
+    plan: {
+        id: string;
+        name: string;
+        maxConcurrent: number;
+        maxPending: number;
+        chargesCredits: boolean;
+    };
+}
+
+export interface V1ModelEntry {
+    model: string;
+    family: string;
+    default: boolean;
+    credits: number | null;
+    note?: string;
+}
+
+export interface V1Models {
+    video: V1ModelEntry[];
+    image: V1ModelEntry[];
+}

@@ -211,3 +211,65 @@ export const mockTasksResponse: PortalTasksResponse = {
 
     nextCursor: null,
 };
+// ── Mô phỏng /v1/tasks + /v1/batches/:id: task chuyển pending → processing → succeeded sau vài lần poll ──
+import type { CreateTasksRequest, PortalTask } from "@/types/api";
+
+const mockBatches = new Map<string, { tasks: PortalTask[]; polls: number }>();
+
+export function createMockBatch(body: CreateTasksRequest, priceCredits = 5): { batchId: string; totalCredits: number; tasks: PortalTask[] } {
+    const batchId = `batch_mock_${Date.now().toString(36)}`;
+    const now = new Date().toISOString();
+    const tasks: PortalTask[] = body.tasks.map((item, index) => ({
+        id: `${batchId}_t${index + 1}`,
+        batchId,
+        status: "pending",
+        stage: "generate",
+        worker: item.worker,
+        model: typeof item.params.model === "string" ? item.params.model : null,
+        priceCredits,
+        result: null,
+        error: null,
+        creditsRefunded: 0,
+        createdAt: now,
+        updatedAt: now,
+        completedAt: null,
+    }));
+    mockBatches.set(batchId, { tasks, polls: 0 });
+    return { batchId, totalCredits: priceCredits * tasks.length, tasks };
+}
+
+export function getMockBatch(batchId: string): { tasks: PortalTask[] } | null {
+    const entry = mockBatches.get(batchId);
+    if (!entry) return null;
+    entry.polls += 1;
+    const now = new Date().toISOString();
+    entry.tasks = entry.tasks.map((task, index) => {
+        if (task.status !== "pending" && task.status !== "processing") return task;
+        const threshold = 2 + index;
+        if (entry.polls >= threshold + 1) {
+            return {
+                ...task,
+                status: "succeeded",
+                updatedAt: now,
+                completedAt: now,
+                result: { mediaId: `media_${task.id}`, url: "https://samplelib.com/lib/preview/mp4/sample-5s.mp4", mock: true },
+            };
+        }
+        if (entry.polls >= threshold) return { ...task, status: "processing", updatedAt: now };
+        return task;
+    });
+    return { tasks: entry.tasks };
+}
+
+export function cancelMockTask(taskId: string): PortalTask | null {
+    for (const entry of mockBatches.values()) {
+        const index = entry.tasks.findIndex((task) => task.id === taskId);
+        if (index < 0) continue;
+        const current = entry.tasks[index]!;
+        if (current.status === "pending" || current.status === "processing") {
+            entry.tasks[index] = { ...current, status: "cancelled", updatedAt: new Date().toISOString() };
+        }
+        return entry.tasks[index]!;
+    }
+    return null;
+}
