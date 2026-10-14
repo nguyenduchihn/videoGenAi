@@ -21,6 +21,10 @@ vi.mock("@/stores/apiKey.store", () => ({
         getState: () => ({ key: { raw: "test-key" }, openConnectDialog: vi.fn() }),
     },
 }));
+vi.mock("@/stores/auth.store", () => ({
+    useAuthStore: (selector: (state: { user: { user: { id: string } } }) => unknown) =>
+        selector({ user: { user: { id: "user-1" } } }),
+}));
 vi.mock("@/hooks/useFeedback", () => ({
     useFeedback: () => ({ toast: { warning: vi.fn(), error: vi.fn(), success: vi.fn() } }),
 }));
@@ -68,10 +72,10 @@ describe("useBatchRunner", () => {
             );
         });
 
-        expect(taskStorageService.saveBatch).toHaveBeenCalledWith("batch-1", ["task-1"], ["test prompt"]);
+        expect(taskStorageService.saveBatch).toHaveBeenCalledWith("user-1", "batch-1", ["task-1"], ["test prompt"]);
         const completed = result.current.results.find((r) => r.status === "completed");
         expect(completed?.url).toBe("https://example.com/v.mp4");
-        expect(taskStorageService.removeBatch).toHaveBeenCalledWith("batch-1");
+        expect(taskStorageService.removeBatch).toHaveBeenCalledWith("user-1", "batch-1");
     });
 
     it("onExhausted keeps batch stored — removeBatch not called", async () => {

@@ -4,6 +4,7 @@ import { imageService } from "@/services/image.service";
 import { taskStorageService } from "@/services/taskStorage.service";
 import { pollBatch } from "@/lib/pollBatch";
 import { useApiKeyStore } from "@/stores/apiKey.store";
+import { useAuthStore } from "@/stores/auth.store";
 import { useFeedback } from "@/hooks/useFeedback";
 import {
     getGeneratorErrorMessage,
@@ -44,6 +45,11 @@ export function useBatchRunner(): UseBatchRunnerReturn {
     const [isGenerating, setIsGenerating] = useState(false);
     const activePollControllers = useRef(new Map<string, AbortController>());
     const idempotencyKeysRef = useRef(new Map<string, string>());
+    const userId = useAuthStore((s) => s.user?.user.id ?? "");
+    const userIdRef = useRef(userId);
+    useEffect(() => {
+        userIdRef.current = userId;
+    }, [userId]);
 
     useEffect(() => {
         const controllers = activePollControllers.current;
@@ -58,7 +64,8 @@ export function useBatchRunner(): UseBatchRunnerReturn {
         const abortControllers = new Map<string, AbortController>();
 
         const restoreBatches = async () => {
-            const batches = taskStorageService.getBatches();
+            if (!userId) return;
+            const batches = taskStorageService.getBatches(userId);
             for (const batch of batches) {
                 if (cancelled) return;
                 try {
@@ -139,7 +146,7 @@ export function useBatchRunner(): UseBatchRunnerReturn {
             abortControllers.forEach((c) => c.abort());
             abortControllers.clear();
         };
-    }, []);
+    }, [userId]);
 
     const submit = async (
         jobs: string[],
@@ -196,6 +203,7 @@ export function useBatchRunner(): UseBatchRunnerReturn {
             );
             if (response.batchId) {
                 taskStorageService.saveBatch(
+                    userIdRef.current,
                     response.batchId,
                     response.tasks.map((t) => t.id).filter((id): id is string => Boolean(id)),
                     jobs,
@@ -250,7 +258,7 @@ export function useBatchRunner(): UseBatchRunnerReturn {
                             },
                         },
                     );
-                    if (!pollingExhausted) taskStorageService.removeBatch(response.batchId);
+                    if (!pollingExhausted) taskStorageService.removeBatch(userIdRef.current, response.batchId);
                 } finally {
                     pollingCancelled = controller.signal.aborted;
                     if (activePollControllers.current.get(response.batchId) === controller) {
@@ -302,6 +310,7 @@ export function useBatchRunner(): UseBatchRunnerReturn {
 
             if (response.batchId) {
                 taskStorageService.saveBatch(
+                    userIdRef.current,
                     response.batchId,
                     response.tasks.map((t) => t.id).filter((id): id is string => Boolean(id)),
                     [result.prompt],
@@ -341,7 +350,7 @@ export function useBatchRunner(): UseBatchRunnerReturn {
                 },
                 {},
             );
-            taskStorageService.removeBatch(response.batchId);
+            taskStorageService.removeBatch(userIdRef.current, response.batchId);
         } catch (error) {
             console.error("Retry generator error:", error);
             const message = getGeneratorErrorMessage(error);
@@ -377,12 +386,11 @@ export function useBatchRunner(): UseBatchRunnerReturn {
     };
 
     const download = (result: GeneratorResultItem): void => {
-        console.log("Download result:", result);
         if (!result.url) {
-            console.log(`Chưa có URL thật cho Job #${result.jobIndex}`);
+            toast.warning(`Job #${result.jobIndex} chưa có file kết quả để tải.`);
             return;
         }
-        window.open(result.url, "_blank");
+        window.open(result.url, "_blank", "noopener");
     };
 
     return { results, isGenerating, submit, retry, cancel, download };

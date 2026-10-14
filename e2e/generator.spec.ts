@@ -20,6 +20,10 @@ test("tạo video nhanh từ dashboard: chưa có key ⇒ dialog kết nối ⇒
     await page.getByRole("button", { name: /^Tạo$/ }).click();
     // Kết quả mock: task chuyển pending → processing → succeeded sau ~3 lần poll (3 s/lần) ⇒ có <video> trong thẻ kết quả.
     await expect(page.locator("video").first()).toBeVisible({ timeout: 30_000 });
-    const batches = await page.evaluate(() => localStorage.getItem("videogenai_active_batches"));
-    expect(batches === null || batches === "[]").toBeTruthy();
+    const batches = await page.evaluate(() =>
+        Object.keys(localStorage)
+            .filter((key) => key.startsWith("videogenai_active_batches"))
+            .map((key) => localStorage.getItem(key)),
+    );
+    expect(batches.every((value) => value === null || value === "[]")).toBeTruthy();
 });
