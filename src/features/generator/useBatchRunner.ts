@@ -3,7 +3,6 @@ import { taskService } from "@/services/task.service";
 import { imageService } from "@/services/image.service";
 import { taskStorageService } from "@/services/taskStorage.service";
 import { pollBatch } from "@/lib/pollBatch";
-import { useApiKeyStore } from "@/stores/apiKey.store";
 import { useAuthStore } from "@/stores/auth.store";
 import { useFeedback } from "@/hooks/useFeedback";
 import {
@@ -165,11 +164,6 @@ export function useBatchRunner(): UseBatchRunnerReturn {
             }]);
             return;
         }
-        if (!useApiKeyStore.getState().key?.raw) {
-            useApiKeyStore.getState().openConnectDialog();
-            return;
-        }
-
         setIsGenerating(true);
         const jobsKey = jobs.join("\0") + "\0" + opts.mode + "\0" + opts.modelKey;
         let iKey = idempotencyKeysRef.current.get(jobsKey);

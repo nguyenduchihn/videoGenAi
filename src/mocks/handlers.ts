@@ -29,9 +29,11 @@ export const mockModels = {
     image: [{ model: "Nano_Banana_2_Lite", family: "nano-banana", default: true, credits: 1 }],
 };
 
-/** /v1/* giống backend thật: thiếu X-API-Key ⇒ 401 UNAUTHENTICATED (để ConnectKeyDialog/flow key được test trên mock). */
-const requireApiKey = (request: Request): Response | null =>
-    request.headers.get("x-api-key") ? null : error(401, "UNAUTHENTICATED", "missing api key");
+/** /v1/* giống backend thật: X-API-Key (tích hợp ngoài) HOẶC cookie phiên web; mock coi "đã đăng nhập" = có cookie. */
+const requireApiKey = (request: Request): Response | null => {
+    if (request.headers.get("x-api-key")) return null;
+    return isMockUnauthenticated() ? error(401, "SESSION_REQUIRED", "login required") : null;
+};
 
 export const handlers = [
     // ── Portal auth ──
@@ -118,7 +120,7 @@ export const handlers = [
     }),
     http.get("/portal/payments/intents", () => HttpResponse.json(getMockPaymentHistory())),
 
-    // ── v1 (X-API-Key) ──
+    // ── v1 (X-API-Key hoặc cookie phiên) ──
     http.get("/v1/models", ({ request }) => requireApiKey(request) ?? HttpResponse.json(mockModels)),
     http.get("/v1/me", ({ request }) =>
         requireApiKey(request) ?? HttpResponse.json({

@@ -6,12 +6,10 @@ import { useFeedback } from "@/hooks/useFeedback";
 import { getErrorMessage } from "@/lib/errors";
 import { formatDate } from "@/lib/format";
 import { apiKeyService } from "@/services/apiKey.service";
-import { useApiKeyStore } from "@/stores/apiKey.store";
 import type { ApiKey, CreateApiKeyResponse } from "@/types/api";
 
 export default function ApiKeys() {
     const { confirm, toast, withOverlay } = useFeedback();
-    const storeKey = useApiKeyStore((s) => s.key);
     const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -37,9 +35,8 @@ export default function ApiKeys() {
         }
     }
 
-    /** Key mới (tạo/xoay) được dùng ngay cho trình tạo video trên trình duyệt này. */
+    /** Key mới (tạo/xoay): raw chỉ hiện một lần trong modal, không lưu ở trình duyệt. */
     function rememberKey(issued: CreateApiKeyResponse) {
-        useApiKeyStore.getState().setKey({ raw: issued.raw, last4: issued.last4, keyId: issued.id });
         setNewKey(issued);
     }
 
@@ -72,7 +69,6 @@ export default function ApiKeys() {
         if (!ok) return;
         try {
             await withOverlay(apiKeyService.revokeApiKey(item.id), "Đang thu hồi…");
-            if (useApiKeyStore.getState().key?.keyId === item.id) useApiKeyStore.getState().clearKey();
             toast.success("Đã thu hồi API Key.");
             await loadApiKeys();
         } catch (err) {
@@ -106,7 +102,7 @@ export default function ApiKeys() {
                 </div>
                 <div>
                     <h2 className="text-xl font-semibold text-[var(--app-text)]">API Keys</h2>
-                    <p className="mt-1 text-sm text-[var(--app-text-secondary)]">Dùng cho trình tạo video trên web và các ứng dụng gọi API bên ngoài.</p>
+                    <p className="mt-1 text-sm text-[var(--app-text-secondary)]">Dành cho ứng dụng tích hợp API bên ngoài (gửi header X-API-Key). Tạo video trên web dùng phiên đăng nhập, không cần key.</p>
                 </div>
             </div>
 
@@ -156,19 +152,17 @@ export default function ApiKeys() {
                         <ErrorPanel message={loadError} onRetry={() => void loadApiKeys()} />
                     </div>
                 ) : apiKeys.length === 0 ? (
-                    <EmptyState icon={KeyRound} title="Chưa có API Key" description="Tạo API Key để sử dụng API của VideoGen AI." />
+                    <EmptyState icon={KeyRound} title="Chưa có API Key" description="Chỉ cần API Key khi gọi API từ ứng dụng bên ngoài; tạo video trên web không cần key." />
                 ) : (
                     <ul className="divide-y divide-[var(--app-border)]">
                         {apiKeys.map((item) => {
                             const revoked = Boolean(item.revokedAt);
-                            const inUse = !revoked && storeKey?.keyId === item.id;
                             return (
                                 <li key={item.id} className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="min-w-0">
                                         <div className="flex flex-wrap items-center gap-2">
                                             <p className="truncate text-sm font-medium text-[var(--app-text)]">{item.label}</p>
                                             <Badge variant={revoked ? "neutral" : "success"}>{revoked ? "Đã thu hồi" : "Đang hoạt động"}</Badge>
-                                            {inUse && <Badge variant="accent">Đang dùng trên trình duyệt này</Badge>}
                                         </div>
                                         <p className="mt-1 font-mono text-xs text-[var(--app-text-secondary)]">vk_••••••••{item.last4}</p>
                                         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[var(--app-text-muted)]">

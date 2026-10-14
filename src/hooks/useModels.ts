@@ -3,15 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { models } from "@/api/v1.api";
 import { STATIC_FALLBACK, type ModelCatalog } from "@/features/generator/modelCatalog";
 import { qk } from "@/lib/queryClient";
-import { useApiKeyStore } from "@/stores/apiKey.store";
 
-/** GET /v1/models cần X-API-Key ⇒ chỉ chạy khi trình duyệt đã có key. */
+/** GET /v1/models dùng cookie phiên (web cùng origin) ⇒ chạy ngay khi đã đăng nhập. */
 export function useModels() {
-    const hasKey = useApiKeyStore((s) => !!s.key?.raw);
     return useQuery({
         queryKey: qk.models,
         queryFn: models,
-        enabled: hasKey,
         staleTime: 5 * 60 * 1_000,
     });
 }

@@ -16,11 +16,6 @@ vi.mock("@/services/taskStorage.service", () => ({
         removeBatch: vi.fn(),
     },
 }));
-vi.mock("@/stores/apiKey.store", () => ({
-    useApiKeyStore: {
-        getState: () => ({ key: { raw: "test-key" }, openConnectDialog: vi.fn() }),
-    },
-}));
 vi.mock("@/stores/auth.store", () => ({
     useAuthStore: (selector: (state: { user: { user: { id: string } } }) => unknown) =>
         selector({ user: { user: { id: "user-1" } } }),

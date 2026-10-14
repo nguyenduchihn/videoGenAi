@@ -405,12 +405,6 @@ export interface DashboardData {
     pricing: PortalPricingResponse;
 }
 
-export interface StoredApiKey {
-    raw: string;
-    keyId?: string;
-    last4?: string;
-}
-
 export interface ForgotPasswordRequest { email: string }
 export interface ForgotPasswordResponse { ok: boolean; devToken?: string | null }
 

@@ -3,14 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui";
 import { useFeedback } from "@/hooks/useFeedback";
 import { portalApi } from "@/api/portal.api";
-import { useApiKeyStore } from "@/stores/apiKey.store";
 import { useAuthStore } from "@/stores/auth.store";
 export default function Security() {
     const navigate = useNavigate();
     const { toast, confirm, withOverlay } = useFeedback();
     const me = useAuthStore((s) => s.user);
     const clearUser = useAuthStore((s) => s.clearUser);
-    const clearKey = useApiKeyStore((s) => s.clearKey);
     const email = me?.user.email ?? '';
     const handleReset = async () => {
         if (!email || !(await confirm({ title: "Gửi email đặt lại mật khẩu?", body: email }))) return;
@@ -27,7 +25,6 @@ export default function Security() {
         } catch {
             // Cookie có thể đã hết hạn: vẫn xoá phiên phía client và về trang đăng nhập.
         } finally {
-            clearKey();
             clearUser();
             navigate("/login", { replace: true });
         }
