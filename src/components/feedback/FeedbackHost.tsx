@@ -3,7 +3,6 @@ import { useDelayedVisible } from "./useDelayedVisible";
 import { OverlayLoader } from "./OverlayLoader";
 import { ToastStack } from "./ToastStack";
 import { ConfirmDialog } from "./ConfirmDialog";
-import { ConnectKeyDialog } from "./ConnectKeyDialog";
 
 export function FeedbackHost() {
     const overlays = useFeedbackStore((s) => s.overlays);
@@ -16,7 +15,6 @@ export function FeedbackHost() {
             )}
             <ToastStack />
             <ConfirmDialog />
-            <ConnectKeyDialog />
         </>
     );
 }

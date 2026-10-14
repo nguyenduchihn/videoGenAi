@@ -35,8 +35,7 @@ test("đăng ký ⇒ kiểm tra hộp thư ⇒ xác minh bằng token ⇒ dashbo
     await page.goto("/verify-email?token=dev-verify-token");
     await expect(page).toHaveURL(/\/dashboard$/);
     await expect(page.getByText("Email đã được xác minh!")).toBeVisible();
-    const storedKey = await page.evaluate(() => localStorage.getItem("videogen_api_key"));
-    expect(storedKey).toContain("vk_mock_first_key_raw");
+    expect(await page.evaluate(() => localStorage.getItem("videogen_api_key"))).toBeNull(); // web không lưu key nữa
 });
 
 test("link xác minh hết hạn ⇒ báo lỗi và cho gửi lại", async ({ page }) => {

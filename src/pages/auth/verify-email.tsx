@@ -5,7 +5,6 @@ import { portalApi } from "@/api/portal.api";
 import { Button, ErrorPanel, Field, Input } from "@/components/ui";
 import { useFeedback } from "@/hooks/useFeedback";
 import { ApiError, getErrorMessage } from "@/lib/errors";
-import { useApiKeyStore } from "@/stores/apiKey.store";
 import { useAuthStore } from "@/stores/auth.store";
 import { AuthShell } from "./authShell";
 
@@ -16,7 +15,6 @@ export default function VerifyEmail() {
     const devTokenParam = params.get("devToken");
     const navigate = useNavigate();
     const refreshMe = useAuthStore((s) => s.refreshMe);
-    const setKey = useApiKeyStore((s) => s.setKey);
     const { toast, withOverlay } = useFeedback();
     const [tokenErr, setTokenErr] = useState<string | null>(null);
     const [cooldown, setCooldown] = useState(0);
@@ -29,8 +27,8 @@ export default function VerifyEmail() {
         if (!token || did.current) return;
         did.current = true;
         const run = async () => {
-            const res = await portalApi.auth.verifyEmail(token);
-            if (res.firstKey) setKey({ raw: res.firstKey.raw, last4: res.firstKey.last4, keyId: res.firstKey.id });
+            // firstKey (API key đầu tiên) chỉ dành cho tích hợp bên ngoài; web tạo video bằng cookie phiên nên không cần lưu.
+            await portalApi.auth.verifyEmail(token);
             // Backend đã đặt cookie phiên: nạp /portal/auth/me đầy đủ (gói, số dư…) trước khi vào dashboard.
             await refreshMe().catch(() => undefined);
         };
