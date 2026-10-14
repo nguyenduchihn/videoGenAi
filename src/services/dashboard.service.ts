@@ -1,111 +1,13 @@
-import {
-    mockMeResponse,
-} from "@/mocks/auth.mock";
+import { listPortalTasks, me, pricing } from "@/api/portal.api";
+import type { DashboardData, GetTasksParams, PortalMeResponse, PortalPricingResponse, PortalTasksResponse } from "@/types/api";
 
-import {
-    mockTasksResponse,
-} from "@/mocks/tasks.mock";
-
-import {
-    mockPricingResponse,
-} from "@/mocks/pricing.mock";
-
-import api from "@/services/api";
-
-import type {
-    DashboardData,
-    GetTasksParams,
-    PortalMeResponse,
-    PortalPricingResponse,
-    PortalTasksResponse,
-} from "@/types/api";
-
-const USE_MOCK_API =
-    import.meta.env.VITE_USE_MOCK_API !==
-    "false";
-
+/** Giữ API cũ cho các trang chưa chuyển sang hooks; không còn nhánh mock (MSW lo khi VITE_USE_MOCK_API=true). */
 export const dashboardService = {
-    async getMe(): Promise<PortalMeResponse> {
-        if (USE_MOCK_API) {
-            return mockMeResponse;
-        }
-
-        const response =
-            await api.get<PortalMeResponse>(
-                "/portal/auth/me"
-            );
-
-        return response.data;
-    },
-
-    async getTasks(
-        params?: GetTasksParams
-    ): Promise<PortalTasksResponse> {
-        if (USE_MOCK_API) {
-            let tasks = [
-                ...mockTasksResponse.tasks,
-            ];
-
-            if (params?.status) {
-                tasks = tasks.filter(
-                    (task) =>
-                        task.status ===
-                        params.status
-                );
-            }
-
-            const limit =
-                params?.limit ?? 20;
-
-            return {
-                tasks: tasks.slice(0, limit),
-                nextCursor: null,
-            };
-        }
-
-        const response =
-            await api.get<PortalTasksResponse>(
-                "/portal/tasks",
-                {
-                    params,
-                }
-            );
-
-        return response.data;
-    },
-
-    async getPricing(): Promise<PortalPricingResponse> {
-        if (USE_MOCK_API) {
-            return mockPricingResponse;
-        }
-
-        const response =
-            await api.get<PortalPricingResponse>(
-                "/portal/pricing"
-            );
-
-        return response.data;
-    },
-
+    getMe: (): Promise<PortalMeResponse> => me(),
+    getTasks: (params?: GetTasksParams): Promise<PortalTasksResponse> => listPortalTasks(params ?? {}),
+    getPricing: (): Promise<PortalPricingResponse> => pricing(),
     async getDashboardData(): Promise<DashboardData> {
-        const [
-            me,
-            tasks,
-            pricing,
-        ] = await Promise.all([
-            this.getMe(),
-
-            this.getTasks({
-                limit: 20,
-            }),
-
-            this.getPricing(),
-        ]);
-
-        return {
-            me,
-            tasks,
-            pricing,
-        };
+        const [meData, tasks, pricingData] = await Promise.all([me(), listPortalTasks({ limit: 20 }), pricing()]);
+        return { me: meData, tasks, pricing: pricingData };
     },
 };

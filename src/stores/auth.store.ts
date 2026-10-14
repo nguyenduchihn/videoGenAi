@@ -1,47 +1,28 @@
-
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 
+import { me as fetchMe } from "@/api/portal.api";
+import { storeRegistry } from "@/lib/storeRegistry";
 import type { PortalMeResponse } from "@/types/api";
 
 interface AuthState {
     user: PortalMeResponse | null;
     isAuthenticated: boolean;
-    loading: boolean;
-
     setUser: (user: PortalMeResponse) => void;
     clearUser: () => void;
-    setLoading: (loading: boolean) => void;
+    /** Gọi lại /portal/auth/me (sau khi nạp tiền, tạo task, đổi key…) và cập nhật store. */
+    refreshMe: () => Promise<PortalMeResponse>;
 }
 
-export const useAuthStore = create<AuthState>()(
-    persist(
-        (set) => ({
-            user: null,
-            isAuthenticated: false,
-            loading: true,
+export const useAuthStore = create<AuthState>((set) => ({
+    user: null,
+    isAuthenticated: false,
+    setUser: (user) => set({ user, isAuthenticated: true }),
+    clearUser: () => set({ user: null, isAuthenticated: false }),
+    refreshMe: async () => {
+        const data = await fetchMe();
+        set({ user: data, isAuthenticated: true });
+        return data;
+    },
+}));
 
-            setUser: (user) =>
-                set({
-                    user,
-                    isAuthenticated: true,
-                }),
-
-            clearUser: () =>
-                set({
-                    user: null,
-                    isAuthenticated: false,
-                    loading: false,
-                }),
-
-            setLoading: (loading) => set({ loading }),
-        }),
-        {
-            name: "videogen-auth",
-            partialize: (state) => ({
-                user: state.user,
-                isAuthenticated: state.isAuthenticated,
-            }),
-        },
-    ),
-);
+storeRegistry.setClearUser(() => useAuthStore.getState().clearUser());

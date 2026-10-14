@@ -8,6 +8,24 @@ export type AccentColor =
     | "blue"
     | "green";
 
+export interface AccentPreset {
+    title: string;
+    accent: string;
+    hover: string;
+    /** Nền nhạt: pha accent với surface hiện tại ⇒ đúng ở cả light lẫn dark. */
+    soft: string;
+}
+
+const softOf = (accent: string) => `color-mix(in srgb, ${accent} 18%, var(--app-surface))`;
+
+/** Nguồn duy nhất cho bảng màu accent (store áp dụng, trang Giao diện hiển thị). */
+export const ACCENT_PRESETS: Record<AccentColor, AccentPreset> = {
+    orange: { title: "Cam", accent: "#f4a261", hover: "#e88945", soft: softOf("#f4a261") },
+    violet: { title: "Tím", accent: "#7c3aed", hover: "#6d28d9", soft: softOf("#7c3aed") },
+    blue: { title: "Xanh dương", accent: "#2563eb", hover: "#1d4ed8", soft: softOf("#2563eb") },
+    green: { title: "Xanh lá", accent: "#16a34a", hover: "#15803d", soft: softOf("#16a34a") },
+};
+
 interface AppearanceState {
     theme: ThemeMode;
     accent: AccentColor;
@@ -81,38 +99,7 @@ function applyAccent(accent: AccentColor) {
 
     const root = document.documentElement;
 
-    const colors: Record<
-        AccentColor,
-        {
-            accent: string;
-            hover: string;
-            soft: string;
-        }
-    > = {
-        orange: {
-            accent: "#F4A261",
-            hover: "#E88945",
-            soft: "#FFF0E2",
-        },
-        violet: {
-            accent: "#7c3aed",
-            hover: "#6d28d9",
-            soft: "#f3e8ff",
-        },
-        blue: {
-            accent: "#2563eb",
-            hover: "#1d4ed8",
-            soft: "#dbeafe",
-        },
-        green: {
-            accent: "#16a34a",
-            hover: "#15803d",
-            soft: "#dcfce7",
-        },
-
-    };
-
-    const selected = colors[accent];
+    const selected = ACCENT_PRESETS[accent];
 
     root.style.setProperty(
         "--app-accent",

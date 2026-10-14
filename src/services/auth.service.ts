@@ -1,97 +1,12 @@
-import api from "@/services/api";
-
-import {
-    mockMeResponse,
-} from "@/mocks/auth.mock";
-
-import type {
-    LoginRequest,
-    LoginResponse,
-    RegisterRequest,
-    RegisterResponse,
-    PortalMeResponse,
-    ResendVerificationEmailRequest,
-    ResendVerificationEmailResponse,
-} from "@/types/api";
-
-const USE_MOCK_API =
-    import.meta.env.VITE_USE_MOCK_API !==
-    "false";
+import * as portalApi from "@/api/portal.api";
+import type { LoginRequest, LoginResponse, PortalMeResponse, RegisterRequest, RegisterResponse } from "@/types/api";
 
 export const authService = {
-    async login(payload: LoginRequest): Promise<LoginResponse> {
-        if (USE_MOCK_API) {
-            return {
-                ok: true,
-            };
-        }
-
-        const response =
-            await api.post<LoginResponse>(
-                "/portal/auth/login",
-                payload
-            );
-
-        return response.data;
-    },
-
-    async googleLogin(): Promise<void> {
-        window.location.href = "/portal/auth/google/start";
-    },
-
-
-    async register(
-        payload: RegisterRequest
-    ): Promise<RegisterResponse> {
-        if (USE_MOCK_API) {
-            return {
-                ok: true,
-                email: payload.email,
-                devToken: null,
-            };
-        }
-
-        const response =
-            await api.post<RegisterResponse>(
-                "/portal/auth/register",
-                payload
-            );
-
-        return response.data;
-    },
-
-    async resendVerificationEmail(
-        payload: ResendVerificationEmailRequest
-    ): Promise<ResendVerificationEmailResponse> {
-        const response =
-            await api.post<ResendVerificationEmailResponse>(
-                "/ENDPOINT_THUC_TE",
-                payload
-            );
-
-        return response.data;
-    },
-
-    async me(): Promise<PortalMeResponse> {
-        if (USE_MOCK_API) {
-            return mockMeResponse;
-        }
-
-        const response =
-            await api.get<PortalMeResponse>(
-                "/portal/auth/me"
-            );
-
-        return response.data;
-    },
-
-    async logout(): Promise<void> {
-        if (USE_MOCK_API) {
-            return;
-        }
-
-        await api.post(
-            "/portal/auth/logout"
-        );
+    login: (p: LoginRequest): Promise<LoginResponse> => portalApi.login(p),
+    register: (p: RegisterRequest): Promise<RegisterResponse> => portalApi.register(p),
+    me: (): Promise<PortalMeResponse> => portalApi.me(),
+    logout: (): Promise<void> => portalApi.logout(),
+    googleLogin(): void {
+        window.location.href = portalApi.googleStartUrl();
     },
 };

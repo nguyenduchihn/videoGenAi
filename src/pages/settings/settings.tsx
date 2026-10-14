@@ -41,7 +41,7 @@ export default function Settings() {
                 </div>
 
                 <div className="mt-6 overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] transition-colors">
-                    <nav className="flex overflow-x-auto">
+                    <nav aria-label="Mục cài đặt" className="flex overflow-x-auto">
                         {settingsItems.map((item) => {
                             const Icon = item.icon;
 
