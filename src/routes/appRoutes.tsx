@@ -25,9 +25,12 @@ const Appearance = lazy(() => import("@/pages/settings/appearance"));
 const Security = lazy(() => import("@/pages/settings/security"));
 const ApiKeys = lazy(() => import("@/pages/settings/apiKeys"));
 
+const RouteErrorPage = lazy(() => import("./RouteErrorPage"));
+
 const router = createBrowserRouter([
     {
         element: <RootLayout />,
+        errorElement: <RouteErrorPage />,
         children: [
             { path: "/", element: <Home /> },
             { path: "/welcome", element: <Navigate to="/dashboard" replace /> },
