@@ -1,10 +1,8 @@
 import {
     Activity,
     CheckCircle2,
-    Clock3,
     Coins,
     Film,
-    Loader2,
     Plus,
     Sparkles,
     XCircle,
@@ -18,9 +16,7 @@ import {
     type ReactNode,
 } from "react";
 
-import {
-    useNavigate,
-} from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import {
     dashboardService,
@@ -29,9 +25,9 @@ import {
 import type {
     PortalMeResponse,
     PortalTask,
-    TaskStatus,
 } from "@/types/api";
 import GeneratorPanel from "@/components/generator/generatorPanel";
+import { Spinner, StatusBadge } from "@/components/ui";
 
 export default function Dashboard() {
     const navigate = useNavigate();
@@ -100,9 +96,9 @@ export default function Dashboard() {
 
     if (loading) {
         return (
-            <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-[var(--app-bg)] transition-colors">
+            <div className="flex min-h-[calc(100dvh-var(--app-header-h))] items-center justify-center bg-[var(--app-bg)] transition-colors">
                 <div className="flex items-center gap-3 text-sm text-[var(--app-text-secondary)]">
-                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <Spinner size="md" />
                     Đang tải Dashboard...
                 </div>
             </div>
@@ -111,9 +107,9 @@ export default function Dashboard() {
 
     if (!me || error) {
         return (
-            <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-[var(--app-bg)]">
+            <div className="flex min-h-[calc(100dvh-var(--app-header-h))] items-center justify-center bg-[var(--app-bg)]">
                 <div className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-8 text-center">
-                    <XCircle className="mx-auto h-10 w-10 text-red-500" />
+                    <XCircle className="mx-auto h-10 w-10 text-[var(--app-danger)]" />
 
                     <h2 className="mt-4 text-lg font-semibold text-[var(--app-text)]">
                         Không thể tải Dashboard
@@ -128,10 +124,10 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="min-h-[calc(100vh-64px)] bg-[var(--app-bg)] transition-colors">
+        <div className="min-h-[calc(100dvh-var(--app-header-h))] bg-[var(--app-bg)] transition-colors">
             <div className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 sm:py-7">
 
-                <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+                <div className="mb-5 flex flex-col justify-between gap-4 sm:mb-6 md:flex-row md:items-center">
 
                     <div>
                         <p className="text-sm text-[var(--app-text-secondary)]">
@@ -163,7 +159,7 @@ export default function Dashboard() {
                     </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2.5 sm:gap-4 xl:grid-cols-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
 
                     <StatCard
                         icon={
@@ -220,13 +216,17 @@ export default function Dashboard() {
                 </div>
 
 
-                <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.6fr_0.8fr]">
+                {/* Cùng lưới 4 cột + gap với hàng thẻ thống kê ⇒ mép cột thẳng hàng (3 cột generator, 1 cột hoạt động). */}
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:mt-4 sm:gap-4 xl:grid-cols-4">
 
-                    <GeneratorPanel variant="quick" />
+                    {/* GeneratorPanel trả fragment (form + kết quả) ⇒ bọc lại để không tách thành 2 ô lưới. */}
+                    <div className="flex min-w-0 flex-col gap-3 sm:gap-4 xl:col-span-3">
+                        <GeneratorPanel variant="quick" />
+                    </div>
 
-                    <section className="mt-6 rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] transition-colors">
+                    <section className="flex min-w-0 flex-col rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] transition-colors xl:col-span-1">
 
-                        <div className="flex items-center justify-between border-b border-[var(--app-border)] px-6 py-5">
+                        <div className="flex items-center justify-between gap-3 border-b border-[var(--app-border)] px-5 py-4 sm:px-6 sm:py-5">
 
                             <div>
                                 <h2 className="text-sm font-semibold text-[var(--app-text)]">
@@ -238,33 +238,47 @@ export default function Dashboard() {
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-4">
-
-                                <span className="flex items-center gap-1 text-xs text-emerald-600">
+                            <div className="flex items-center gap-3">
+                                <span className="flex items-center gap-1 text-xs text-[var(--app-success)]">
                                     <CheckCircle2 className="h-4 w-4" />
                                     {successCount}
                                 </span>
-
-                                <span className="flex items-center gap-1 text-xs text-red-600">
+                                <span className="flex items-center gap-1 text-xs text-[var(--app-danger)]">
                                     <XCircle className="h-4 w-4" />
                                     {failedCount}
                                 </span>
-
+                                <Link to="/tasks" className="text-xs font-medium text-[var(--app-accent)] transition hover:underline">
+                                    Xem tất cả
+                                </Link>
                             </div>
                         </div>
 
-                        <div className="divide-y divide-[var(--app-border)]">
+                        {recentTasks.length === 0 ? (
+                            <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
+                                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--app-surface-soft)] text-[var(--app-text-muted)]">
+                                    <Film className="h-5 w-5" />
+                                </div>
 
-                            {recentTasks.map(
-                                (task) => (
-                                    <TaskRow
-                                        key={task.id}
-                                        task={task}
-                                    />
-                                )
-                            )}
+                                <p className="mt-4 text-sm font-medium text-[var(--app-text)]">
+                                    Chưa có task nào
+                                </p>
 
-                        </div>
+                                <p className="mt-1 text-xs text-[var(--app-text-secondary)]">
+                                    Nhập prompt và bấm Tạo để bắt đầu.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="divide-y divide-[var(--app-border)]">
+                                {recentTasks.map(
+                                    (task) => (
+                                        <TaskRow
+                                            key={task.id}
+                                            task={task}
+                                        />
+                                    )
+                                )}
+                            </div>
+                        )}
                     </section>
                 </div>
             </div>
@@ -291,7 +305,7 @@ function StatCard({
             </div>
 
 
-            <p className="mt-2 text-[10px] text-[var(--app-text-secondary)] sm:mt-4 sm:text-xs">
+            <p className="mt-2 text-[11px] text-[var(--app-text-secondary)] sm:mt-4 sm:text-xs">
                 {label}
             </p>
 
@@ -300,7 +314,7 @@ function StatCard({
                 {value}
             </p>
 
-            <p className="mt-0.5 truncate text-[9px] text-[var(--app-text-muted)] sm:mt-1 sm:text-xs">
+            <p className="mt-0.5 truncate text-[11px] text-[var(--app-text-muted)] sm:mt-1 sm:text-xs">
                 {description}
             </p>
         </div>
@@ -308,113 +322,24 @@ function StatCard({
 }
 
 
-function TaskRow({
-    task,
-}: {
-    task: PortalTask;
-}) {
-    const statusMap: Record<
-        TaskStatus,
-        {
-            label: string;
-            className: string;
-            icon: ReactNode;
-        }
-    > = {
-        pending: {
-            label: "Đang chờ",
-            className:
-                "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-            icon: (
-                <Clock3 className="h-3.5 w-3.5" />
-            ),
-        },
-
-        processing: {
-            label: "Đang xử lý",
-            className:
-                "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-            icon: (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ),
-        },
-
-        succeeded: {
-            label: "Hoàn thành",
-            className:
-                "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-            icon: (
-                <CheckCircle2 className="h-3.5 w-3.5" />
-            ),
-        },
-
-        failed: {
-            label: "Thất bại",
-            className:
-                "bg-red-500/10 text-red-600 dark:text-red-400",
-            icon: (
-                <XCircle className="h-3.5 w-3.5" />
-            ),
-        },
-
-        cancelled: {
-            label: "Đã huỷ",
-            className:
-                "bg-[var(--app-surface-soft)] text-[var(--app-text-secondary)]",
-            icon: (
-                <XCircle className="h-3.5 w-3.5" />
-            ),
-        },
-    };
-
-    const status =
-        statusMap[task.status];
-
+function TaskRow({ task }: { task: PortalTask }) {
     return (
-        <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-
-            <div className="flex min-w-0 items-center gap-4">
-
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--app-surface-soft)]">
-                    <Film className="h-4 w-4 text-[var(--app-text-secondary)]" />
-                </div>
-
-                <div className="min-w-0">
-
-                    <p className="truncate text-sm font-medium text-[var(--app-text)]">
-                        {formatWorker(
-                            task.worker
-                        )}
-                    </p>
-
-                    <p className="mt-1 text-xs text-[var(--app-text-muted)]">
-                        {task.model ??
-                            "Default model"}{" "}
-                        •{" "}
-                        {task.priceCredits} credits
-                    </p>
-                </div>
+        <Link
+            to={`/tasks?id=${task.id}`}
+            className="flex items-center gap-3 px-4 py-3.5 transition hover:bg-[var(--app-surface-soft)] sm:px-5"
+        >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--app-surface-soft)]">
+                <Film className="h-4 w-4 text-[var(--app-text-secondary)]" />
             </div>
-
-            <span
-                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${status.className}`}
-            >
-                {status.icon}
-                {status.label}
-            </span>
-        </div>
+            <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                    <p className="truncate text-sm font-medium text-[var(--app-text)]">{task.worker}</p>
+                    <StatusBadge status={task.status} />
+                </div>
+                <p className="mt-0.5 truncate text-xs text-[var(--app-text-muted)]">
+                    {task.model ?? "Default model"} · {task.priceCredits} credits
+                </p>
+            </div>
+        </Link>
     );
-}
-
-function formatWorker(
-    worker: string
-) {
-    return worker
-        .split("-")
-        .map(
-            (item) =>
-                item.charAt(0).toUpperCase() +
-                item.slice(1)
-        )
-        .join(" ");
 }

@@ -1,38 +1,40 @@
 
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --app-bg: #f5f8ff;
+  --app-bg: #fff9f3;
   --app-surface: #ffffff;
-  --app-surface-soft: #edf3ff;
-  --app-border: #dce6f5;
+  --app-surface-soft: #fff4e9;
+  --app-border: #f0e2d4;
 
-  --app-text: #172b4d;
-  --app-text-secondary: #526580;
-  --app-text-muted: #8292aa;
+  --app-text: #292524;
+  --app-text-secondary: #78716c;
+  --app-text-muted: #a8a29e;
 
-  --app-accent: #2563eb;
-  --app-accent-hover: #1d4ed8;
-  --app-accent-soft: #e5efff;
 
-  color-scheme: light;
+  --app-accent: #f4a261;
+  --app-accent-hover: #e88945;
+  --app-accent-soft: #fff0e2;
+
+  /* Thanh trên cùng chỉ có ở < lg (sidebar cố định thay thế ở desktop). */
+  --app-header-h: 56px;
+
+  /* Semantic status */
+  --app-success: oklch(53% 0.15 145);
+  --app-success-soft: oklch(96% 0.04 145);
+  --app-danger: oklch(55% 0.2 25);
+  --app-danger-soft: oklch(97% 0.03 25);
+  --app-warning: oklch(70% 0.17 75);
+  --app-warning-soft: oklch(97% 0.04 75);
+  --app-info: oklch(58% 0.17 235);
+  --app-info-soft: oklch(96% 0.03 235);
 }
 
-html.dark {
-  color-scheme: dark;
-
-  --app-bg: #0b1220;
-  --app-surface: #131e30;
-  --app-surface-soft: #1b2a41;
-  --app-border: #2b3b54;
-
-  --app-text: #f1f5fb;
-  --app-text-secondary: #b3c1d6;
-  --app-text-muted: #8294af;
-
-  --app-accent: #60a5fa;
-  --app-accent-hover: #93c5fd;
-  --app-accent-soft: #1c3558;
+@media (min-width: 1024px) {
+  :root {
+    --app-header-h: 0px;
+  }
 }
 
 html,
@@ -43,32 +45,66 @@ body,
 
 html {
   color-scheme: light;
-  background: var(--app-bg);
 }
 
 html.dark {
   color-scheme: dark;
+
+  --app-bg: #0f1117;
+  --app-surface: #171a21;
+  --app-surface-soft: #24211f;
+  --app-border: #3b3028;
+
+  --app-text: #f3f4f6;
+  --app-text-secondary: #a1a1aa;
+  --app-text-muted: #71717a;
+
+  --app-accent: #f4a261;
+  --app-accent-hover: #ffb875;
+  --app-accent-soft: #3b2b20;
+
+  /* Semantic status – dark */
+  --app-success: oklch(65% 0.15 145);
+  --app-success-soft: oklch(22% 0.06 145);
+  --app-danger: oklch(65% 0.2 25);
+  --app-danger-soft: oklch(22% 0.06 25);
+  --app-warning: oklch(76% 0.17 75);
+  --app-warning-soft: oklch(22% 0.06 75);
+  --app-info: oklch(68% 0.17 235);
+  --app-info-soft: oklch(22% 0.06 235);
+}
+
+@theme {
+  --color-app-bg: var(--app-bg);
+  --color-app-surface: var(--app-surface);
+  --color-app-surface-soft: var(--app-surface-soft);
+  --color-app-border: var(--app-border);
+  --color-app-text: var(--app-text);
+  --color-app-text-secondary: var(--app-text-secondary);
+  --color-app-text-muted: var(--app-text-muted);
+  --color-app-accent: var(--app-accent);
+  --color-app-accent-hover: var(--app-accent-hover);
+  --color-app-accent-soft: var(--app-accent-soft);
+  --color-app-success: var(--app-success);
+  --color-app-success-soft: var(--app-success-soft);
+  --color-app-danger: var(--app-danger);
+  --color-app-danger-soft: var(--app-danger-soft);
+  --color-app-warning: var(--app-warning);
+  --color-app-warning-soft: var(--app-warning-soft);
+  --color-app-info: var(--app-info);
+  --color-app-info-soft: var(--app-info-soft);
 }
 
 body {
   margin: 0;
-  min-width: 320px;
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
   background: var(--app-bg);
   color: var(--app-text);
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
+  overflow-x: hidden;
 }
 
-*,
-*::before,
-*::after {
+* {
   box-sizing: border-box;
 }
 
@@ -79,79 +115,13 @@ select {
   font: inherit;
 }
 
-button {
-  cursor: pointer;
-}
-
-button:disabled {
-  cursor: not-allowed;
-}
-
-input,
-textarea,
-select {
-  color: var(--app-text);
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: var(--app-text-muted);
-  opacity: 1;
-}
-
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible,
-button:focus-visible {
-  outline: 2px solid var(--app-accent);
-  outline-offset: 2px;
-}
-
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--app-border) transparent;
-}
-
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--app-border);
-  border-radius: 999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--app-text-muted);
-}
-
-::selection {
-  background: var(--app-accent-soft);
-  color: var(--app-text);
-}
-
-body,
-button,
-input,
-textarea,
-select {
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease;
-}
 @media (prefers-reduced-motion: reduce) {
   *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
+  ::before,
+  ::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

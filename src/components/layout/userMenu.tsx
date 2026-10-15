@@ -1,14 +1,13 @@
-
 import {
     CreditCard,
     LogOut,
     Settings,
     User,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import { authService } from "@/services/auth.service";
-import type { PortalMeResponse } from "@/types/api";
 import { useAuthStore } from "@/stores/auth.store";
 
 interface UserMenuProps {
@@ -20,40 +19,17 @@ export default function UserMenu({
 }: UserMenuProps) {
     const navigate = useNavigate();
 
-    const [account, setAccount] =
-        useState<PortalMeResponse | null>(null);
+    const me = useAuthStore((state) => state.user);
+    const clearUser = useAuthStore((state) => state.clearUser);
 
-    const [loading, setLoading] = useState(true);
     const [loggingOut, setLoggingOut] = useState(false);
-    const [error, setError] = useState("");
 
-    useEffect(() => {
-        let active = true;
+    const displayName =
+        me?.user.name?.trim() || me?.user.email || "Tài khoản";
 
-        const loadAccount = async () => {
-            try {
-                const data = await authService.me();
+    const planLabel = `Nạp credits · ${me?.balance.display ?? '—'}`;
 
-                if (active) {
-                    setAccount(data);
-                }
-            } catch {
-                if (active) {
-                    setError("Không thể tải thông tin tài khoản.");
-                }
-            } finally {
-                if (active) {
-                    setLoading(false);
-                }
-            }
-        };
-
-        void loadAccount();
-
-        return () => {
-            active = false;
-        };
-    }, []);
+    const initial = displayName.charAt(0).toUpperCase();
 
     const handleNavigate = (path: string) => {
         onClose();
@@ -61,77 +37,48 @@ export default function UserMenu({
     };
 
     const handleLogout = async () => {
-        if (loggingOut) return;
-
-        setLoggingOut(true);
-        setError("");
+        if (loggingOut) {
+            return;
+        }
 
         try {
+            setLoggingOut(true);
             await authService.logout();
-        } catch (error) {
-            console.error("Đăng xuất API thất bại:", error);
+        } catch {
+            // Cookie có thể đã hết hạn: vẫn xoá phiên phía client và về trang đăng nhập.
         } finally {
-            useAuthStore.getState().clearUser();
-
+            clearUser();
             onClose();
             navigate("/login", { replace: true });
-
-            setLoggingOut(false);
         }
     };
-
-    const user = account?.user;
-    const planName =
-        account?.plan?.name ||
-        (user?.planId
-            ? user.planId.charAt(0).toUpperCase() +
-            user.planId.slice(1)
-            : "Chưa có gói");
-
-    const initial =
-        user?.name?.trim().charAt(0).toUpperCase() || "U";
 
     return (
         <div className="w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] shadow-lg">
             <div className="border-b border-[var(--app-border)] px-4 py-3">
                 <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--app-accent)] text-sm font-semibold text-white">
-                        {loading ? "…" : initial}
+                        {initial}
                     </div>
 
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-[var(--app-text)]">
-                            {loading
-                                ? "Đang tải..."
-                                : user?.name || "Người dùng"}
+                            {displayName}
                         </p>
 
                         <p className="truncate text-xs text-[var(--app-text-secondary)]">
-                            {user?.email || ""}
+                            {me?.user.email ?? planLabel}
                         </p>
-
-                        {!loading && user && (
-                            <p className="mt-1 truncate text-xs text-[var(--app-text-muted)]">
-                                Gói {planName}
-                            </p>
-                        )}
                     </div>
                 </div>
-
-                {error && (
-                    <p
-                        role="alert"
-                        className="mt-2 text-xs text-red-600"
-                    >
-                        {error}
-                    </p>
-                )}
             </div>
 
             <div className="p-1.5">
                 <button
                     type="button"
-                    onClick={() => handleNavigate("/profile")}
+                    onClick={() =>
+                        handleNavigate("/profile")
+                    }
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-[var(--app-text-secondary)] transition hover:bg-[var(--app-surface-soft)] hover:text-[var(--app-text)]"
                 >
                     <User className="h-4 w-4 shrink-0 text-[var(--app-text-muted)]" />
@@ -140,11 +87,13 @@ export default function UserMenu({
 
                 <button
                     type="button"
-                    onClick={() => handleNavigate("/pricing")}
+                    onClick={() =>
+        handleNavigate("/billing")
+                    }
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-[var(--app-text-secondary)] transition hover:bg-[var(--app-surface-soft)] hover:text-[var(--app-text)]"
                 >
                     <CreditCard className="h-4 w-4 shrink-0 text-[var(--app-text-muted)]" />
-                    Gói của tôi
+                    {planLabel}
                 </button>
 
                 <button

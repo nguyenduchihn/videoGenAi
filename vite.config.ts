@@ -11,6 +11,11 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // B1: API phục vụ SPA này từ origin của nó (apps/api/src/bootstrap.ts) ⇒ build ra dist/videogenai ở gốc monorepo.
+  build: {
+    outDir: "../../dist/videogenai",
+    emptyOutDir: true,
+  },
   server: {
     proxy: {
       "/portal": {

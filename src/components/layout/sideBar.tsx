@@ -1,11 +1,10 @@
-import { FolderKanban, Home, Sparkles, Settings, HelpCircle, X, PanelLeftOpen, PanelLeftClose, CreditCard, ChevronDown } from "lucide-react";
-import { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
-import { authService } from "@/services/auth.service";
-import type { PortalMeResponse } from "@/types/api";
-import { useAppearanceStore } from "@/stores/appearance.store";
+import { ChevronDown, CreditCard, FolderKanban, HelpCircle, History, Home, PanelLeftClose, PanelLeftOpen, Settings, Sparkles, X } from "lucide-react";
+import { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 
-import Upgrade from "../pricing/upgradeModal";
+import { useAppearanceStore } from "@/stores/appearance.store";
+import { useAuthStore } from "@/stores/auth.store";
+
 import UserMenu from "./userMenu";
 interface SidebarProps {
     open: boolean;
@@ -13,21 +12,10 @@ interface SidebarProps {
 }
 
 const mainMenu = [
-    {
-        label: "Trang chủ",
-        path: "/dashboard",
-        icon: Home,
-    },
-    {
-        label: "Dự án",
-        path: "/projects",
-        icon: FolderKanban,
-    },
-    {
-        label: "Các gói dịch vụ",
-        path: "/pricing",
-        icon: CreditCard,
-    },
+    { label: "Trang chủ", path: "/dashboard", icon: Home },
+    { label: "Dự án", path: "/projects", icon: FolderKanban },
+    { label: "Lịch sử tác vụ", path: "/tasks", icon: History },
+    { label: "Nạp credits", path: "/billing", icon: CreditCard },
 ];
 
 const otherMenu = [
@@ -55,88 +43,25 @@ export default function Sidebar({
         (state) => state.setCompactSidebar
     );
 
-    const [isDesktop, setIsDesktop] = useState(() => {
-        return (
-            typeof window !== "undefined" &&
-            window.matchMedia("(min-width: 1024px)").matches
-        );
-    });
-
-    useEffect(() => {
-        const mediaQuery = window.matchMedia("(min-width: 1024px)");
-
-        const handleChange = (event: MediaQueryListEvent) => {
-            setIsDesktop(event.matches);
-        };
-
-        setIsDesktop(mediaQuery.matches);
-        mediaQuery.addEventListener("change", handleChange);
-
-        return () => {
-            mediaQuery.removeEventListener("change", handleChange);
-        };
-    }, []);
-
-    const isCompact = isDesktop && compactSidebar;
-
-    const desktopCompact = compactSidebar;
-
-    const [upgradeOpen, setUpgradeOpen] =
-        useState(false);
-
     const [userMenuOpen, setUserMenuOpen] = useState(false);
-    const [account, setAccount] = useState<PortalMeResponse | null>(null);
 
-    useEffect(() => {
-        let active = true;
+    const navigate = useNavigate();
+    const me = useAuthStore((state) => state.user);
 
-        authService
-            .me()
-            .then((data) => {
-                if (active) {
-                    setAccount(data);
-                }
-            })
-            .catch((error) => {
-                console.error("Không thể tải thông tin tài khoản:", error);
-            });
+    const displayName =
+        me?.user.name?.trim() || me?.user.email || "Tài khoản";
 
-        return () => {
-            active = false;
-        };
-    }, []);
+    const planName = me?.plan?.name ?? "Miễn phí";
 
-    const userName = account?.user?.name || "Người dùng";
-
-    const planName =
-        account?.plan?.name ||
-        (account?.user?.planId
-            ? account.user.planId.charAt(0).toUpperCase() +
-            account.user.planId.slice(1)
-            : "Chưa có gói");
-
-    const userInitial = userName.trim().charAt(0).toUpperCase() || "U";
-    const handleUpgradeOpen = () => {
-        setUpgradeOpen(true);
-    };
-
-    const handleUpgradeClose = () => {
-        setUpgradeOpen(false);
-    };
-
+    const initial = displayName.charAt(0).toUpperCase();
     const handleNavClick = (path: string) => {
         onClose();
-
-        if (
-            window.matchMedia("(min-width: 1024px)").matches &&
-            path === "/projects"
-        ) {
-            setCompactSidebar(true);
-        }
+        if (path === "/projects") setCompactSidebar(true);
     };
     return (
         <>
             <aside
+                aria-label="Điều hướng chính"
                 className={`
                     fixed 
                     inset-y-0 
@@ -150,15 +75,16 @@ export default function Sidebar({
                     border-r 
                     border-[var(--app-border)]
                     bg-[var(--app-surface)] 
-                    transition-all duration-200 ease-out
+                    transition-all duration-200 
+                    ease-out
                     w-[280px]
-                    ${desktopCompact ? "lg:w-[84px]" : "lg:w-[230px]"}
+                    ${compactSidebar ? "lg:w-[84px]" : "lg:w-[230px]"}
                     lg:translate-x-0
                     ${open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
                     `}
             >
                 <div
-                    className={`group relative flex h-16 shrink-0 items-center border-b border-[var(--app-border)] ${isCompact
+                    className={`group relative flex h-16 shrink-0 items-center border-b border-[var(--app-border)] ${compactSidebar
                         ? "justify-center px-2"
                         : "justify-between px-4 lg:px-5"
 
@@ -167,14 +93,14 @@ export default function Sidebar({
                     <NavLink
                         to="/dashboard"
                         onClick={onClose}
-                        className={`flex min-w-0 items-center ${isCompact ? "justify-center" : "gap-2.5"
+                        className={`flex min-w-0 items-center ${compactSidebar ? "justify-center" : "gap-2.5"
                             }`}
                     >
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--app-accent)]">
                             <Sparkles className="h-4 w-4 text-white" />
                         </div>
 
-                        {!isCompact && (
+                        {!compactSidebar && (
                             <span className="truncate text-[15px] font-semibold tracking-tight text-[var(--app-text)]">
                                 VideoGen{" "}
                                 <span className="text-[var(--app-accent)]">AI</span>
@@ -219,7 +145,7 @@ export default function Sidebar({
 
                 <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-5">
                     <div>
-                        {!isCompact && (
+                        {!compactSidebar && (
                             <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
                                 Workspace
                             </p>
@@ -235,12 +161,13 @@ export default function Sidebar({
                                         to={item.path}
                                         onClick={() => handleNavClick(item.path)}
                                         title={
-                                            isCompact
+                                            compactSidebar
                                                 ? item.label
                                                 : undefined
                                         }
+                                        aria-label={compactSidebar ? item.label : undefined}
                                         className={({ isActive }) =>
-                                            `flex items-center rounded-lg py-2.5 text-sm transition ${isCompact
+                                            `flex items-center rounded-lg py-2.5 text-sm transition ${compactSidebar
                                                 ? "justify-center px-0"
                                                 : "gap-3 px-3"
                                             } ${isActive
@@ -258,7 +185,7 @@ export default function Sidebar({
                                                         }`}
                                                 />
 
-                                                {!isCompact && (
+                                                {!compactSidebar && (
                                                     <span className="truncate">
                                                         {item.label}
                                                     </span>
@@ -272,7 +199,7 @@ export default function Sidebar({
                     </div>
 
                     <div className="mt-2">
-                        {!isCompact && (
+                        {!compactSidebar && (
                             <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
                                 Khác
                             </p>
@@ -288,12 +215,13 @@ export default function Sidebar({
                                         to={item.path}
                                         onClick={() => handleNavClick(item.path)}
                                         title={
-                                            isCompact
+                                            compactSidebar
                                                 ? item.label
                                                 : undefined
                                         }
+                                        aria-label={compactSidebar ? item.label : undefined}
                                         className={({ isActive }) =>
-                                            `flex items-center rounded-lg py-2.5 text-sm transition ${isCompact
+                                            `flex items-center rounded-lg py-2.5 text-sm transition ${compactSidebar
                                                 ? "justify-center px-0"
                                                 : "gap-3 px-3"
                                             } ${isActive
@@ -311,7 +239,7 @@ export default function Sidebar({
                                                         }`}
                                                 />
 
-                                                {!isCompact && (
+                                                {!compactSidebar && (
                                                     <span className="truncate">
                                                         {item.label}
                                                     </span>
@@ -325,50 +253,27 @@ export default function Sidebar({
                     </div>
                 </nav>
 
-                <div className="min-h-0 shrink-0">
-                    {isCompact ? (
-                        <button
-                            type="button"
-                            onClick={handleUpgradeOpen}
-                            title="Các gói nâng cấp"
-                            className="flex h-10 w-full items-center justify-center rounded-lg bg-[var(--app-accent-soft)] transition hover:opacity-80"
-                        >
-                            <Sparkles className="h-4 w-4 text-[var(--app-accent)]" />
+                <div className={`min-h-0 shrink-0 ${compactSidebar ? "px-2 pt-2" : "px-3 pt-3"}`}>
+                    {compactSidebar ? (
+                        <button type="button" onClick={() => navigate('/billing')} title="Nạp credits" className="flex h-10 w-full items-center justify-center rounded-lg bg-[var(--app-accent-soft)] transition hover:opacity-80">
+                            <CreditCard className="h-4 w-4 text-[var(--app-accent)]" />
                         </button>
                     ) : (
                         <div className="rounded-xl bg-[var(--app-surface-soft)] p-3">
                             <div className="flex items-start gap-2">
-                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--app-accent-soft)]">
-                                    <Sparkles className="h-4 w-4 text-[var(--app-accent)]" />
-                                </div>
-
-                                <div className="min-w-0">
-                                    <p className="text-xs font-semibold text-[var(--app-text)]">
-                                        Gói Pro
-                                    </p>
-                                    <p className="mt-0.5 text-[10px] leading-4 text-[var(--app-text-secondary)]">
-                                        Nâng cấp để tạo nhiều video hơn
-                                    </p>
-                                </div>
+                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--app-accent-soft)]"><CreditCard className="h-4 w-4 text-[var(--app-accent)]" /></div>
+                                <div className="min-w-0"><p className="text-xs font-semibold text-[var(--app-text)]">{planName}</p><p className="mt-0.5 text-[10px] leading-4 text-[var(--app-text-secondary)]">{me?.balance.display ?? '—'}</p></div>
                             </div>
-
-                            <button
-                                type="button"
-                                onClick={handleUpgradeOpen}
-                                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--app-surface)] px-3 py-2.5 text-xs font-medium text-[var(--app-text-secondary)] ring-1 ring-[var(--app-border)] transition hover:bg-[var(--app-accent-soft)] hover:text-[var(--app-accent)]"
-                            >
-                                <Sparkles className="h-4 w-4 text-[var(--app-accent)]" />
-                                <span>Các gói nâng cấp</span>
-                            </button>
+                            <button type="button" onClick={() => navigate('/billing')} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--app-surface)] px-3 py-2.5 text-xs font-medium text-[var(--app-text-secondary)] ring-1 ring-[var(--app-border)] transition hover:bg-[var(--app-accent-soft)] hover:text-[var(--app-accent)]"><CreditCard className="h-4 w-4 text-[var(--app-accent)]" /><span>Nạp credits</span></button>
                         </div>
                     )}
 
                     <div
-                        className={`shrink-0 border-t border-[var(--app-border)] ${isCompact ? "p-2" : "p-3"
+                        className={`mt-3 shrink-0 border-t border-[var(--app-border)] ${compactSidebar ? "-mx-2 p-2" : "-mx-3 p-3"
                             }`}
                     >
                         <div className="flex min-h-0 flex-col">
-                            {userMenuOpen && !isCompact && (
+                            {userMenuOpen && !compactSidebar && (
                                 <div className="mb-2 max-h-[40vh] min-w-0 shrink overflow-y-auto overscroll-contain">
                                     <UserMenu onClose={() => setUserMenuOpen(false)} />
                                 </div>
@@ -377,21 +282,22 @@ export default function Sidebar({
                             <button
                                 type="button"
                                 onClick={() => setUserMenuOpen((prev) => !prev)}
-                                title={isCompact ? "Tài khoản" : undefined}
-                                className={`flex w-full shrink-0 items-center rounded-xl py-2 transition hover:bg-[var(--app-surface-soft)] ${isCompact ? "justify-center px-0" : "gap-3 px-2"
+                                title={compactSidebar ? "Tài khoản" : undefined}
+                                aria-label={compactSidebar ? "Tài khoản" : undefined}
+                                aria-expanded={userMenuOpen}
+                                className={`flex w-full shrink-0 items-center rounded-xl py-2 transition hover:bg-[var(--app-surface-soft)] ${compactSidebar ? "justify-center px-0" : "gap-3 px-2"
                                     }`}
                             >
                                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--app-accent)] text-xs font-semibold text-white">
-                                    {userInitial}
+                                    {initial}
                                 </div>
 
-                                {!isCompact && (
+                                {!compactSidebar && (
                                     <>
                                         <div className="min-w-0 flex-1 text-left">
                                             <p className="truncate text-xs font-semibold text-[var(--app-text)]">
-                                                {userName}
+                                                {displayName}
                                             </p>
-
                                             <p className="truncate text-[10px] text-[var(--app-text-secondary)]">
                                                 {planName}
                                             </p>
@@ -407,12 +313,8 @@ export default function Sidebar({
                         </div>
                     </div>
                 </div>
-            </aside>
+        </aside>
 
-            <Upgrade
-                open={upgradeOpen}
-                onClose={handleUpgradeClose}
-            />
         </>
     );
 }

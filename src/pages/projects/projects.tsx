@@ -8,37 +8,17 @@ import {
 import { useMemo, useState } from "react";
 
 import GeneratorPanel from "@/components/generator/generatorPanel";
+import { useProjectDrafts, type ProjectDraft } from "@/features/projects/useProjectDrafts";
 
-type Project = {
-    id: string;
-    name: string;
-    description: string;
-};
-
-const INITIAL_PROJECTS: Project[] = [
-    {
-        id: "1",
-        name: "Video quảng cáo sản phẩm",
-        description: "Tạo video quảng cáo sản phẩm bằng AI",
-    },
-    {
-        id: "2",
-        name: "Video giới thiệu sản phẩm",
-        description: "Video giới thiệu sản phẩm cho social media",
-    },
-    {
-        id: "3",
-        name: "Video TikTok",
-        description: "Các video ngắn cho TikTok",
-    },
-];
+function draftDescription(d: ProjectDraft): string {
+    if (!d.prompt) return "Chưa có prompt";
+    return d.prompt.length > 60 ? d.prompt.slice(0, 60) + "…" : d.prompt;
+}
 
 export default function Projects() {
-    const [projects, setProjects] =
-        useState<Project[]>(INITIAL_PROJECTS);
-
+    const { drafts: projects, create } = useProjectDrafts();
     const [selectedProjectId, setSelectedProjectId] =
-        useState("1");
+        useState(() => projects[0]?.id ?? "");
 
     const [projectMenuOpen, setProjectMenuOpen] =
         useState(false);
@@ -59,31 +39,21 @@ export default function Projects() {
         }
 
         return projects.filter((project) =>
-            `${project.name} ${project.description}`
+            `${project.name} ${draftDescription(project)}`
                 .toLowerCase()
                 .includes(keyword)
         );
     }, [projects, search]);
 
-    const handleSelectProject = (project: Project) => {
+    const handleSelectProject = (project: ProjectDraft) => {
         setSelectedProjectId(project.id);
         setProjectMenuOpen(false);
         setSearch("");
     };
 
     const handleCreateProject = () => {
-        const newProject: Project = {
-            id: `project-${Date.now()}`,
-            name: "Dự án mới",
-            description: "Workspace mới",
-        };
-
-        setProjects((current) => [
-            newProject,
-            ...current,
-        ]);
-
-        setSelectedProjectId(newProject.id);
+        const draft = create("Dự án mới");
+        setSelectedProjectId(draft.id);
         setProjectMenuOpen(false);
         setSearch("");
     };
@@ -93,7 +63,7 @@ export default function Projects() {
     }
 
     return (
-        <div className="h-[calc(100vh-64px)] min-h-0 overflow-hidden bg-[var(--app-bg)]">
+        <div className="h-[calc(100dvh-var(--app-header-h))] min-h-0 overflow-hidden bg-[var(--app-bg)]">
             <header className="relative z-30 flex h-12 shrink-0 items-center justify-between border-b border-[var(--app-border)] bg-[var(--app-surface)] px-4 transition-colors sm:px-6">
                 <div className="relative">
                     <button
@@ -194,11 +164,9 @@ export default function Projects() {
                                                                 }
                                                             </p>
 
-                                                            <p className="mt-0.5 truncate text-xs text-gray-400">
-                                                                {
-                                                                    project.description
-                                                                }
-                                                            </p>
+                                                        <p className="mt-0.5 truncate text-xs text-gray-400">
+                                                                {draftDescription(project)}
+                                                        </p>
                                                         </div>
 
                                                         {active && (
@@ -252,6 +220,7 @@ export default function Projects() {
                     key={selectedProject.id}
                     variant="advanced"
                     layout="project"
+                    draftId={selectedProject.id}
                 />
             </main>
         </div>

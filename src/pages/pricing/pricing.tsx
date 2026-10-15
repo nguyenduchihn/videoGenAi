@@ -20,7 +20,7 @@ import type {
     PaymentPackagesResponse,
     PortalPricingResponse,
 } from "@/types/api";
-import UpgradeModal from "@/components/pricing/upgradeModal";
+import { useNavigate } from "react-router";
 
 interface WorkerInfo {
     key: string;
@@ -339,6 +339,7 @@ function PackageCard({
 }
 
 export default function Pricing() {
+    const navigate = useNavigate();
     const [pricing, setPricing] =
         useState<PortalPricingResponse | null>(
             null
@@ -348,8 +349,6 @@ export default function Pricing() {
         useState<PaymentPackagesResponse | null>(
             null
         );
-
-    const [upgradeOpen, setUpgradeOpen] = useState(false);
 
     const [loading, setLoading] =
         useState(true);
@@ -514,7 +513,7 @@ export default function Pricing() {
                                 <PackageCard
                                     key={packageItem.id}
                                     packageItem={packageItem}
-                                    onChoose={() => setUpgradeOpen(true)}
+                                    onChoose={() => navigate(`/billing?package=${packageItem.id}`)}
                                     disabled={!packages?.enabled}
                                 />
                             )
@@ -567,10 +566,6 @@ export default function Pricing() {
                     </p>
                 </div>
             </div>
-            <UpgradeModal
-                open={upgradeOpen}
-                onClose={() => setUpgradeOpen(false)}
-            />
         </div>
     );
 }
