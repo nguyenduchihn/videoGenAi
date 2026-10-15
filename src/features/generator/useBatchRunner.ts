@@ -71,6 +71,10 @@ function fromTask(task: PortalTask, base: Pick<GeneratorResultItem, "jobIndex" |
     };
 }
 
+/** Backend chỉ nhận Idempotency-Key 8–128 ký tự [A-Za-z0-9_-]: ghép các phần bằng '-' và lọc ký tự lạ. */
+export const idempotencyKeyOf = (...parts: string[]): string =>
+    parts.join("-").replace(/[^A-Za-z0-9_-]/g, "-").slice(0, 128).padEnd(8, "0");
+
 const chunkRanges = (count: number, size: number): Array<[number, number]> =>
     Array.from({ length: Math.ceil(count / size) }, (_, i) => [i * size, Math.min((i + 1) * size, count)]);
 
@@ -238,7 +242,7 @@ export function useBatchRunner(): UseBatchRunnerReturn {
                     continue;
                 }
                 try {
-                    const response = await createWithRetry(tasks.slice(start, end), `${baseKey}:${index}`, meta, [start, end]);
+                    const response = await createWithRetry(tasks.slice(start, end), idempotencyKeyOf(baseKey, `c${index}`), meta, [start, end]);
                     const created = response.tasks;
                     const order = placeholderIds.slice(start, end);
                     patchWhere((item) => chunkIds.has(item.id), (item) => {
@@ -270,7 +274,7 @@ export function useBatchRunner(): UseBatchRunnerReturn {
     const retry = useCallback(async (result: GeneratorResultItem, task: CreateTaskItem, meta: SubmitMeta = {}): Promise<void> => {
         patchWhere((item) => item.id === result.id, { status: "pending", error: undefined });
         const retryKey = `retry:${result.id}`;
-        const key = idempotencyKeys.current.get(retryKey) ?? crypto.randomUUID();
+        const key = idempotencyKeys.current.get(retryKey) ?? idempotencyKeyOf("retry", result.id, crypto.randomUUID());
         idempotencyKeys.current.set(retryKey, key);
         try {
             const response = await createWithRetry([task], key, meta, [0, 1]);

@@ -2,7 +2,10 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/errors";
 import type { CreateTaskItem, PortalTask } from "@/types/api";
-import { useBatchRunner } from "./useBatchRunner";
+import { idempotencyKeyOf, useBatchRunner } from "./useBatchRunner";
+
+/** Luật của backend (apps/api): Idempotency-Key must be 8-128 chars [A-Za-z0-9_-]. */
+const IDEMPOTENCY_KEY_RE = /^[A-Za-z0-9_-]{8,128}$/;
 
 vi.mock("@/services/task.service", () => ({
     taskService: { createTasks: vi.fn(), getBatch: vi.fn(), cancelTask: vi.fn(), cancelBatch: vi.fn() },
@@ -99,9 +102,10 @@ describe("useBatchRunner", () => {
 
         const calls = vi.mocked(taskService.createTasks).mock.calls;
         expect(calls.map(([body]) => body.tasks.length)).toEqual([20, 20, 5]);
-        const keys = calls.map(([, key]) => key);
-        expect(keys.map((k) => k?.split(":").at(-1))).toEqual(["0", "1", "2"]);
-        expect(new Set(keys.map((k) => k?.split(":")[0])).size).toBe(1);
+        const keys = calls.map(([, key]) => key ?? "");
+        expect(keys.map((k) => k.match(/-c(\d+)$/)?.[1])).toEqual(["0", "1", "2"]);
+        expect(new Set(keys.map((k) => k.replace(/-c\d+$/, ""))).size).toBe(1);
+        for (const key of keys) expect(key).toMatch(IDEMPOTENCY_KEY_RE);
         expect(pollBatch).toHaveBeenCalledTimes(3);
         expect(result.current.results).toHaveLength(45);
         expect(result.current.results[44]).toMatchObject({ id: "t45", jobIndex: 45, prompt: "p45" });
@@ -180,6 +184,21 @@ describe("useBatchRunner", () => {
         await act(async () => { await result.current.submit([item("q")], ["q"]); });
         const keys = create.mock.calls.map(([, key]) => key);
         expect(new Set(keys).size).toBe(1);
+    });
+
+    it("every Idempotency-Key sent (submit and retry, even for local placeholder ids) satisfies the backend format", async () => {
+        const create = vi.mocked(taskService.createTasks);
+        create.mockResolvedValue({ batchId: "batch-1", totalCredits: 5, tasks: [task()] });
+        const { result } = renderHook(() => useBatchRunner());
+
+        await act(async () => { await result.current.submit([item("p")], ["p"]); });
+        await act(async () => {
+            await result.current.retry({ id: "local:abc:0", jobIndex: 1, prompt: "p", status: "failed", type: "video", worker: "text-to-video" }, item("p"));
+        });
+
+        for (const [, key] of create.mock.calls) expect(key).toMatch(IDEMPOTENCY_KEY_RE);
+        expect(idempotencyKeyOf("a b:c", "x")).toMatch(IDEMPOTENCY_KEY_RE);
+        expect(idempotencyKeyOf("x".repeat(200)).length).toBe(128);
     });
 
     it("restores stored batches with the type taken from the task worker and drops batches that 404", async () => {
