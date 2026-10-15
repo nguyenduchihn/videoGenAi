@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
-    "gen:api": "npx -y openapi-typescript@7 docs/openapi.json -o src/api/schema.d.ts"
+    "gen:api": "npx -y openapi-typescript@7 docs/openapi.json -o src/api/schema.d.ts",
+    "sync:api": "cp ../../docs/api/openapi.json docs/openapi.json && npm run gen:api"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

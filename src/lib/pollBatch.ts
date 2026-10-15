@@ -3,13 +3,16 @@ import { toApiError } from "@/lib/errors";
 import type { PortalTask } from "@/types/api";
 
 const POLL_INTERVAL_MS = 3_000;
-const MAX_DURATION_MS = 10 * 60 * 1_000;
+/** Sau 2 phút đầu giãn nhịp ra 6 s (backend gửi lại khi Google timeout, hạn chót 2 giờ). */
+const SLOW_AFTER_MS = 2 * 60 * 1_000;
+const SLOW_INTERVAL_MS = 6_000;
+const MAX_DURATION_MS = 30 * 60 * 1_000;
 const MAX_CONSECUTIVE_ERRORS = 5;
 const TERMINAL: ReadonlySet<string> = new Set(["succeeded", "failed", "cancelled"]);
 
 export type PollBatchOptions = {
     signal?: AbortSignal;
-    /** Gọi khi quá 10 phút mà lô chưa xong: UI báo người dùng xem tiếp ở Lịch sử tác vụ. */
+    /** Gọi khi quá 30 phút mà lô chưa xong: UI báo người dùng xem tiếp ở Lịch sử tác vụ. */
     onExhausted?: () => void;
 };
 
@@ -35,7 +38,7 @@ function wait(ms: number, signal?: AbortSignal): Promise<void> {
     });
 }
 
-/** Poll GET /v1/batches/:id mỗi 3 giây tới khi mọi task kết thúc, bị huỷ (signal) hoặc quá 10 phút. */
+/** Poll GET /v1/batches/:id (3 s, sau 2 phút 6 s) tới khi mọi task kết thúc, bị huỷ (signal) hoặc quá 30 phút. */
 export async function pollBatch(
     batchId: string,
     onUpdate: (tasks: PortalTask[]) => void,
@@ -79,11 +82,12 @@ export async function pollBatch(
         last = tasks;
         onUpdate(last);
         if (isBatchFinished(last)) return last;
-        if (Date.now() - startedAt >= MAX_DURATION_MS) {
+        const elapsed = Date.now() - startedAt;
+        if (elapsed >= MAX_DURATION_MS) {
             onExhausted?.();
             return last;
         }
-        if (!(await sleep(POLL_INTERVAL_MS))) break;
+        if (!(await sleep(elapsed < SLOW_AFTER_MS ? POLL_INTERVAL_MS : SLOW_INTERVAL_MS))) break;
     }
     return last;
 }

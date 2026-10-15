@@ -10,10 +10,11 @@ import {
     mockPaymentPackages,
 } from "./payment.mock";
 import { mockPricingResponse } from "./pricing.mock";
-import { cancelMockTask, createMockBatch, getMockBatch, mockTasksResponse } from "./tasks.mock";
+import { mockUploadedImage } from "./images.mock";
+import { cancelMockTask, createMockBatch, getMockBatch, mockTasksResponse, validateMockTask } from "./tasks.mock";
 
-const error = (status: number, code: string, message: string) =>
-    HttpResponse.json({ error: { code, message, requestId: `mock-${Date.now()}` } }, { status });
+const error = (status: number, code: string, message: string, metadata?: Record<string, unknown>, headers?: Record<string, string>) =>
+    HttpResponse.json({ error: { code, message, requestId: `mock-${Date.now()}`, ...(metadata ? { metadata } : {}) } }, { status, headers });
 
 /** e2e: đặt localStorage `videogen:mock-unauth` = "1" để giả lập chưa đăng nhập (handler chạy trong page). */
 function isMockUnauthenticated(): boolean {
@@ -25,9 +26,36 @@ function isMockUnauthenticated(): boolean {
 }
 
 export const mockModels = {
-    video: [{ model: "Veo_3.1-Lite", family: "veo", default: true, credits: 5 }],
-    image: [{ model: "Nano_Banana_2_Lite", family: "nano-banana", default: true, credits: 1 }],
+    video: [
+        { model: "Veo_3.1-Lite", family: "veo", default: true, credits: 5 },
+        { model: "Veo_3.1-Omni", family: "veo", default: false, credits: 20, note: "Tới 7 ảnh tham chiếu" },
+        { model: "Veo_3.1-Lite [Lower Priority]", family: "veo", default: false, credits: 0, note: "Miễn phí, xếp hàng chậm hơn" },
+    ],
+    image: [{ model: "Nano_Banana_Pro", family: "nano-banana", default: true, credits: 1 }],
 };
+
+/** e2e: thân các request POST /v1/tasks đã nhận (handler MSW chạy trong page) để test kiểm tra worker/images. */
+function rememberMockRequest(body: CreateTasksRequest): void {
+    try {
+        if (typeof localStorage === "undefined") return;
+        const previous = JSON.parse(localStorage.getItem("videogen:mock-task-requests") ?? "[]") as unknown[];
+        localStorage.setItem("videogen:mock-task-requests", JSON.stringify([...previous, body]));
+    } catch {
+        /* storage bị chặn: bỏ qua */
+    }
+}
+
+/** e2e: header `x-mock-queue-full` hoặc localStorage `videogen:mock-queue-full` = "1" ⇒ lần gọi /v1/tasks kế tiếp trả 429 (dùng một lần). */
+function consumeMockQueueFull(request: Request): boolean {
+    if (request.headers.get("x-mock-queue-full")) return true;
+    try {
+        if (typeof localStorage === "undefined" || localStorage.getItem("videogen:mock-queue-full") !== "1") return false;
+        localStorage.removeItem("videogen:mock-queue-full");
+        return true;
+    } catch {
+        return false;
+    }
+}
 
 /** /v1/* giống backend thật: X-API-Key (tích hợp ngoài) HOẶC cookie phiên web; mock coi "đã đăng nhập" = có cookie. */
 const requireApiKey = (request: Request): Response | null => {
@@ -132,15 +160,31 @@ export const handlers = [
             plan: { id: "pro", name: "Pro", maxConcurrent: 4, maxPending: 50, chargesCredits: true },
         }),
     ),
-    http.post("/v1/images", ({ request }) =>
-        requireApiKey(request) ?? HttpResponse.json({
-            images: [{ imageId: `img_${Date.now().toString(36)}`, mime: "image/png", size: 1024, sha256: "", createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 86_400_000).toISOString() }],
-        }, { status: 201 }),
-    ),
+    http.post("/v1/images", async ({ request }) => {
+        const denied = requireApiKey(request);
+        if (denied) return denied;
+        const form = await request.formData();
+        const images = [];
+        for (const [name, value] of form.entries()) {
+            if (!(value instanceof File)) continue;
+            if (!value.type.startsWith("image/")) return error(400, "BAD_IMAGE_INPUTS", `${name}: không phải ảnh`, { field: name, constraint: "mime" });
+            images.push(mockUploadedImage(name, value));
+        }
+        return HttpResponse.json({ images }, { status: 201 });
+    }),
     http.post("/v1/tasks", async ({ request }) => {
         const denied = requireApiKey(request);
         if (denied) return denied;
+        if (consumeMockQueueFull(request)) return error(429, "QUEUE_FULL", "queue full", undefined, { "Retry-After": "2" });
         const body = (await request.json()) as CreateTasksRequest;
+        if (!Array.isArray(body.tasks) || body.tasks.length === 0 || body.tasks.length > 20) {
+            return error(400, "VALIDATION_FAILED", "tasks: 1–20 task mỗi request");
+        }
+        for (const [index, item] of body.tasks.entries()) {
+            const failure = validateMockTask(item);
+            if (failure) return error(failure.status, failure.code, `tasks[${index}]: ${failure.message}`, { index, ...failure.metadata });
+        }
+        rememberMockRequest(body);
         return HttpResponse.json(createMockBatch(body), { status: 202 });
     }),
     http.get("/v1/batches/:id", ({ params, request }) => {
@@ -152,8 +196,10 @@ export const handlers = [
     http.post("/v1/batches/:id/cancel", ({ params }) => {
         const batch = getMockBatch(params.id as string);
         if (!batch) return error(404, "BATCH_NOT_FOUND", "batch not found");
-        batch.tasks.forEach((task) => cancelMockTask(task.id));
-        return HttpResponse.json(getMockBatch(params.id as string));
+        const active = batch.tasks.filter((task) => task.status === "pending" || task.status === "processing");
+        const cancelled = active.map((task) => cancelMockTask(task.id)).filter((task) => task !== null);
+        const creditsRefunded = cancelled.reduce((sum, task) => sum + task.priceCredits, 0);
+        return HttpResponse.json({ cancelled, skipped: batch.tasks.length - cancelled.length, creditsRefunded });
     }),
     http.get("/v1/tasks/:id", ({ params }) => {
         const task = mockTasksResponse.tasks.find((item) => item.id === params.id);

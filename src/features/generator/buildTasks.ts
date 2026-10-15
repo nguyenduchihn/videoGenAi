@@ -1,46 +1,77 @@
-import type { GeneratorMode, GeneratorSettingsState } from "@/components/generator/types";
-import type { CreateTaskItem } from "@/types/api";
+import type { GeneratorSettingsState } from "@/components/generator/types";
+import type { CreateTaskItem, CreateTaskUpscale, ImageRef } from "@/types/api";
+import { GeneratorError } from "./errors";
+import type { GeneratorMode } from "./modes";
 
-export interface UploadedIds {
-    startImageId?: string;
-    endImageId?: string;
+/** Ảnh đã upload (imageId) + tham số đính kèm, đủ để dựng `images`/`sourceMediaId`. */
+export interface ResolvedAttachments {
+    start?: ImageRef;
+    end?: ImageRef;
+    references: ImageRef[];
+    sources: ImageRef[];
+    voice?: string;
+    sourceMediaId?: string;
 }
 
+export const EMPTY_RESOLVED: ResolvedAttachments = { references: [], sources: [] };
+
+function need<T>(value: T | undefined, role: string): T {
+    if (value === undefined || value === null || value === "") {
+        throw new GeneratorError("ATTACHMENT_MISSING", `Thiếu ảnh/video cho vai trò "${role}".`);
+    }
+    return value;
+}
+
+function upscaleOf(settings: GeneratorSettingsState): { upscale?: CreateTaskUpscale } {
+    return settings.upscale === "none" ? {} : { upscale: { resolution: settings.upscale } };
+}
+
+/** Mỗi prompt ⇒ một task đúng hợp đồng POST /v1/tasks của worker tương ứng (tasks.dto.ts, task-params.schemas.ts). */
 export function buildTasks(
     mode: GeneratorMode,
     jobs: string[],
     settings: GeneratorSettingsState,
-    aspectRatio: string,
-    { startImageId, endImageId }: UploadedIds,
+    ratio: string,
+    resolved: ResolvedAttachments,
 ): CreateTaskItem[] {
-    return jobs.map((job) => {
-        if (mode === "image-to-video") {
-            if (!startImageId) throw new Error("START_FRAME_REQUIRED");
-            if (endImageId) {
+    const upscale = upscaleOf(settings);
+    const video = { model: settings.model, ratio, duration: settings.duration, audioEnabled: settings.audioEnabled };
+    const image = { model: settings.model, ratio };
+    return jobs.map((prompt): CreateTaskItem => {
+        switch (mode) {
+            case "text-to-video":
+                return { worker: mode, params: { prompt, ...video }, ...upscale };
+            case "image-to-video":
+                return { worker: mode, params: { prompt, ...video }, images: { start: need(resolved.start, "start") }, ...upscale };
+            case "start-end-image-to-video":
                 return {
-                    worker: "start-end-image-to-video" as const,
-                    params: { prompt: job, model: settings.model, ratio: aspectRatio, generateAudio: settings.generateAudio },
-                    images: { start: startImageId, end: endImageId },
+                    worker: mode,
+                    params: { prompt, ...video },
+                    images: { start: need(resolved.start, "start"), end: need(resolved.end, "end") },
+                    ...upscale,
                 };
-            }
-            return {
-                worker: "image-to-video" as const,
-                params: { prompt: job, model: settings.model, ratio: aspectRatio, generateAudio: settings.generateAudio },
-                images: { start: startImageId },
-            };
+            case "reference-images-to-video":
+                return {
+                    worker: mode,
+                    params: { prompt, ...video, ...(resolved.voice ? { audio: resolved.voice } : {}) },
+                    images: { references: resolved.references },
+                    ...upscale,
+                };
+            case "extend-video":
+                return {
+                    worker: mode,
+                    params: { prompt, model: settings.model },
+                    sourceMediaId: need(resolved.sourceMediaId, "sourceMediaId"),
+                    ...upscale,
+                };
+            case "text-to-image":
+                return {
+                    worker: mode,
+                    params: { prompt, ...image, ...(settings.seed !== null ? { seed: settings.seed } : {}) },
+                    ...upscale,
+                };
+            case "image-to-image":
+                return { worker: mode, params: { prompt, ...image }, images: { sources: resolved.sources }, ...upscale };
         }
-        if (mode === "text-to-video") {
-            return {
-                worker: "text-to-video" as const,
-                params: { prompt: job, model: settings.model, ratio: aspectRatio, generateAudio: settings.generateAudio },
-            };
-        }
-        if (mode === "text-to-image") {
-            return {
-                worker: "text-to-image" as const,
-                params: { prompt: job, model: settings.model, ratio: aspectRatio },
-            };
-        }
-        throw new Error(`Mode "${mode}" chưa được nối API backend.`);
     });
 }

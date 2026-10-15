@@ -1,57 +1,84 @@
-import { describe, it, expect } from "vitest";
-import { buildTasks } from "./buildTasks";
+import { describe, expect, it } from "vitest";
 import type { GeneratorSettingsState } from "@/components/generator/types";
+import { buildTasks, EMPTY_RESOLVED } from "./buildTasks";
 
 const settings: GeneratorSettingsState = {
     model: "Veo_3.1-Lite",
-    parallel: 8,
-    batchDelay: 10,
-    burstSize: 1,
-    generateAudio: true,
-    upscaleThreads: 1,
+    duration: 6,
+    audioEnabled: true,
+    upscale: "none",
+    seed: null,
     customSeparator: "===",
 };
+const imageSettings: GeneratorSettingsState = { ...settings, model: "Nano_Banana_Pro" };
 
 describe("buildTasks", () => {
-    it("text-to-video 2 prompts → 2 items with params.model/aspectRatio/audio", () => {
-        const tasks = buildTasks("text-to-video", ["p1", "p2"], settings, "16:9", {});
+    it("text-to-video: one task per prompt with model/ratio/duration/audioEnabled (no generateAudio)", () => {
+        const tasks = buildTasks("text-to-video", ["p1", "p2"], settings, "16:9", EMPTY_RESOLVED);
         expect(tasks).toHaveLength(2);
         expect(tasks[0]).toEqual({
             worker: "text-to-video",
-            params: { prompt: "p1", model: "Veo_3.1-Lite", ratio: "16:9", generateAudio: true },
+            params: { prompt: "p1", model: "Veo_3.1-Lite", ratio: "16:9", duration: 6, audioEnabled: true },
         });
-        expect(tasks[1]).toMatchObject({ params: { prompt: "p2", model: "Veo_3.1-Lite" } });
+        expect(tasks[1]?.params.prompt).toBe("p2");
+        expect("generateAudio" in (tasks[0]?.params ?? {})).toBe(false);
     });
 
-    it("image-to-video with start only → worker image-to-video, images.start set", () => {
-        const tasks = buildTasks("image-to-video", ["p1"], settings, "16:9", { startImageId: "sid" });
-        expect(tasks[0]).toMatchObject({
+    it("image-to-video: images.start from the resolved start id", () => {
+        const [task] = buildTasks("image-to-video", ["p"], settings, "9:16", { ...EMPTY_RESOLVED, start: "img_s" });
+        expect(task).toEqual({
             worker: "image-to-video",
-            params: { prompt: "p1", generateAudio: true },
-            images: { start: "sid" },
-        });
-        expect((tasks[0].images as Record<string, unknown>).end).toBeUndefined();
-    });
-
-    it("image-to-video with start+end → worker start-end-image-to-video", () => {
-        const tasks = buildTasks("image-to-video", ["p1"], settings, "16:9", {
-            startImageId: "sid",
-            endImageId: "eid",
-        });
-        expect(tasks[0]).toMatchObject({
-            worker: "start-end-image-to-video",
-            images: { start: "sid", end: "eid" },
+            params: { prompt: "p", model: "Veo_3.1-Lite", ratio: "9:16", duration: 6, audioEnabled: true },
+            images: { start: "img_s" },
         });
     });
 
-    it("image-to-video without startImageId throws START_FRAME_REQUIRED", () => {
-        expect(() => buildTasks("image-to-video", ["p1"], settings, "16:9", {})).toThrow("START_FRAME_REQUIRED");
+    it("start-end-image-to-video: both frames, throws ATTACHMENT_MISSING when end is absent", () => {
+        const [task] = buildTasks("start-end-image-to-video", ["p"], settings, "16:9", { ...EMPTY_RESOLVED, start: "s", end: "e" });
+        expect(task).toMatchObject({ worker: "start-end-image-to-video", images: { start: "s", end: "e" } });
+        expect(() => buildTasks("start-end-image-to-video", ["p"], settings, "16:9", { ...EMPTY_RESOLVED, start: "s" })).toThrow(/sourceMediaId|end/);
     });
 
-    it("unsupported mode throws with backend message", () => {
-        expect(() =>
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            buildTasks("components" as any, ["p1"], settings, "16:9", {}),
-        ).toThrow("chưa được nối API backend");
+    it("reference-images-to-video: references with handles, voice only when given", () => {
+        const refs = ["a", { imageId: "b", handle: "girl" }];
+        const [withVoice] = buildTasks("reference-images-to-video", ["p"], settings, "16:9", { ...EMPTY_RESOLVED, references: refs, voice: "giọng nữ" });
+        expect(withVoice).toEqual({
+            worker: "reference-images-to-video",
+            params: { prompt: "p", model: "Veo_3.1-Lite", ratio: "16:9", duration: 6, audioEnabled: true, audio: "giọng nữ" },
+            images: { references: refs },
+        });
+        const [noVoice] = buildTasks("reference-images-to-video", ["p"], settings, "16:9", { ...EMPTY_RESOLVED, references: refs });
+        expect("audio" in (noVoice?.params ?? {})).toBe(false);
+    });
+
+    it("extend-video: sourceMediaId at task level, params only prompt + model (no duration/audio/ratio)", () => {
+        const [task] = buildTasks("extend-video", ["tiếp"], settings, "16:9", { ...EMPTY_RESOLVED, sourceMediaId: "media_1" });
+        expect(task).toEqual({ worker: "extend-video", params: { prompt: "tiếp", model: "Veo_3.1-Lite" }, sourceMediaId: "media_1" });
+        expect(() => buildTasks("extend-video", ["p"], settings, "16:9", EMPTY_RESOLVED)).toThrow("sourceMediaId");
+    });
+
+    it("text-to-image: ratio + optional seed, never duration/audio", () => {
+        const [plain] = buildTasks("text-to-image", ["p"], imageSettings, "1:1", EMPTY_RESOLVED);
+        expect(plain).toEqual({ worker: "text-to-image", params: { prompt: "p", model: "Nano_Banana_Pro", ratio: "1:1" } });
+        const [seeded] = buildTasks("text-to-image", ["p"], { ...imageSettings, seed: 12345 }, "4:3", EMPTY_RESOLVED);
+        expect(seeded?.params).toEqual({ prompt: "p", model: "Nano_Banana_Pro", ratio: "4:3", seed: 12345 });
+    });
+
+    it("image-to-image: always sends images.sources (even for one image) and no seed", () => {
+        const [task] = buildTasks("image-to-image", ["p"], { ...imageSettings, seed: 12345 }, "1:1", { ...EMPTY_RESOLVED, sources: [{ imageId: "x", handle: "a" }] });
+        expect(task).toEqual({
+            worker: "image-to-image",
+            params: { prompt: "p", model: "Nano_Banana_Pro", ratio: "1:1" },
+            images: { sources: [{ imageId: "x", handle: "a" }] },
+        });
+    });
+
+    it("upscale: attached per task when chosen, resolution as given", () => {
+        const [video] = buildTasks("text-to-video", ["p"], { ...settings, upscale: "1080P" }, "16:9", EMPTY_RESOLVED);
+        expect(video?.upscale).toEqual({ resolution: "1080P" });
+        const [image] = buildTasks("text-to-image", ["p"], { ...imageSettings, upscale: "4K" }, "1:1", EMPTY_RESOLVED);
+        expect(image?.upscale).toEqual({ resolution: "4K" });
+        const [none] = buildTasks("text-to-image", ["p"], imageSettings, "1:1", EMPTY_RESOLVED);
+        expect("upscale" in (none ?? {})).toBe(false);
     });
 });

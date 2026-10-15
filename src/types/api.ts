@@ -9,6 +9,8 @@ export interface ApiErrorResponse {
         message: string;
         requestId: string;
         details?: ApiErrorDetail[];
+        /** Ngữ cảnh lỗi có cấu trúc (BAD_IMAGE_INPUTS: field/constraint/max/given/model/omniMax/handle; IMAGE_NOT_FOUND: imageId/ttlHours). */
+        metadata?: Record<string, unknown>;
     };
 }
 
@@ -207,12 +209,20 @@ export interface PortalTask {
     updatedAt: string;
 
     completedAt: string | null;
+
+    generationMode?: "mock" | "real";
 }
 
 export interface PortalTasksResponse {
     tasks: PortalTask[];
 
     nextCursor: string | null;
+}
+
+/** GET /v1/tasks?ids=… */
+export interface ListTasksByIdsResponse {
+    tasks: PortalTask[];
+    notFound: string[];
 }
 
 export interface GetTasksParams {
@@ -236,11 +246,15 @@ export type UpscaleResolution =
     | "4K"
     | "1080P";
 
+/** Ảnh đính kèm: imageId trần hoặc kèm `handle` để nhắc `@handle` trong prompt. */
+export type ImageRef = string | { imageId: string; handle?: string };
+
 export interface CreateTaskImages {
-    start?: string;
-    end?: string;
-    references?: string[];
-    source?: string;
+    start?: ImageRef;
+    end?: ImageRef;
+    references?: ImageRef[];
+    source?: ImageRef;
+    sources?: ImageRef[];
 }
 
 export interface CreateTaskUpscale {
@@ -276,8 +290,20 @@ export interface BatchTasksResponse {
     tasks: PortalTask[];
 }
 
+/** POST /v1/batches/:id/cancel — `cancelled` là các task vừa huỷ; `skipped` = task đã kết thúc, không huỷ được. */
+export interface CancelBatchResponse {
+    cancelled: PortalTask[];
+    skipped: number;
+    creditsRefunded: number;
+}
+
 export interface UploadedImage {
     imageId: string;
+    /** Tên field multipart khách đặt (vd `references_001`) — trả lại để ghép id vào đúng vai trò. */
+    name: string;
+    filename: string | null;
+    /** Trùng nội dung ảnh đã có ⇒ id ảnh gốc (cùng imageId); null = ảnh mới. */
+    duplicateOf: string | null;
     mime: string;
     size: number;
     sha256: string;

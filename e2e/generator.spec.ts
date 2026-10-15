@@ -7,7 +7,7 @@ test("tạo video nhanh từ dashboard bằng phiên đăng nhập (không cần
     await expect(page.getByRole("heading", { name: /Xin chào/ })).toBeVisible();
 
     await page.getByPlaceholder(/Nhập prompt/).fill("Một chú mèo đang lướt sóng lúc hoàng hôn");
-    await page.getByRole("button", { name: /^Tạo$/ }).click();
+    await page.getByRole("button", { name: /^Tạo video$/ }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0); // không còn dialog "Kết nối API key"
     expect(await page.evaluate(() => localStorage.getItem("videogen_api_key"))).toBeNull();
     // Kết quả mock: task chuyển pending → processing → succeeded sau ~3 lần poll (3 s/lần) ⇒ có <video> trong thẻ kết quả.

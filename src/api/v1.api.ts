@@ -1,10 +1,11 @@
 import api from "@/lib/api";
 import type {
     BatchTasksResponse,
+    CancelBatchResponse,
     CreateTasksRequest,
     CreateTasksResponse,
+    ListTasksByIdsResponse,
     PortalTask,
-    PortalTasksResponse,
     UploadImagesResponse,
     V1Me,
     V1Models,
@@ -25,8 +26,8 @@ export async function getTask(taskId: string): Promise<PortalTask> {
     return (await api.get<PortalTask>(`/v1/tasks/${taskId}`)).data;
 }
 
-export async function listTasks(ids: string[]): Promise<PortalTasksResponse> {
-    return (await api.get<PortalTasksResponse>("/v1/tasks", { params: { ids: ids.join(",") } })).data;
+export async function listTasks(ids: string[]): Promise<ListTasksByIdsResponse> {
+    return (await api.get<ListTasksByIdsResponse>("/v1/tasks", { params: { ids: ids.join(",") } })).data;
 }
 
 export async function batch(batchId: string): Promise<BatchTasksResponse> {
@@ -37,22 +38,34 @@ export async function cancelTask(taskId: string): Promise<PortalTask> {
     return (await api.post<PortalTask>(`/v1/tasks/${taskId}/cancel`)).data;
 }
 
-export async function cancelBatch(batchId: string): Promise<BatchTasksResponse> {
-    return (await api.post<BatchTasksResponse>(`/v1/batches/${batchId}/cancel`)).data;
+export async function cancelBatch(batchId: string): Promise<CancelBatchResponse> {
+    return (await api.post<CancelBatchResponse>(`/v1/batches/${batchId}/cancel`)).data;
 }
 
-export async function uploadImages(files: File[]): Promise<UploadImagesResponse> {
-    if (files.length === 0) return { images: [] };
-    const fd = new FormData();
-    files.forEach((f, i) => fd.append(i === 0 ? "file" : `file${i + 1}`, f));
-    return (await api.post<UploadImagesResponse>("/v1/images", fd)).data;
+/** Một part multipart: `name` là tên field do client đặt, backend trả lại cùng imageId để ghép vai trò. */
+export interface UploadPart {
+    name: string;
+    file: File;
 }
 
-export async function uploadImage(file: File): Promise<string> {
-    const r = await uploadImages([file]);
-    const img = r.images[0];
-    if (!img) throw new Error("IMAGE_UPLOAD_FAILED");
-    return img.imageId;
+export interface UploadOptions {
+    onUploadProgress?: (loaded: number, total: number) => void;
+    signal?: AbortSignal;
+}
+
+export async function uploadImages(parts: UploadPart[], options: UploadOptions = {}): Promise<UploadImagesResponse> {
+    if (parts.length === 0) return { images: [] };
+    const form = new FormData();
+    for (const part of parts) form.append(part.name, part.file, part.file.name);
+    const { onUploadProgress, signal } = options;
+    return (
+        await api.post<UploadImagesResponse>("/v1/images", form, {
+            signal,
+            onUploadProgress: onUploadProgress
+                ? (event) => onUploadProgress(event.loaded, event.total ?? event.loaded)
+                : undefined,
+        })
+    ).data;
 }
 
 export async function models(): Promise<V1Models> {

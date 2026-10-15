@@ -1,25 +1,48 @@
 import type { AxiosError } from "axios";
 
+export interface ApiErrorExtra {
+    /** `error.metadata` của backend (BAD_IMAGE_INPUTS, IMAGE_NOT_FOUND…). */
+    metadata?: Record<string, unknown>;
+    /** Header `Retry-After` (giây) khi 429 QUEUE_FULL / RATE_LIMITED. */
+    retryAfterSec?: number;
+}
+
 export class ApiError extends Error {
     status: number;
     code: string;
     requestId?: string;
-    constructor(status: number, code: string, message: string, requestId?: string) {
+    metadata?: Record<string, unknown>;
+    retryAfterSec?: number;
+    constructor(status: number, code: string, message: string, requestId?: string, extra: ApiErrorExtra = {}) {
         super(message);
         this.name = "ApiError";
         this.status = status;
         this.code = code;
         this.requestId = requestId;
+        this.metadata = extra.metadata;
+        this.retryAfterSec = extra.retryAfterSec;
     }
+}
+
+type ApiErrorBody = { error?: { code?: string; message?: string; requestId?: string; metadata?: Record<string, unknown> } };
+
+function parseRetryAfter(value: unknown): number | undefined {
+    if (typeof value !== "string" && typeof value !== "number") return undefined;
+    const seconds = Number.parseInt(String(value), 10);
+    return Number.isFinite(seconds) && seconds >= 0 ? seconds : undefined;
 }
 
 export function toApiError(err: unknown): ApiError {
     if (err instanceof ApiError) return err;
-    const ax = err as AxiosError<{ error?: { code?: string; message?: string; requestId?: string } }>;
+    const ax = err as AxiosError<ApiErrorBody>;
     if (ax?.isAxiosError) {
         if (!ax.response) return new ApiError(0, "NETWORK", "Lỗi kết nối mạng.");
         const e = ax.response.data?.error;
-        return new ApiError(ax.response.status, e?.code ?? String(ax.response.status), e?.message ?? ax.message, e?.requestId);
+        const headers = ax.response.headers as Record<string, unknown> | undefined;
+        return new ApiError(ax.response.status, e?.code ?? String(ax.response.status), e?.message ?? ax.message, e?.requestId, {
+            metadata: e?.metadata,
+            retryAfterSec: parseRetryAfter(headers?.["retry-after"]),
+        });
     }
     return new ApiError(0, "INTERNAL", err instanceof Error ? err.message : "Lỗi không xác định.");
 }
