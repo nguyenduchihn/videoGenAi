@@ -19,7 +19,8 @@ vi.mock("@/stores/auth.store", () => ({
         selector({ user: { user: { id: "user-1" } } }),
 }));
 const toast = { warning: vi.fn(), error: vi.fn(), success: vi.fn(), info: vi.fn() };
-vi.mock("@/hooks/useFeedback", () => ({ useFeedback: () => ({ toast }) }));
+// Giả lập useFeedback trả object `toast` MỚI mỗi render (như hook thật trước khi memo) để chắc runner không nhân poller.
+vi.mock("@/hooks/useFeedback", () => ({ useFeedback: () => ({ toast: { ...toast } }) }));
 
 import { pollBatch } from "@/lib/pollBatch";
 import { taskService } from "@/services/task.service";
@@ -217,6 +218,22 @@ describe("useBatchRunner", () => {
         expect(result.current.results[0]).toMatchObject({ id: "t-img", type: "image", status: "completed", prompt: "ảnh mèo", jobIndex: 1 });
         expect(taskStorageService.removeBatch).toHaveBeenCalledWith("user-1", "b-gone");
         expect(pollBatch).not.toHaveBeenCalled();
+    });
+
+    it("re-renders never restart the restore effect nor spawn a second poller for the same batch", async () => {
+        vi.mocked(taskStorageService.getBatches).mockReturnValue([
+            { batchId: "b-live", taskIds: ["t-live"], prompts: ["p"], createdAt: new Date().toISOString() },
+        ]);
+        vi.mocked(taskService.getBatch).mockResolvedValue({ tasks: [task({ id: "t-live", batchId: "b-live", status: "processing" })] });
+        vi.mocked(pollBatch).mockImplementation(() => new Promise(() => undefined));
+        const { result, rerender } = renderHook(() => useBatchRunner());
+        await waitFor(() => expect(result.current.results).toHaveLength(1));
+
+        for (let i = 0; i < 5; i += 1) rerender();
+        await act(async () => { await Promise.resolve(); });
+
+        expect(taskService.getBatch).toHaveBeenCalledTimes(1);
+        expect(pollBatch).toHaveBeenCalledTimes(1);
     });
 
     it("cancelAll cancels every active batch and marks their cards as cancelled", async () => {

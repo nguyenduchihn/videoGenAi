@@ -82,6 +82,9 @@ const isActive = (item: GeneratorResultItem) => item.status === "pending" || ite
 
 export function useBatchRunner(): UseBatchRunnerReturn {
     const { toast } = useFeedback();
+    // Giữ toast trong ref: callback/effect bên dưới không phụ thuộc identity của toast (tránh chạy lại restore, nhân poller).
+    const toastRef = useRef(toast);
+    useEffect(() => { toastRef.current = toast; }, [toast]);
     const [results, setResults] = useState<GeneratorResultItem[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [queueNotice, setQueueNotice] = useState<QueueNotice | null>(null);
@@ -112,8 +115,9 @@ export function useBatchRunner(): UseBatchRunnerReturn {
         patchWhere((item) => byId.has(item.id), (item) => fromTask(byId.get(item.id)!, item));
     }, [patchWhere]);
 
-    /** Poll một lô tới khi xong; lô hết hạn/không tồn tại ⇒ bỏ khỏi localStorage. */
+    /** Poll một lô tới khi xong (mỗi lô chỉ một poller); lô hết hạn/không tồn tại ⇒ bỏ khỏi localStorage. */
     const trackBatch = useCallback(async (batchId: string): Promise<void> => {
+        if (pollControllers.current.has(batchId)) return;
         const controller = new AbortController();
         pollControllers.current.set(batchId, controller);
         let exhausted = false;
@@ -122,7 +126,7 @@ export function useBatchRunner(): UseBatchRunnerReturn {
                 signal: controller.signal,
                 onExhausted: () => {
                     exhausted = true;
-                    toast.warning(EXHAUSTED_MESSAGE);
+                    toastRef.current.warning(EXHAUSTED_MESSAGE);
                 },
             });
             if (!exhausted && !controller.signal.aborted) taskStorageService.removeBatch(userIdRef.current, batchId);
@@ -134,7 +138,7 @@ export function useBatchRunner(): UseBatchRunnerReturn {
         } finally {
             if (pollControllers.current.get(batchId) === controller) pollControllers.current.delete(batchId);
         }
-    }, [applyTasks, patchWhere, toast]);
+    }, [applyTasks, patchWhere]);
 
     useEffect(() => {
         let cancelled = false;
@@ -310,16 +314,16 @@ export function useBatchRunner(): UseBatchRunnerReturn {
         );
         patchWhere((item) => cancelledIds.has(item.id), { status: "failed", error: CANCELLED_MESSAGE });
         const firstFailure = settled.find((outcome): outcome is PromiseRejectedResult => outcome.status === "rejected");
-        if (firstFailure) toast.error(describeApiError(firstFailure.reason));
-    }, [patchWhere, results, toast]);
+        if (firstFailure) toastRef.current.error(describeApiError(firstFailure.reason));
+    }, [patchWhere, results]);
 
     const download = useCallback((result: GeneratorResultItem): void => {
         if (!result.url) {
-            toast.warning(`Job #${result.jobIndex} chưa có file kết quả để tải.`);
+            toastRef.current.warning(`Job #${result.jobIndex} chưa có file kết quả để tải.`);
             return;
         }
         window.open(result.url, "_blank", "noopener");
-    }, [toast]);
+    }, []);
 
     return { results, isGenerating, queueNotice, submit, retry, cancel, cancelAll, download };
 }
