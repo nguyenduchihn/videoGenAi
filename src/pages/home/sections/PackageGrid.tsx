@@ -24,7 +24,6 @@ export function PackageGrid({ packages, highlightedId, disabled, ctaLabel, onCho
                 return (
                     <li
                         key={pkg.id}
-                        aria-disabled={disabled || undefined}
                         className={`lift relative flex flex-col rounded-2xl border p-6 ${featured ? "border-app-accent bg-app-surface shadow-xl shadow-app-accent/10 lg:-translate-y-2 lg:scale-[1.02]" : "border-app-border bg-app-bg"} ${disabled ? "opacity-70" : ""}`}
                     >
                         {featured && <div className="absolute -top-3 left-6"><Badge variant="accent">Phổ biến</Badge></div>}
@@ -42,7 +41,7 @@ export function PackageGrid({ packages, highlightedId, disabled, ctaLabel, onCho
                             onClick={() => onChoose(pkg)}
                             disabled={disabled}
                             aria-label={`${ctaLabel} ${pkg.label}`}
-                            className={`mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-xl text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent/40 disabled:cursor-not-allowed ${featured ? "bg-app-accent text-white hover:bg-app-accent-hover" : "border border-app-border bg-app-surface text-app-text hover:border-app-accent/40 hover:text-app-accent"}`}
+                            className={`mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-xl text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent/40 disabled:cursor-not-allowed ${featured ? "bg-app-accent text-app-accent-fg hover:bg-app-accent-hover" : "border border-app-border bg-app-surface text-app-text hover:border-app-accent/40 hover:text-app-accent"}`}
                         >
                             {ctaLabel}
                         </button>

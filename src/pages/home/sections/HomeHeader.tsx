@@ -88,7 +88,7 @@ export function HomeHeader() {
 
                 <div className="hidden items-center gap-2 sm:flex">
                     {user ? (
-                        <button type="button" onClick={() => navigate("/dashboard")} className="rounded-lg bg-app-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-app-accent-hover">
+                        <button type="button" onClick={() => navigate("/dashboard")} className="rounded-lg bg-app-accent px-4 py-2 text-sm font-semibold text-app-accent-fg transition hover:bg-app-accent-hover">
                             Vào Dashboard
                         </button>
                     ) : (
@@ -96,7 +96,7 @@ export function HomeHeader() {
                             <button type="button" onClick={() => navigate("/login")} className="rounded-lg px-3.5 py-2 text-sm font-medium text-app-text-secondary transition-colors hover:text-app-accent">
                                 Đăng nhập
                             </button>
-                            <button type="button" onClick={() => navigate("/register")} className="rounded-lg bg-app-accent px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-app-accent/20 transition-all hover:bg-app-accent-hover hover:shadow-md">
+                            <button type="button" onClick={() => navigate("/register")} className="rounded-lg bg-app-accent px-4 py-2.5 text-sm font-semibold text-app-accent-fg shadow-sm shadow-app-accent/20 transition-all hover:bg-app-accent-hover hover:shadow-md">
                                 {trialCtaLabel(signupGrant)}
                             </button>
                         </>
@@ -110,14 +110,14 @@ export function HomeHeader() {
                     aria-expanded={open}
                     aria-controls="home-drawer"
                     onClick={() => setOpen((p) => !p)}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-app-border text-app-text-secondary transition hover:bg-app-surface-soft sm:hidden"
+                    className="flex h-11 w-11 items-center justify-center rounded-lg border border-app-border text-app-text-secondary transition hover:bg-app-surface-soft lg:hidden"
                 >
                     {open ? <X className="h-5 w-5" aria-hidden /> : <Menu className="h-5 w-5" aria-hidden />}
                 </button>
             </div>
 
-            {open && (
-                <div id="home-drawer" ref={drawerRef} className="border-t border-app-border/70 bg-app-bg px-4 py-5 shadow-lg sm:hidden">
+            {/* Luôn trong DOM (hidden khi đóng) để aria-controls luôn trỏ tới phần tử có thật; hiện tới < lg vì nav ngang chỉ có từ lg */}
+            <div id="home-drawer" ref={drawerRef} hidden={!open} className="border-t border-app-border/70 bg-app-bg px-4 py-5 shadow-lg lg:hidden">
                     <div className="flex flex-col gap-1">
                         {NAV.map((n) => (
                             <button key={n.id} type="button" onClick={() => jump(n.id)} className="rounded-lg px-4 py-3 text-left text-sm text-app-text-secondary transition hover:bg-app-surface-soft hover:text-app-text">
@@ -127,14 +127,15 @@ export function HomeHeader() {
                         <Link to={API_DOCS_URL} className="rounded-lg px-4 py-3 text-left text-sm text-app-text-secondary transition hover:bg-app-surface-soft hover:text-app-text">
                             Tài liệu API
                         </Link>
-                        <div className="my-3 h-px bg-app-border" />
+                        <div className="my-3 h-px bg-app-border sm:hidden" />
+                        <div className="flex flex-col gap-1 sm:hidden">
                         {user ? (
-                            <button type="button" onClick={() => go("/dashboard")} className="rounded-lg bg-app-accent px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-app-accent-hover">
+                            <button type="button" onClick={() => go("/dashboard")} className="rounded-lg bg-app-accent px-4 py-3 text-left text-sm font-semibold text-app-accent-fg transition hover:bg-app-accent-hover">
                                 Vào Dashboard
                             </button>
                         ) : (
                             <>
-                                <button type="button" onClick={() => go("/register")} className="rounded-lg bg-app-accent px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-app-accent-hover">
+                                <button type="button" onClick={() => go("/register")} className="rounded-lg bg-app-accent px-4 py-3 text-left text-sm font-semibold text-app-accent-fg transition hover:bg-app-accent-hover">
                                     {trialCtaLabel(signupGrant)}
                                 </button>
                                 <button type="button" onClick={() => go("/login")} className="mt-1 rounded-lg border border-app-border bg-app-surface px-4 py-3 text-left text-sm font-medium text-app-text transition hover:bg-app-surface-soft">
@@ -142,9 +143,9 @@ export function HomeHeader() {
                                 </button>
                             </>
                         )}
+                        </div>
                     </div>
                 </div>
-            )}
         </header>
     );
 }

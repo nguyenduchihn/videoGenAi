@@ -99,12 +99,12 @@ export function HeroSection() {
                     </p>
                     <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                         {user ? (
-                            <button type="button" onClick={() => navigate("/dashboard")} className="group inline-flex items-center justify-center gap-2 rounded-xl bg-app-accent px-7 py-4 text-sm font-semibold text-white shadow-lg shadow-app-accent/25 transition-all hover:-translate-y-0.5 hover:bg-app-accent-hover">
+                            <button type="button" onClick={() => navigate("/dashboard")} className="group inline-flex items-center justify-center gap-2 rounded-xl bg-app-accent px-7 py-4 text-sm font-semibold text-app-accent-fg shadow-lg shadow-app-accent/25 transition-all hover:-translate-y-0.5 hover:bg-app-accent-hover">
                                 Vào Dashboard
                                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
                             </button>
                         ) : (
-                            <button type="button" onClick={() => navigate("/register")} className="group inline-flex items-center justify-center gap-2 rounded-xl bg-app-accent px-7 py-4 text-sm font-semibold text-white shadow-lg shadow-app-accent/25 transition-all hover:-translate-y-0.5 hover:bg-app-accent-hover">
+                            <button type="button" onClick={() => navigate("/register")} className="group inline-flex items-center justify-center gap-2 rounded-xl bg-app-accent px-7 py-4 text-sm font-semibold text-app-accent-fg shadow-lg shadow-app-accent/25 transition-all hover:-translate-y-0.5 hover:bg-app-accent-hover">
                                 {trialCtaLabel(signupGrant)}
                                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
                             </button>
@@ -154,9 +154,11 @@ export function HeroSection() {
                             </div>
                             <span className="hidden text-[11px] text-white/35 sm:block">aiveo3.org</span>
                         </div>
-                        <div role="tabpanel" id={`hero-panel-${tab}`} aria-labelledby={`hero-tab-${tab}`} className="min-h-[260px] bg-black/20">
-                            {tab === "studio" ? <StudioShot dark={isDark} /> : <ApiPreview batchMax={batchMax} />}
-                        </div>
+                        {TABS.map((t) => (
+                            <div key={t.id} role="tabpanel" id={`hero-panel-${t.id}`} aria-labelledby={`hero-tab-${t.id}`} hidden={tab !== t.id} className="min-h-[260px] bg-black/20">
+                                {t.id === "studio" ? <StudioShot dark={isDark} /> : <ApiPreview batchMax={batchMax} />}
+                            </div>
+                        ))}
                     </div>
                     <p className="mt-3 text-center text-[11px] text-white/40">
                         {tab === "studio" ? "Giao diện Studio thật: chọn chế độ, nhập prompt, theo dõi lượt tạo." : `Một request tạo tới ${batchMax ?? "nhiều"} task; theo dõi qua GET /v1/batches/:id hoặc webhook.`}

@@ -105,7 +105,7 @@ export function FooterSection() {
                         <span aria-hidden="true" className="h-1 w-1 rounded-full bg-app-border" />
                         <Link to="/terms" className="text-xs text-app-text-muted transition-colors hover:text-app-accent">Điều khoản sử dụng</Link>
                         <span aria-hidden="true" className="h-1 w-1 rounded-full bg-app-border" />
-                        <a href="#top" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="text-xs font-medium text-app-text-secondary transition-colors hover:text-app-accent">Lên đầu trang ↑</a>
+                        <a href="#top" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="text-xs font-medium text-app-text-secondary transition-colors hover:text-app-accent">Lên đầu trang <span aria-hidden="true">↑</span></a>
                     </div>
                 </div>
             </div>

@@ -53,6 +53,7 @@ export function HowItWorks() {
     return (
         <section id="cach-hoat-dong" aria-labelledby="how-heading" className="scroll-mt-20 border-t border-app-border bg-app-surface">
             <div className="mx-auto max-w-7xl px-4 py-16 sm:py-20 lg:px-8 lg:py-24">
+                <Tabs value={tab} onChange={setTab}>
                 <div ref={headRef} className={`${headClass} flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between`}>
                     <div className="max-w-2xl">
                         <p className="eyebrow text-app-accent">Cách dùng</p>
@@ -63,16 +64,13 @@ export function HowItWorks() {
                             Người làm nội dung dùng Studio trong trình duyệt; lập trình viên gọi API từ hệ thống của mình. Cùng một hàng đợi, cùng một bảng giá.
                         </p>
                     </div>
-                    <Tabs value={tab} onChange={setTab} className="w-full max-w-xs">
-                        <TabsList aria-label="Chọn cách dùng">
-                            <TabsTrigger value="studio">Studio</TabsTrigger>
-                            <TabsTrigger value="api">API</TabsTrigger>
-                        </TabsList>
-                    </Tabs>
+                    <TabsList aria-label="Chọn cách dùng" className="w-full max-w-xs">
+                        <TabsTrigger value="studio">Studio</TabsTrigger>
+                        <TabsTrigger value="api">API</TabsTrigger>
+                    </TabsList>
                 </div>
-                <Tabs value={tab} onChange={setTab}>
-                    <TabsContent value="studio"><StepGrid steps={STUDIO} /></TabsContent>
-                    <TabsContent value="api"><StepGrid steps={API} /></TabsContent>
+                <TabsContent value="studio"><StepGrid steps={STUDIO} /></TabsContent>
+                <TabsContent value="api"><StepGrid steps={API} /></TabsContent>
                 </Tabs>
             </div>
         </section>

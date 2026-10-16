@@ -21,9 +21,12 @@ function SessionProbe() {
 export default function Home() {
     return (
         <div className="landing min-h-screen overflow-x-hidden bg-app-bg text-app-text">
+            <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-app-bg focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-app-text focus:ring-2 focus:ring-app-accent">
+                Bỏ qua điều hướng
+            </a>
             <SessionProbe />
             <HomeHeader />
-            <main>
+            <main id="main-content">
                 <HeroSection />
                 <TrustStrip />
                 <CapabilityBento />

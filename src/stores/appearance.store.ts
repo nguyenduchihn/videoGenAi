@@ -14,6 +14,8 @@ export interface AccentPreset {
     accent: string;
     hover: string;
     soft: string;
+    /** Màu chữ trên nền accent: cam (#f4a261) với chữ trắng chỉ 2:1 ⇒ dùng chữ tối; các màu còn lại chữ trắng. */
+    fg: string;
 }
 
 const softOf = (accent: string) =>
@@ -25,24 +27,28 @@ export const ACCENT_PRESETS: Record<AccentColor, AccentPreset> = {
         accent: "#f4a261",
         hover: "#e88945",
         soft: softOf("#f4a261"),
+        fg: "#1f1206",
     },
     violet: {
         title: "Tím",
         accent: "#3520f5",
         hover: "#2916d9",
         soft: softOf("#3520f5"),
+        fg: "#ffffff",
     },
     blue: {
         title: "Xanh dương",
         accent: "#2563eb",
         hover: "#1d4ed8",
         soft: softOf("#2563eb"),
+        fg: "#ffffff",
     },
     green: {
         title: "Xanh lá",
         accent: "#16a34a",
         hover: "#15803d",
         soft: softOf("#16a34a"),
+        fg: "#ffffff",
     },
 };
 
@@ -162,6 +168,7 @@ function applyAccent(accent: AccentColor) {
     root.style.setProperty("--app-accent", selected.accent);
     root.style.setProperty("--app-accent-hover", selected.hover);
     root.style.setProperty("--app-accent-soft", selected.soft);
+    root.style.setProperty("--app-accent-fg", selected.fg);
 }
 
 function applyPreferences(state: AppearancePreferences) {
