@@ -123,7 +123,7 @@ export default function LibraryToolbar({
                             onClick={onSelectCurrentPage}
                             className={actionClass}
                         >
-                            Chọn trang này
+                            Chọn tất cả đã tải
                         </button>
 
                         <button

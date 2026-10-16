@@ -1,6 +1,7 @@
 import { Download, FastForward, Image as ImageIcon, Loader2, Play, RefreshCw, Video, XCircle } from "lucide-react";
 import { useState } from "react";
 import { getRatioPreviewClass } from "@/components/generator/ratioPreview";
+import { LazyImage, LazyVideo } from "@/components/media";
 import type { PortalTask } from "@/types/api";
 import { ICON_BUTTON, ICON_BUTTON_PRIMARY, isActiveTask, isVideoTask, STATUS_CLASS, STATUS_LABEL, taskAlt, taskErrorText, taskNumber, type RunTaskActions } from "./runTaskView";
 
@@ -43,16 +44,17 @@ function Preview({ task, ratio, onRefresh }: { task: PortalTask; ratio?: string;
             </button>
         );
     }
+    // Media chỉ tải khi thẻ cuộn tới và tới lượt trong hàng đợi (xem components/media): lượt 100 job không kéo 100 file cùng lúc.
     if (isVideoTask(task)) {
         return (
             <div className="aspect-video overflow-hidden bg-black">
-                <video src={url} controls preload="metadata" aria-label={taskAlt(task)} onError={() => setExpired(true)} className="h-full w-full object-contain" />
+                <LazyVideo src={url} controls aria-label={taskAlt(task)} onError={() => setExpired(true)} wrapperClassName="bg-black" className="object-contain" />
             </div>
         );
     }
     return (
         <div className={`${getRatioPreviewClass(ratio)} overflow-hidden bg-[var(--app-surface-soft)]`}>
-            <img src={url} alt={taskAlt(task)} loading="lazy" decoding="async" onError={() => setExpired(true)} className="h-full w-full object-contain" />
+            <LazyImage src={url} alt={taskAlt(task)} onError={() => setExpired(true)} className="object-contain" />
         </div>
     );
 }

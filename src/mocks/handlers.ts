@@ -12,7 +12,7 @@ import {
 import { mockPricingResponse } from "./pricing.mock";
 import { mockUploadedImage } from "./images.mock";
 import { cancelMockRun, enqueueMockItems, getMockRunSummary, listMockRuns, mockRunTasksPage, renameMockRun, retryMockFailed, seedMockBigRun, upsertMockRun } from "./runs.mock";
-import { cancelMockTask, createMockBatch, getMockBatch, mockTasksResponse, takenRunIndices, validateMockTask } from "./tasks.mock";
+import { allMockBatchTasks, cancelMockTask, createMockBatch, getMockBatch, mockTasksResponse, takenRunIndices, validateMockTask } from "./tasks.mock";
 import type { RunStatus, TaskStatus } from "@/types/api";
 
 /** e2e: localStorage `videogen:mock-big-run` = N ⇒ /v1/runs có sẵn lượt `run_mock_big` với N task đã xong. */
@@ -122,7 +122,10 @@ export const handlers = [
         const status = q.get("status");
         const limit = Math.min(50, Math.max(1, Number(q.get("limit")) || 20));
         const offset = Math.max(0, Number(q.get("cursor")) || 0);
-        const all = status ? mockTasksResponse.tasks.filter((task) => task.status === status) : mockTasksResponse.tasks;
+        seedBigRunIfRequested();
+        // Task mẫu đứng trước (e2e lịch sử dựa vào thứ tự này), sau đó là task của các lô/lượt mock đã tạo trong phiên.
+        const pool = [...mockTasksResponse.tasks, ...allMockBatchTasks()];
+        const all = status ? pool.filter((task) => task.status === status) : pool;
         const tasks = all.slice(offset, offset + limit);
         return HttpResponse.json({ tasks, nextCursor: offset + limit < all.length ? String(offset + limit) : null });
     }),

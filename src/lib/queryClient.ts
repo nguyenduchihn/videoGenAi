@@ -14,6 +14,8 @@ export const qk = {
     models: ["models"] as const,
     ledger: (cursor?: string) => ["ledger", cursor ?? null] as const,
     tasks: (params?: GetTasksParams) => ["tasks", params ?? {}] as const,
+    /** Thư viện media: các trang task succeeded, tải dần khi cuộn. */
+    library: ["tasks", "library"] as const,
     intents: (cursor?: string) => ["intents", cursor ?? null] as const,
     runs: (status?: RunStatus) => ["runs", status ?? "all"] as const,
     /** Bản kê lượt đang gửi dở (IndexedDB) của một khách. */

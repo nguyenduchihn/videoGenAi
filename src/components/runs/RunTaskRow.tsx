@@ -1,4 +1,5 @@
 import { Download, FastForward, Loader2, RefreshCw, XCircle } from "lucide-react";
+import { LazyImage, LazyVideo } from "@/components/media";
 import type { PortalTask } from "@/types/api";
 import { ICON_BUTTON, isActiveTask, isVideoTask, STATUS_CLASS, STATUS_LABEL, taskAlt, taskErrorText, taskNumber, type RunTaskActions } from "./runTaskView";
 
@@ -10,7 +11,7 @@ export default function RunTaskRow({ task, actions, rowIndex }: { task: PortalTa
         <div role="row" aria-rowindex={rowIndex} className={`flex items-center gap-3 border-b border-[var(--app-border)] px-4 py-2 sm:px-5 ${task.status === "failed" ? "border-l-4 border-l-[var(--app-danger)]" : ""}`}>
             <div className="flex h-10 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[var(--app-surface-soft)]" aria-hidden="true">
                 {url && task.status === "succeeded" ? (
-                    isVideoTask(task) ? <video src={url} preload="none" muted className="h-full w-full object-cover" /> : <img src={url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                    isVideoTask(task) ? <LazyVideo src={url} muted plain className="object-cover" /> : <LazyImage src={url} alt="" plain className="object-cover" />
                 ) : isActiveTask(task) ? (
                     <Loader2 className="h-4 w-4 text-[var(--app-text-muted)] motion-safe:animate-spin" />
                 ) : null}
