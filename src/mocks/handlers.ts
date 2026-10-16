@@ -196,7 +196,7 @@ export const handlers = [
     ),
     http.get("/portal/pricing", () =>
         mockMode() === "subscription"
-            ? HttpResponse.json({ ...mockPricingResponse, topupEnabled: false, packages: [], commercialMode: "subscription", plans: mockPlansForSale })
+            ? HttpResponse.json({ ...mockPricingResponse, topupEnabled: false, packages: [], commercialMode: "subscription", plans: mockPlansForSale, trialDays: 14 })
             : HttpResponse.json({ ...mockPricingResponse, topupEnabled: !isMockTopupDisabled() }),
     ),
 

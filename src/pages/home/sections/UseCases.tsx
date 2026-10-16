@@ -1,115 +1,68 @@
-import { ArrowUpRight, GraduationCap, Megaphone, ShoppingBag, Smartphone } from "lucide-react";
+import { ArrowUpRight, Cpu, GraduationCap, Megaphone, ShoppingBag, Smartphone } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { usePricing } from "@/hooks/usePricing";
+import { useReveal } from "../useReveal";
+import { API_DOCS_URL } from "../landingCopy";
 
-const CASES = [
-    {
-        n: "01",
-        title: "Marketing",
-        desc: "Tạo video quảng cáo, chiến dịch truyền thông và nội dung thương hiệu thu hút khách hàng.",
-        tag: "Brand & Campaign",
-        icon: <Megaphone className="h-5 w-5" />,
-    },
-    {
-        n: "02",
-        title: "Social Media",
-        desc: "Sáng tạo nội dung cho TikTok, Reels, Shorts và các nền tảng mạng xã hội.",
-        tag: "Short-form Content",
-        icon: <Smartphone className="h-5 w-5" />,
-    },
-    {
-        n: "03",
-        title: "Sản phẩm",
-        desc: "Biến hình ảnh sản phẩm thành video giới thiệu trực quan, chuyên nghiệp và hấp dẫn.",
-        tag: "Product Showcase",
-        icon: <ShoppingBag className="h-5 w-5" />,
-    },
-    {
-        n: "04",
-        title: "Giáo dục",
-        desc: "Xây dựng video bài giảng, nội dung hướng dẫn và tài liệu đào tạo dễ tiếp cận.",
-        tag: "Learning & Training",
-        icon: <GraduationCap className="h-5 w-5" />,
-    },
+interface UseCase {
+    title: string;
+    desc: string;
+    workers: string;
+    icon: LucideIcon;
+}
+
+const CASES: UseCase[] = [
+    { title: "Marketing", desc: "Video quảng cáo, teaser chiến dịch và nội dung thương hiệu từ kịch bản hoặc ảnh sản phẩm.", workers: "text-to-video · image-to-video", icon: Megaphone },
+    { title: "Mạng xã hội", desc: "Clip ngắn cho TikTok, Reels, Shorts theo lô hàng chục biến thể, upscale lên 1080P hay 4K trước khi đăng.", workers: "text-to-video · upscale-video", icon: Smartphone },
+    { title: "Sản phẩm", desc: "Giữ sản phẩm nhất quán qua ảnh tham chiếu, dựng cảnh xoay, mở hộp, chuyển cảnh đầu-cuối.", workers: "reference-images-to-video · start-end-image-to-video", icon: ShoppingBag },
+    { title: "Giáo dục", desc: "Minh hoạ bài giảng, video hướng dẫn và ảnh minh họa từ mô tả văn bản.", workers: "text-to-video · text-to-image", icon: GraduationCap },
 ];
 
 export function UseCases() {
+    const { data } = usePricing();
+    const [headRef, headClass] = useReveal<HTMLDivElement>();
+    const [gridRef, gridClass] = useReveal<HTMLDivElement>();
+    const batch = data?.maxBatchTasks;
     return (
-        <section
-            id="ung-dung"
-            aria-labelledby="cases-heading"
-            className="scroll-mt-20 border-t border-app-border bg-app-bg"
-        >
-            <div className="mx-auto max-w-7xl px-4 py-20 sm:py-24 lg:px-8 lg:py-28">
-                <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
-                    <div className="max-w-2xl">
-                        <div className="inline-flex items-center gap-2 rounded-full border border-app-accent/15 bg-app-accent-soft px-3.5 py-2 text-xs font-semibold text-app-accent">
-                            <span className="h-1.5 w-1.5 rounded-full bg-app-accent" />
-                            USE CASES
-                        </div>
-
-                        <h2
-                            id="cases-heading"
-                            className="mt-6 text-3xl font-bold leading-tight tracking-tight text-app-text sm:text-4xl lg:text-5xl"
-                        >
-                            Một công cụ.
-                            <br className="hidden sm:block" />{" "}
-                            <span className="text-app-accent">
-                                Nhiều cách sáng tạo.
-                            </span>
-                        </h2>
-                    </div>
-
-                    <p className="max-w-lg text-sm leading-7 text-app-text-secondary sm:text-base lg:pb-1">
-                        Từ marketing đến mạng xã hội, từ giới thiệu sản phẩm
-                        đến giáo dục — VideoGen AI giúp bạn biến ý tưởng thành
-                        nội dung video phù hợp với mục tiêu.
-                    </p>
+        <section id="ung-dung" aria-labelledby="cases-heading" className="scroll-mt-20 border-t border-app-border bg-app-bg">
+            <div className="mx-auto max-w-7xl px-4 py-16 sm:py-20 lg:px-8 lg:py-24">
+                <div ref={headRef} className={`${headClass} max-w-2xl`}>
+                    <p className="eyebrow text-app-accent">Ứng dụng</p>
+                    <h2 id="cases-heading" className="display-lg mt-4 text-app-text">
+                        Một công cụ, <span className="text-app-accent">nhiều cách sáng tạo.</span>
+                    </h2>
                 </div>
-
-                <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:mt-16">
-                    {CASES.map((item) => (
-                        <article
-                            key={item.n}
-                            className="group relative flex min-h-56 flex-col overflow-hidden rounded-2xl border border-app-border bg-app-surface p-6 transition-all duration-300 hover:-translate-y-1 hover:border-app-accent/35 hover:shadow-xl hover:shadow-app-accent/[0.05] sm:p-7"
-                        >
-                            <div
-                                aria-hidden="true"
-                                className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-app-accent/[0.035] blur-3xl transition-colors duration-300 group-hover:bg-app-accent/[0.10]"
-                            />
-
-                            <div className="relative flex items-start justify-between gap-4">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-app-accent/10 bg-app-accent-soft text-app-accent transition-all duration-300 group-hover:bg-app-accent group-hover:text-white">
-                                    {item.icon}
+                <div ref={gridRef} className={`${gridClass} mt-12 grid gap-4 sm:grid-cols-2`}>
+                    {CASES.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                            <article key={item.title} className="lift group relative flex min-h-56 flex-col overflow-hidden rounded-2xl border border-app-border bg-app-surface p-6 hover:border-app-accent/35 hover:shadow-xl hover:shadow-app-accent/[0.05] sm:p-7">
+                                <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-app-accent/[0.035] blur-3xl transition-colors group-hover:bg-app-accent/[0.10]" />
+                                <div className="relative flex h-12 w-12 items-center justify-center rounded-xl border border-app-accent/10 bg-app-accent-soft text-app-accent transition-colors group-hover:bg-app-accent group-hover:text-white">
+                                    <Icon className="h-5 w-5" aria-hidden />
                                 </div>
-
-                                <span className="text-sm font-semibold tracking-wider text-app-text-muted/70">
-                                    {item.n}
-                                </span>
+                                <h3 className="relative mt-6 text-lg font-semibold tracking-tight text-app-text">{item.title}</h3>
+                                <p className="relative mt-3 flex-1 text-sm leading-6 text-app-text-secondary">{item.desc}</p>
+                                <p className="relative mt-6 border-t border-app-border pt-4 font-mono text-[11px] text-app-text-muted">{item.workers}</p>
+                            </article>
+                        );
+                    })}
+                    <article className="lift group relative flex flex-col gap-6 overflow-hidden rounded-2xl border border-app-border bg-app-surface p-6 hover:border-app-accent/35 hover:shadow-xl hover:shadow-app-accent/[0.05] sm:col-span-2 sm:p-7 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="flex items-start gap-5">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-app-accent/10 bg-app-accent-soft text-app-accent transition-colors group-hover:bg-app-accent group-hover:text-white">
+                                <Cpu className="h-5 w-5" aria-hidden />
                             </div>
-
-                            <div className="relative mt-6 flex flex-1 flex-col">
-                                <h3 className="text-lg font-semibold tracking-tight text-app-text transition-colors group-hover:text-app-accent">
-                                    {item.title}
-                                </h3>
-
-                                <p className="mt-3 max-w-xl text-sm leading-6 text-app-text-secondary">
-                                    {item.desc}
+                            <div>
+                                <h3 className="text-lg font-semibold tracking-tight text-app-text">Tự động hoá bằng API</h3>
+                                <p className="mt-2 max-w-2xl text-sm leading-6 text-app-text-secondary">
+                                    Nối thẳng vào pipeline của bạn: {batch ? `gửi tới ${batch} task mỗi request` : "gửi hàng loạt"}, nhận webhook khi xong, gửi lại an toàn nhờ Idempotency-Key, hoàn credit khi task lỗi.
                                 </p>
-
-                                <div className="mt-6 flex items-center justify-between gap-3 border-t border-app-border pt-4">
-                                    <span className="text-xs font-medium text-app-text-muted">
-                                        {item.tag}
-                                    </span>
-
-                                    <span
-                                        aria-hidden="true"
-                                        className="flex h-8 w-8 items-center justify-center rounded-full border border-app-border text-app-text-secondary transition-all duration-300 group-hover:border-app-accent/20 group-hover:bg-app-accent group-hover:text-white"
-                                    >
-                                        <ArrowUpRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                                    </span>
-                                </div>
                             </div>
-                        </article>
-                    ))}
+                        </div>
+                        <a href={API_DOCS_URL} target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-xl border border-app-border bg-app-bg px-4 py-2.5 text-sm font-semibold text-app-text transition hover:border-app-accent/30 hover:text-app-accent lg:self-center">
+                            Xem tài liệu API <ArrowUpRight className="h-4 w-4" aria-hidden />
+                        </a>
+                    </article>
                 </div>
             </div>
         </section>

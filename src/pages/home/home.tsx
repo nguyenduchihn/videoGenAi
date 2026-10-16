@@ -1,12 +1,18 @@
+import "./landing.css";
 import { useMe } from "@/hooks/useMe";
 import { HomeHeader } from "./sections/HomeHeader";
 import { HeroSection } from "./sections/HeroSection";
-import { ProductPreview } from "./sections/ProductPreview";
+import { TrustStrip } from "./sections/TrustStrip";
+import { CapabilityBento } from "./sections/CapabilityBento";
 import { HowItWorks } from "./sections/HowItWorks";
 import { UseCases } from "./sections/UseCases";
-import { PricingTeaser } from "./sections/PricingTeaser";
+import { PricingSection } from "./sections/PricingSection";
+import { ApiSection } from "./sections/ApiSection";
+import { FaqSection } from "./sections/FaqSection";
+import { FinalCta } from "./sections/FinalCta";
 import { FooterSection } from "./sections/FooterSection";
 
+/** Khách chưa đăng nhập nhận 401 (bình thường) ⇒ CTA giữ trạng thái "chưa đăng nhập"; có phiên ⇒ nút đổi sang Dashboard. */
 function SessionProbe() {
     useMe();
     return null;
@@ -14,15 +20,19 @@ function SessionProbe() {
 
 export default function Home() {
     return (
-        <div className="min-h-screen overflow-x-hidden bg-app-bg text-app-text">
+        <div className="landing min-h-screen overflow-x-hidden bg-app-bg text-app-text">
             <SessionProbe />
             <HomeHeader />
             <main>
                 <HeroSection />
-                <ProductPreview />
+                <TrustStrip />
+                <CapabilityBento />
                 <HowItWorks />
                 <UseCases />
-                <PricingTeaser />
+                <PricingSection />
+                <ApiSection />
+                <FaqSection />
+                <FinalCta />
             </main>
             <FooterSection />
         </div>

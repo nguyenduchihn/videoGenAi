@@ -3,17 +3,15 @@ import {
     Coins,
     CreditCard,
     Database,
-    Film,
-    Image as ImageIcon,
     Loader2,
     RefreshCw,
     Sparkles,
-    Video,
     XCircle,
 } from "lucide-react";
-import { useEffect, useState } from "react";
 
-import { subscriptionService } from "@/services/subscription.service";
+import { getWorkerInfo } from "@/features/pricing/workerInfo";
+import { usePricing } from "@/hooks/usePricing";
+import { formatVnd } from "@/lib/format";
 
 import type {
     PaymentPackage,
@@ -24,89 +22,8 @@ import { Link, useNavigate } from "react-router";
 import { PlanCard } from "@/features/plan/PlanCard";
 import { useAuthStore } from "@/stores/auth.store";
 
-interface WorkerInfo {
-    key: string;
-    label: string;
-    description: string;
-    icon: typeof Video;
-}
-
-const WORKER_INFO: Record<string, Omit<WorkerInfo, "key">> = {
-    "text-to-video": {
-        label: "Text → Video",
-        description:
-            "Tạo video từ mô tả bằng văn bản.",
-        icon: Video,
-    },
-
-    "image-to-video": {
-        label: "Image → Video",
-        description:
-            "Biến hình ảnh thành video chuyển động.",
-        icon: ImageIcon,
-    },
-
-    "reference-images-to-video": {
-        label: "Reference Images → Video",
-        description:
-            "Tạo video dựa trên các hình ảnh tham chiếu.",
-        icon: ImageIcon,
-    },
-
-    "start-end-image-to-video": {
-        label: "Start / End Image → Video",
-        description:
-            "Tạo video với hình ảnh đầu và cuối.",
-        icon: Film,
-    },
-
-    "extend-video": {
-        label: "Extend Video",
-        description:
-            "Mở rộng nội dung của video hiện có.",
-        icon: Film,
-    },
-
-    "text-to-image": {
-        label: "Text → Image",
-        description:
-            "Tạo hình ảnh từ prompt văn bản.",
-        icon: Sparkles,
-    },
-
-    "image-to-image": {
-        label: "Image → Image",
-        description:
-            "Biến đổi hình ảnh bằng AI.",
-        icon: ImageIcon,
-    },
-};
-
-function formatVnd(value: number) {
-    return new Intl.NumberFormat("vi-VN", {
-        style: "currency",
-        currency: "VND",
-        maximumFractionDigits: 0,
-    }).format(value);
-}
-
-function formatCredits(value: number) {
-    return new Intl.NumberFormat("vi-VN").format(value);
-}
-
-function getWorkerInfo(workerKey: string): WorkerInfo {
-    const fallback: Omit<WorkerInfo, "key"> = {
-        label: workerKey,
-        description:
-            "Dịch vụ AI trong hệ thống VideoGen AI.",
-        icon: Sparkles,
-    };
-
-    return {
-        key: workerKey,
-        ...(WORKER_INFO[workerKey] ?? fallback),
-    };
-}
+/** Số credit không kèm đơn vị (trang này tự ghi chữ "credits" sau số). */
+const formatCredits = (value: number) => new Intl.NumberFormat("vi-VN").format(value);
 
 function LoadingState() {
     return (
@@ -342,63 +259,26 @@ function PackageCard({
 
 export default function Pricing() {
     const navigate = useNavigate();
-    const [pricing, setPricing] =
-        useState<PortalPricingResponse | null>(
-            null
-        );
+    // Dùng chung cache TanStack với landing (qk.pricing): vào từ trang chủ không tải lại
+    const { data: pricing, isLoading, error, refetch } = usePricing();
 
-    const [loading, setLoading] =
-        useState(true);
-
-    const [error, setError] =
-        useState("");
-
-    const load = async () => {
-        try {
-            setLoading(true);
-            setError("");
-
-            // /portal/pricing công khai (không cần đăng nhập) đã gồm gói nạp + cờ bật/tắt
-            setPricing(await subscriptionService.getPricing());
-        } catch (error) {
-            console.error(
-                "Load pricing error:",
-                error
-            );
-
-            setError(
-                "Không thể tải thông tin bảng giá. Vui lòng thử lại."
-            );
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        load();
-    }, []);
-
-    if (loading) {
+    if (isLoading) {
         return <LoadingState />;
     }
 
-    if (error) {
+    if (error || !pricing) {
         return (
             <ErrorState
-                message={error}
-                onRetry={load}
+                message="Không thể tải thông tin bảng giá. Vui lòng thử lại."
+                onRetry={() => void refetch()}
             />
         );
     }
 
-    const workers = pricing?.workers
-        ? Object.entries(pricing.workers)
-        : [];
+    const workers = Object.entries(pricing.workers);
 
-    const paymentPackages =
-        pricing?.packages ?? [];
-    const topupEnabled =
-        pricing?.topupEnabled ?? false;
+    const paymentPackages = pricing.packages;
+    const topupEnabled = pricing.topupEnabled;
 
     const hasWorkerPricing =
         workers.length > 0;
@@ -406,7 +286,7 @@ export default function Pricing() {
     const hasPackages =
         paymentPackages.length > 0;
 
-    if (pricing?.commercialMode === "subscription") {
+    if (pricing.commercialMode === "subscription") {
         return <PlansPricing pricing={pricing} workers={workers} />;
     }
 
@@ -491,8 +371,7 @@ export default function Pricing() {
                         </p>
                     </div>
 
-                    {pricing &&
-                        !topupEnabled && (
+                    {!topupEnabled && (
                             <div className="mb-5 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-900/50 dark:bg-amber-950/20">
                                 <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
 

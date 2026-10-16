@@ -357,6 +357,12 @@ export interface PortalPricingResponse {
     commercialMode: CommercialMode;
     /** Gói dịch vụ đang mở bán (chỉ subscription), đã sắp theo thứ tự hiển thị. */
     plans: PricingPlan[];
+    /** Credit tặng khi đăng ký (cấu hình admin) — landing hiện "Tặng N credit". */
+    signupGrant: number;
+    /** subscription: số ngày dùng thử gói mặc định cho khách mới; 0 = không hạn. */
+    trialDays: number;
+    /** Số task tối đa trong một lần POST /v1/tasks. */
+    maxBatchTasks: number;
 }
 
 export interface PricingPlan {
