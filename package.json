@@ -13,7 +13,7 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "gen:api": "npx -y openapi-typescript@7 docs/openapi.json -o src/api/schema.d.ts",
-    "sync:api": "cp ../../docs/api/openapi.json docs/openapi.json && npm run gen:api"
+    "sync:api": "cp ../../docs/api/openapi.json docs/openapi.json && cp ../../docs/api/integrator.json docs/integrator.json && npm run gen:api"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
@@ -40,6 +40,7 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "ajv": "^8.17.1",
     "jsdom": "^29.1.1",
     "msw": "^3.0.3",
     "oxlint": "^1.81.0",

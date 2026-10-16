@@ -1,7 +1,8 @@
 import type { PricingWorker } from "@/types/api";
 import { cheapestCredits } from "@/features/pricing/workerInfo";
 
-export const API_DOCS_URL = "https://api.aiveo3.org/docs";
+/** Trang tài liệu tích hợp (cùng site); tham chiếu OpenAPI đầy đủ ở /docs. */
+export const API_DOCS_URL = "/api-docs";
 
 /** Nhãn CTA đăng ký: có số credit tặng khi API đã trả, không thì câu chung (không hard-code số). */
 export function trialCtaLabel(signupGrant: number | undefined): string {

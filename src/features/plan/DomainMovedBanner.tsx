@@ -28,7 +28,8 @@ export function DomainMovedBanner({ now }: { now?: number }) {
             <Globe className="mt-0.5 h-4 w-4 shrink-0 text-[var(--app-accent)]" aria-hidden="true" />
             <p className="flex-1 text-sm text-[var(--app-text)]">
                 VideoGen AI đã chuyển sang <strong>aiveo3.org</strong>. Nếu bạn tích hợp qua API key, hãy đổi base URL sang{" "}
-                <code className="rounded bg-[var(--app-surface)] px-1.5 py-0.5 text-xs">{NEW_API_BASE}</code> — địa chỉ cũ vẫn chuyển tiếp tới giữa tháng 11.
+                <code className="rounded bg-[var(--app-surface)] px-1.5 py-0.5 text-xs">{NEW_API_BASE}</code> — địa chỉ cũ vẫn chuyển tiếp tới giữa tháng 11.{" "}
+                <a href="/api-docs#xac-thuc" className="font-medium text-[var(--app-accent)] underline underline-offset-2">Xem tài liệu API</a>
             </p>
             <button type="button" onClick={dismiss} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[var(--app-text-muted)] hover:text-[var(--app-text)]" aria-label="Ẩn thông báo đổi tên miền">
                 <X className="h-4 w-4" aria-hidden="true" />

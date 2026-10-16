@@ -51,8 +51,8 @@ const FOOTER_COLUMNS: FooterColProps[] = [
     {
         title: "Developer",
         items: [
-            { label: "Tài liệu API (Swagger)", href: API_DOCS_URL, external: true },
-            { label: "OpenAPI JSON", href: `${API_BASE}/docs-json`, external: true },
+            { label: "Tài liệu API", href: API_DOCS_URL, external: true },
+            { label: "OpenAPI JSON", href: `${API_BASE}/docs/json`, external: true },
             { label: "API key", href: "/settings/api-keys" },
             { label: "Trạng thái API", href: `${API_BASE}/health/ready`, external: true },
         ],

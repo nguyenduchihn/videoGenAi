@@ -23,6 +23,7 @@ const BillingPage = lazy(() => import("@/features/billing/BillingPage"));
 const MyPlanPage = lazy(() => import("@/features/plan/MyPlanPage"));
 const TasksPage = lazy(() => import("@/features/tasks/TasksPage"));
 const Pricing = lazy(() => import("@/pages/pricing/pricing"));
+const ApiDocsPage = lazy(() => import("@/features/api-docs/ApiDocsPage"));
 const Support = lazy(() => import("@/pages/support/support"));
 const Settings = lazy(() => import("@/pages/settings/settings"));
 const Appearance = lazy(() => import("@/pages/settings/appearance"));
@@ -38,6 +39,7 @@ const router = createBrowserRouter([
         children: [
             { path: "/", element: <Home /> },
             { path: "/pricing", element: <Pricing /> }, // công khai: landing dẫn tới, chưa đăng nhập vẫn xem được giá + gói nạp
+            { path: "/api-docs", element: <ApiDocsPage /> }, // công khai; đăng nhập ⇒ cá nhân hoá (key, giới hạn, khoá webhook)
             { path: "/welcome", element: <Navigate to="/dashboard" replace /> },
             {
                 element: <AuthLayout />,

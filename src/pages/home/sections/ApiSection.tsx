@@ -65,7 +65,7 @@ export function ApiSection() {
                         Tích hợp trong vài phút, <span className="text-app-accent">không cần hạ tầng AI.</span>
                     </h2>
                     <p className="mt-4 max-w-xl text-sm leading-7 text-app-text-secondary sm:text-base">
-                        REST API xác thực bằng header <code className="rounded bg-app-surface-soft px-1.5 py-0.5 text-xs">X-API-Key</code>, có Swagger và OpenAPI để import Postman hay sinh client. Cùng hàng đợi và bảng giá với Studio.
+                        REST API xác thực bằng header <code className="rounded bg-app-surface-soft px-1.5 py-0.5 text-xs">X-API-Key</code>, tài liệu có ví dụ 3 ngôn ngữ, OpenAPI và Postman collection để import hay sinh client. Cùng hàng đợi và bảng giá với Studio.
                     </p>
                     <ul className="mt-8 space-y-4">
                         {highlights.map(({ icon: Icon, title, desc }) => (

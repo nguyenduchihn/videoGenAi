@@ -13,7 +13,7 @@ async function openLanding(page: import("@playwright/test").Page, flags: Record<
 test("chưa đăng nhập: hero có CTA dùng thử kèm số credit từ API, bảng giá thật 3 gói, mục API có code mẫu, FAQ có JSON-LD", async ({ page }) => {
     await openLanding(page, { "videogen:mock-unauth": "1" });
     await expect(page.getByRole("button", { name: "Dùng thử · 100 credit miễn phí" }).first()).toBeVisible();
-    await expect(page.getByRole("link", { name: "Xem tài liệu API" }).first()).toHaveAttribute("href", "https://api.aiveo3.org/docs");
+    await expect(page.getByRole("link", { name: "Xem tài liệu API" }).first()).toHaveAttribute("href", "/api-docs");
 
     const pricing = page.locator("#bang-gia");
     await expect(pricing.getByRole("list", { name: "Gói nạp credit" }).getByRole("listitem")).toHaveCount(3);

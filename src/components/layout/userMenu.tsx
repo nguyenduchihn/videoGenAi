@@ -1,4 +1,5 @@
 import {
+    BookOpen,
     CreditCard,
     LogOut,
     Settings,
@@ -110,6 +111,17 @@ export default function UserMenu({
                 >
                     <Settings className="h-4 w-4 shrink-0 text-[var(--app-text-muted)]" />
                     Cài đặt
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() =>
+                        handleNavigate("/api-docs")
+                    }
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-[var(--app-text-secondary)] transition hover:bg-[var(--app-surface-soft)] hover:text-[var(--app-text)]"
+                >
+                    <BookOpen className="h-4 w-4 shrink-0 text-[var(--app-text-muted)]" />
+                    Tài liệu API
                 </button>
             </div>
 

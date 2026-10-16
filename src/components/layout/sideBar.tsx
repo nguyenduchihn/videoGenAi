@@ -1,4 +1,4 @@
-import { ChevronDown, CreditCard, HelpCircle, History, Home, Image, Layers, PanelLeftClose, PanelLeftOpen, Settings, Sparkles, X } from "lucide-react";
+import { BookOpen, ChevronDown, CreditCard, HelpCircle, History, Home, Image, Layers, PanelLeftClose, PanelLeftOpen, Settings, Sparkles, X } from "lucide-react";
 import { expiryText, planChargesCredits, planExpiry } from "@/features/plan/planCopy";
 import { useCommercialMode } from "@/hooks/useCommercialMode";
 import { useState } from "react";
@@ -27,6 +27,11 @@ const otherMenu = [
         label: "Cài đặt",
         path: "/settings/appearance",
         icon: Settings,
+    },
+    {
+        label: "Tài liệu API",
+        path: "/api-docs",
+        icon: BookOpen,
     },
     {
         label: "Hỗ trợ",

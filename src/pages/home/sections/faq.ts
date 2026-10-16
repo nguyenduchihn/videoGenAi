@@ -47,7 +47,7 @@ export function buildFaq({ signupGrant, maxBatchTasks, subscription }: FaqContex
         },
         {
             q: "Tích hợp API như thế nào?",
-            a: "Tạo API key trong Cài đặt › API keys, gửi header X-API-Key tới POST /v1/tasks, nhận kết quả qua webhook hoặc GET /v1/batches/:id. Tài liệu Swagger và OpenAPI có tại api.aiveo3.org/docs.",
+            a: "Tạo API key trong Cài đặt › API keys, gửi header X-API-Key tới POST /v1/tasks, nhận kết quả qua webhook hoặc GET /v1/batches/:id. Hướng dẫn có ví dụ cURL / Python / Node ở aiveo3.org/api-docs; OpenAPI và Postman tải ngay trên trang đó.",
         },
     ];
 }
