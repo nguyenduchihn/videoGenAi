@@ -5,7 +5,7 @@ import type { PortalTask } from "@/types/api";
 import RunTaskCard from "./RunTaskCard";
 import RunTaskRow from "./RunTaskRow";
 import type { RunViewMode } from "./runTabs";
-import { columnsFor, type RunTaskActions } from "./runTaskView";
+import { CARD_GAP_PX, columnsFor, type RunTaskActions } from "./runTaskView";
 
 interface VirtualResultGridProps {
     /** Tên lưới cho trình đọc màn hình, vd "Job — Thất bại". */
@@ -21,9 +21,9 @@ interface VirtualResultGridProps {
     onFetchMore: () => void;
 }
 
-const CARD_ROW_PX = 360;
+const CARD_ROW_PX = 300; // ước lượng ban đầu, measureElement chỉnh lại theo thẻ thật
 const COMPACT_ROW_PX = 57;
-const GAP_PX = 16;
+const GAP_PX = CARD_GAP_PX;
 
 /**
  * Lưới ảo hoá theo HÀNG trên cuộn trang: chỉ ~2 màn hình DOM dù lượt có 1.000 job; mỗi hàng = `columns` thẻ (hoặc 1 hàng gọn).
@@ -80,7 +80,7 @@ export default function VirtualResultGrid({ label, tasks, totalCount, mode, rati
                             style={{ position: "absolute", top: 0, left: 0, width: "100%", transform: `translateY(${row.start - virtualizer.options.scrollMargin}px)` }}
                         >
                             {mode === "cards" ? (
-                                <div role="row" aria-rowindex={row.index + 1} className="grid gap-4 pb-4" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+                                <div role="row" aria-rowindex={row.index + 1} className="grid pb-3" style={{ gap: GAP_PX, gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
                                     {slice.map((task) => (
                                         <div key={task.id} role="gridcell"><RunTaskCard task={task} ratio={ratio} actions={actions} /></div>
                                     ))}

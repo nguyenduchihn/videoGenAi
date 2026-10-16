@@ -34,11 +34,14 @@ export interface RunTaskActions {
     onRefresh?: (task: PortalTask) => void;
 }
 
-/** Số cột thẻ theo bề rộng khung (360 px: 1 cột). */
+/** Thẻ kết quả rộng tối thiểu 272 px (thay vì chia cứng 3 cột) ⇒ nội dung 1.290 px: 4 cột, 1.024: 3, tablet: 2, điện thoại: 1. */
+export const MIN_CARD_PX = 272;
+export const CARD_GAP_PX = 12;
 export function columnsFor(width: number, mode: RunViewMode): number {
     if (mode === "rows") return 1;
-    if (width < 640) return 1;
-    if (width < 1024) return 2;
-    if (width < 1400) return 3;
-    return 4;
+    return Math.max(1, Math.floor((width + CARD_GAP_PX) / (MIN_CARD_PX + CARD_GAP_PX)));
 }
+
+/** Nút hành động dạng icon 32 px (thẻ và hàng gọn dùng chung); nhãn đặt ở aria-label + title. */
+export const ICON_BUTTON = "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--app-border)] text-[var(--app-text-secondary)] transition hover:bg-[var(--app-surface-soft)] hover:text-[var(--app-text)] disabled:cursor-not-allowed disabled:opacity-40";
+export const ICON_BUTTON_PRIMARY = "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--app-accent)] text-white transition hover:bg-[var(--app-accent-hover)] disabled:cursor-not-allowed disabled:bg-[var(--app-surface-soft)] disabled:text-[var(--app-text-muted)]";

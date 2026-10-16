@@ -117,9 +117,14 @@ export const handlers = [
 
     // ── Tasks (cookie) ──
     http.get("/portal/tasks", ({ request }) => {
-        const status = new URL(request.url).searchParams.get("status");
-        const tasks = status ? mockTasksResponse.tasks.filter((task) => task.status === status) : mockTasksResponse.tasks;
-        return HttpResponse.json({ tasks, nextCursor: null });
+        // Giống API thật: lọc status, cắt theo limit (≤ 50) và cursor (mock: cursor = vị trí bắt đầu), mới nhất trước.
+        const q = new URL(request.url).searchParams;
+        const status = q.get("status");
+        const limit = Math.min(50, Math.max(1, Number(q.get("limit")) || 20));
+        const offset = Math.max(0, Number(q.get("cursor")) || 0);
+        const all = status ? mockTasksResponse.tasks.filter((task) => task.status === status) : mockTasksResponse.tasks;
+        const tasks = all.slice(offset, offset + limit);
+        return HttpResponse.json({ tasks, nextCursor: offset + limit < all.length ? String(offset + limit) : null });
     }),
     http.get("/portal/tasks/:id", ({ params }) => {
         const task = mockTasksResponse.tasks.find((item) => item.id === params.id);

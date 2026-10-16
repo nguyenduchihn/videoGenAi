@@ -1,8 +1,6 @@
 import { Download, FastForward, Loader2, RefreshCw, XCircle } from "lucide-react";
 import type { PortalTask } from "@/types/api";
-import { isActiveTask, isVideoTask, STATUS_CLASS, STATUS_LABEL, taskAlt, taskErrorText, taskNumber, type RunTaskActions } from "./runTaskView";
-
-const ICON_BUTTON = "flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--app-border)] text-[var(--app-text-secondary)] transition hover:bg-[var(--app-surface-soft)] hover:text-[var(--app-text)] disabled:opacity-40";
+import { ICON_BUTTON, isActiveTask, isVideoTask, STATUS_CLASS, STATUS_LABEL, taskAlt, taskErrorText, taskNumber, type RunTaskActions } from "./runTaskView";
 
 /** Hàng gọn cho lượt lớn (> 50 job): thumbnail 40 px, số thứ tự, prompt, trạng thái, hành động icon. */
 export default function RunTaskRow({ task, actions, rowIndex }: { task: PortalTask; actions: RunTaskActions; rowIndex: number }) {

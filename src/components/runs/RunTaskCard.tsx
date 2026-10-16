@@ -2,9 +2,12 @@ import { Download, FastForward, Image as ImageIcon, Loader2, Play, RefreshCw, Vi
 import { useState } from "react";
 import { getRatioPreviewClass } from "@/components/generator/ratioPreview";
 import type { PortalTask } from "@/types/api";
-import { isActiveTask, isVideoTask, STATUS_CLASS, STATUS_LABEL, taskAlt, taskErrorText, taskNumber, type RunTaskActions } from "./runTaskView";
+import { ICON_BUTTON, ICON_BUTTON_PRIMARY, isActiveTask, isVideoTask, STATUS_CLASS, STATUS_LABEL, taskAlt, taskErrorText, taskNumber, type RunTaskActions } from "./runTaskView";
 
-const SECONDARY = "flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-[var(--app-border)] px-3 py-2 text-xs font-medium text-[var(--app-text-secondary)] transition hover:bg-[var(--app-surface-soft)] hover:text-[var(--app-text)]";
+/** Nút có chữ, cao 32 px như nút icon (huỷ / thử lại). */
+const TEXT_BUTTON = "inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition";
+const SECONDARY = `${TEXT_BUTTON} border-[var(--app-border)] text-[var(--app-text-secondary)] hover:bg-[var(--app-surface-soft)] hover:text-[var(--app-text)]`;
+const DANGER = `${TEXT_BUTTON} border-red-200 text-red-600 hover:bg-red-50 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10`;
 
 /** Xem trước: ảnh (theo tỷ lệ) hoặc video; lỗi tải ⇒ "đã hết hạn — nhấn để làm mới". */
 function Preview({ task, ratio, onRefresh }: { task: PortalTask; ratio?: string; onRefresh?: (task: PortalTask) => void }) {
@@ -56,47 +59,46 @@ function Preview({ task, ratio, onRefresh }: { task: PortalTask; ratio?: string;
 
 export default function RunTaskCard({ task, ratio, actions }: { task: PortalTask; ratio?: string; actions: RunTaskActions }) {
     const canExtend = task.status === "succeeded" && isVideoTask(task) && Boolean(task.result?.mediaId) && Boolean(actions.onExtend);
+    const url = task.result?.url;
+    const n = taskNumber(task);
     return (
-        <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] transition-colors" aria-label={`Job #${taskNumber(task)}`}>
-            <Preview key={task.result?.url ?? task.id} task={task} ratio={ratio} onRefresh={actions.onRefresh} />
-            <div className="flex flex-1 flex-col p-4">
-                <div className="flex items-start justify-between gap-3">
+        <article className="flex h-full flex-col overflow-hidden rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] transition-colors" aria-label={`Job #${n}`}>
+            <Preview key={url ?? task.id} task={task} ratio={ratio} onRefresh={actions.onRefresh} />
+            <div className="flex flex-1 flex-col p-3">
+                <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                        <p className="text-sm font-semibold text-[var(--app-text)]">Job #{taskNumber(task)}</p>
-                        <p className="mt-1 line-clamp-2 text-xs text-[var(--app-text-muted)]" title={task.prompt ?? undefined}>{task.prompt ?? "—"}</p>
+                        <p className="text-sm font-semibold text-[var(--app-text)]">Job #{n}</p>
+                        <p className="mt-0.5 line-clamp-2 text-xs text-[var(--app-text-muted)]" title={task.prompt ?? undefined}>{task.prompt ?? "—"}</p>
                     </div>
-                    <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${STATUS_CLASS[task.status]}`}>
+                    <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${STATUS_CLASS[task.status]}`}>
                         {isActiveTask(task) && <Loader2 className="h-3 w-3 motion-safe:animate-spin" aria-hidden="true" />}
                         {STATUS_LABEL[task.status]}
                     </span>
                 </div>
-                <div className="mt-auto pt-4">
+                {/* Hành động: icon 32 px, nhãn qua aria-label/title ⇒ thẻ hẹp vẫn đủ chỗ cho 4 cột */}
+                <div className="mt-auto flex items-center justify-end gap-1.5 pt-3">
                     {isActiveTask(task) && actions.onCancel && (
-                        <button type="button" onClick={() => actions.onCancel?.(task)} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-red-600 transition hover:bg-red-50 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10">
+                        <button type="button" onClick={() => actions.onCancel?.(task)} className={DANGER}>
                             <XCircle className="h-3.5 w-3.5" aria-hidden="true" />Huỷ tạo
                         </button>
                     )}
-                    {task.status === "succeeded" && (
-                        <div className="flex flex-wrap gap-2">
-                            {task.result?.url && (
-                                <button type="button" onClick={() => window.open(task.result!.url!, "_blank", "noopener")} className={SECONDARY}>
-                                    <Play className="h-3.5 w-3.5" aria-hidden="true" />Xem<span className="sr-only"> (mở tab mới)</span>
-                                </button>
-                            )}
-                            {actions.onDownload && (
-                                <button type="button" onClick={() => actions.onDownload?.(task)} disabled={!task.result?.url} className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-[var(--app-accent)] px-3 py-2 text-xs font-medium text-white transition hover:bg-[var(--app-accent-hover)] disabled:cursor-not-allowed disabled:bg-[var(--app-surface-soft)] disabled:text-[var(--app-text-muted)]">
-                                    <Download className="h-3.5 w-3.5" aria-hidden="true" />Tải xuống
-                                </button>
-                            )}
-                            {canExtend && (
-                                <button type="button" onClick={() => actions.onExtend?.(task)} className={`${SECONDARY} basis-full`}>
-                                    <FastForward className="h-3.5 w-3.5" aria-hidden="true" />Tiếp tục video
-                                </button>
-                            )}
-                        </div>
+                    {task.status === "succeeded" && canExtend && (
+                        <button type="button" onClick={() => actions.onExtend?.(task)} className={ICON_BUTTON} aria-label={`Tiếp tục video #${n}`} title="Tiếp tục video">
+                            <FastForward className="h-3.5 w-3.5" aria-hidden="true" />
+                        </button>
+                    )}
+                    {task.status === "succeeded" && url && (
+                        <button type="button" onClick={() => window.open(url, "_blank", "noopener")} className={ICON_BUTTON} aria-label={`Xem ${taskAlt(task)} (mở tab mới)`} title="Xem">
+                            <Play className="h-3.5 w-3.5" aria-hidden="true" />
+                        </button>
+                    )}
+                    {task.status === "succeeded" && actions.onDownload && (
+                        <button type="button" onClick={() => actions.onDownload?.(task)} disabled={!url} className={ICON_BUTTON_PRIMARY} aria-label={`Tải xuống ${taskAlt(task)}`} title="Tải xuống">
+                            <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                        </button>
                     )}
                     {task.status === "failed" && actions.onRetry && (
-                        <button type="button" onClick={() => actions.onRetry?.(task)} className={`${SECONDARY} w-full`}>
+                        <button type="button" onClick={() => actions.onRetry?.(task)} className={SECONDARY}>
                             <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />Thử lại
                         </button>
                     )}

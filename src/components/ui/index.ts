@@ -28,6 +28,8 @@ export { Tabs, TabsList, TabsTrigger, TabsContent } from "./Tabs";
 
 export { DataList } from "./DataList";
 
+export { Pagination } from "./Pagination";
+
 export { CopyButton } from "./CopyButton";
 
 export { Skeleton, SkeletonText } from "./Skeleton";

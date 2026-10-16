@@ -59,7 +59,7 @@ export default function GeneratorPanel() {
     const submitter = useRunSubmitter();
     const userId = useAuthStore((s) => s.user?.user.id ?? "");
     const [searchParams, setSearchParams] = useSearchParams();
-    const history = useTasksHistory("succeeded", { enabled: form.mode === "extend-video" });
+    const history = useTasksHistory({ status: "succeeded" }, { enabled: form.mode === "extend-video" }); // 30 video gần nhất đủ cho danh sách "tiếp tục video"
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [isPreparing, setIsPreparing] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
@@ -78,8 +78,7 @@ export default function GeneratorPanel() {
         // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ chạy khi query đổi
     }, [searchParams]);
 
-    const sessionVideos = useMemo<SessionVideo[]>(() => (history.data?.pages ?? [])
-        .flatMap((page) => page.tasks)
+    const sessionVideos = useMemo<SessionVideo[]>(() => (history.data?.tasks ?? [])
         .filter((task) => VIDEO_WORKERS.has(task.worker) && task.result?.mediaId)
         .map((task): SessionVideo => ({ mediaId: task.result!.mediaId, label: `${workerLabel(task.worker)}${task.prompt ? ` · ${task.prompt.slice(0, 40)}` : ""}`, url: task.result?.url ?? undefined, createdAt: task.createdAt, source: "history" })), [history.data]);
 
