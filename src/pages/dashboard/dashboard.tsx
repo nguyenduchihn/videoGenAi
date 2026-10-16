@@ -21,6 +21,7 @@ import { Link } from "react-router-dom";
 
 import type { PortalMeResponse } from "@/types/api";
 import { expiryText, planChargesCredits, planExpiry } from "@/features/plan/planCopy";
+import { DomainMovedBanner } from "@/features/plan/DomainMovedBanner";
 import { SystemModeBanner } from "@/features/plan/SystemModeBanner";
 import GeneratorPanel from "@/components/generator/generatorPanel";
 import RecentRunsPanel from "@/components/runs/RecentRunsPanel";
@@ -119,6 +120,7 @@ export default function Dashboard() {
                     </div>
                 </div>
 
+                <DomainMovedBanner />
                 <SystemModeBanner />
                 <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
 

@@ -364,7 +364,7 @@ export default function Support() {
                             </p>
 
                             <a
-                                href="mailto:support@videogen.ai?subject=VideoGen%20AI%20Support"
+                                href="mailto:support@aiveo3.org?subject=VideoGen%20AI%20Support"
                                 className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--app-accent)] px-4 py-3 text-sm font-medium text-white transition hover:opacity-90"
                             >
                                 <Mail className="h-4 w-4" />

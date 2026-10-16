@@ -81,7 +81,7 @@ export function HeroSection() {
                                 <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
                                 <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
                             </div>
-                            <span className="mx-auto hidden text-[10px] text-white/25 sm:block">app.videogen.ai</span>
+                            <span className="mx-auto hidden text-[10px] text-white/25 sm:block">aiveo3.org</span>
                         </div>
                         <div className="grid min-h-[380px] grid-cols-1 md:grid-cols-[160px_1fr]">
                             <div className="hidden border-r border-white/[0.06] [background:var(--hero-sidebar)] p-4 md:block">
