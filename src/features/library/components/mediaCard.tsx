@@ -1,4 +1,5 @@
-import { Check, Download, Play } from "lucide-react";
+
+import { Check, Download, Play, Trash2 } from "lucide-react";
 
 import type { MediaItem } from "../library.types";
 import { formatDate } from "../library.utils";
@@ -7,16 +8,20 @@ interface MediaCardProps {
     item: MediaItem;
     isSelectionMode: boolean;
     isSelected: boolean;
+    isDeleting: boolean;
     onOpen: (item: MediaItem) => void;
     onDownload: (item: MediaItem) => void;
+    onDelete: (item: MediaItem) => void;
 }
 
 export default function MediaCard({
     item,
     isSelectionMode,
     isSelected,
+    isDeleting,
     onOpen,
     onDownload,
+    onDelete,
 }: MediaCardProps) {
     return (
         <article className="group overflow-hidden rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)]">
@@ -72,15 +77,32 @@ export default function MediaCard({
                         {formatDate(item.createdAt)}
                     </span>
 
-                    <button
-                        type="button"
-                        title="Tải xuống"
-                        aria-label={`Tải xuống ${item.title}`}
-                        onClick={() => onDownload(item)}
-                        className="shrink-0 rounded-md p-2 text-[var(--app-text-secondary)] hover:bg-[var(--app-surface-soft)] hover:text-[var(--app-accent)]"
-                    >
-                        <Download size={16} />
-                    </button>
+                    <div className="flex shrink-0 items-center gap-1">
+                        <button
+                            type="button"
+                            title="Tải xuống"
+                            aria-label={`Tải xuống ${item.title}`}
+                            onClick={() => onDownload(item)}
+                            className="rounded-md p-2 text-[var(--app-text-secondary)] hover:bg-[var(--app-surface-soft)] hover:text-[var(--app-accent)]"
+                        >
+                            <Download size={16} />
+                        </button>
+
+                        <button
+                            type="button"
+                            title={isDeleting ? "Đang xóa..." : "Xóa"}
+                            aria-label={`Xóa ${item.title}`}
+                            disabled={isDeleting}
+                            onClick={() => onDelete(item)}
+                            className="rounded-md p-2 text-[var(--app-text-secondary)] hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {isDeleting ? (
+                                <span className="block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                            ) : (
+                                <Trash2 size={16} />
+                            )}
+                        </button>
+                    </div>
                 </div>
             </div>
         </article>

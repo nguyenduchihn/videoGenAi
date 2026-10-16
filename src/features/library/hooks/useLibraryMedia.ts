@@ -75,6 +75,10 @@ export function useLibraryMedia() {
             return [
                 {
                     id: task.result.mediaId || task.id,
+                    imageId:
+                        kind === "image" && task.result.mediaId
+                            ? task.result.mediaId
+                            : undefined,
                     url: task.result.url,
                     kind,
                     source: "generated" as const,

@@ -82,6 +82,10 @@ export async function pricing(): Promise<PortalPricingResponse> {
     return (await api.get<PortalPricingResponse>("/portal/pricing")).data;
 }
 
+export async function deleteImage(id: string): Promise<void> {
+    await api.delete(`/v1/images/${encodeURIComponent(id)}`);
+}
+
 /** Nhóm theo miền cho trang/feature gọi gọn: `portalApi.auth.login(...)`. */
 export const portalApi = {
     auth: {

@@ -8,6 +8,7 @@ import LibraryGrid from "./components/libraryGrid";
 import LibraryPagination from "./components/libraryPagination";
 import MediaPreviewModal from "./components/mediaPreviewModal";
 import LibraryToolbar from "./components/libraryToolbar";
+import { useMediaDelete } from "./hooks/useMediaDelete";
 
 const PAGE_SIZE = 12;
 
@@ -19,6 +20,7 @@ export default function LibraryPage() {
     const [selected, setSelected] = useState<MediaItem | null>(null);
     const { selectedIds, isSelectionMode, toggleMediaSelection, toggleSelectCurrentPage, clearSelection, startSelection } = useMediaSelection();
     const { downloading, downloadMedia, downloadSelectedMedia } = useMediaDownload();
+    const { deleteMedia, deletingId, error: deleteError, setError: setDeleteError } = useMediaDelete();
 
 
     const filtered = media.filter((item) => {
@@ -53,6 +55,34 @@ export default function LibraryPage() {
         setPage(Math.max(1, Math.min(value, totalPages)));
     }
 
+
+    async function handleDelete(item: MediaItem) {
+        if (item.kind !== "image" || !item.imageId) {
+            setDeleteError("Không tìm thấy ID ảnh hợp lệ để xóa.");
+            return;
+        }
+
+        const confirmed = window.confirm(
+            `Bạn có chắc muốn xóa ảnh "${item.title}" không? Hành động này không thể hoàn tác.`,
+        );
+
+        if (!confirmed) return;
+
+        setDeleteError("");
+
+        const success = await deleteMedia(item);
+
+        if (!success) return;
+
+        setSelected((current) =>
+            current?.id === item.id ? null : current,
+        );
+
+        clearSelection();
+        await loadTasks();
+    }
+
+
     return (
         <main className="min-h-full space-y-6 p-4 sm:p-6 lg:p-8">
             <LibraryToolbar
@@ -80,6 +110,14 @@ export default function LibraryPage() {
             <div className="mt-3 text-right text-sm text-[var(--app-text-secondary)]">
                 {filtered.length} Tệp
             </div>
+
+
+            {deleteError && (
+                <p role="alert" className="text-sm text-red-600">
+                    {deleteError}
+                </p>
+            )}
+
 
             {loading ? (
                 <div className="flex min-h-64 items-center justify-center gap-3 text-sm text-[var(--app-text-secondary)]">
@@ -124,6 +162,8 @@ export default function LibraryPage() {
                         }
                     }}
                     onDownload={(item) => void downloadMedia(item)}
+                    onDelete={(item) => void handleDelete(item)}
+                    deletingId={deletingId}
                 />
             )}
 
