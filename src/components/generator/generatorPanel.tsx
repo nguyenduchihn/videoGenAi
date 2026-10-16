@@ -157,6 +157,7 @@ export default function GeneratorPanel() {
                     submitError={submitError ?? submitter.progress?.error ?? null}
                     estimatedCredits={form.estimatedCredits}
                     balance={form.balance}
+                    fairUse={form.fairUse}
                     isGenerating={isPreparing || submitter.isSubmitting}
                     uploadProgress={uploadProgress}
                     sendProgress={submitter.isSubmitting && submitter.progress ? { sent: submitter.progress.sent, total: submitter.progress.total } : null}

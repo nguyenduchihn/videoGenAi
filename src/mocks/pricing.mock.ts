@@ -6,6 +6,8 @@ import { mockPaymentPackages } from "./payment.mock";
 export const mockPricingResponse: PortalPricingResponse = {
     topupEnabled: true,
     packages: mockPaymentPackages.packages,
+    commercialMode: "payg",
+    plans: [],
     workers: {
         "text-to-video": {
             credits: 80,

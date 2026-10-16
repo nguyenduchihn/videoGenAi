@@ -7,6 +7,8 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { expiryText, planExpiry } from "@/features/plan/planCopy";
+import { useCommercialMode } from "@/hooks/useCommercialMode";
 import { authService } from "@/services/auth.service";
 import { useAuthStore } from "@/stores/auth.store";
 
@@ -27,7 +29,10 @@ export default function UserMenu({
     const displayName =
         me?.user.name?.trim() || me?.user.email || "Tài khoản";
 
-    const planLabel = `Nạp credits · ${me?.balance.display ?? '—'}`;
+    const subscription = useCommercialMode() === "subscription";
+    const expiry = planExpiry(me?.user.planExpiresAt);
+    const planLabel = subscription ? `Gói của tôi · ${me?.plan?.name ?? "chưa có gói"}${expiry.state === "none" ? "" : ` · ${expiryText(expiry)}`}` : `Nạp credits · ${me?.balance.display ?? '—'}`;
+    const billingPath = subscription ? "/my-plan" : "/billing";
 
     const initial = displayName.charAt(0).toUpperCase();
 
@@ -88,7 +93,7 @@ export default function UserMenu({
                 <button
                     type="button"
                     onClick={() =>
-        handleNavigate("/billing")
+                        handleNavigate(billingPath)
                     }
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-[var(--app-text-secondary)] transition hover:bg-[var(--app-surface-soft)] hover:text-[var(--app-text)]"
                 >

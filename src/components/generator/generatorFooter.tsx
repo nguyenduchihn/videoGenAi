@@ -8,6 +8,8 @@ export interface GeneratorFooterProps {
     jobCount: number;
     estimatedCredits: number;
     balance: number | null;
+    /** Gói không trừ credit ⇒ thay ô chi phí bằng lượt tạo hôm nay / giới hạn. */
+    fairUse?: { today: number; limit: number | null } | null;
     validation: ValidationResult;
     showValidation: boolean;
     submitError: string | null;
@@ -40,6 +42,7 @@ export default function GeneratorFooter({
     jobCount,
     estimatedCredits,
     balance,
+    fairUse = null,
     validation,
     showValidation,
     submitError,
@@ -71,16 +74,26 @@ export default function GeneratorFooter({
                         <p className="mt-1 text-base font-semibold text-[var(--app-text)]">{jobCount}</p>
                     </div>
                     <div className="h-7 w-px bg-[var(--app-border)]" aria-hidden="true" />
-                    <div>
-                        <p className="text-xs text-[var(--app-text-muted)]">Chi phí dự kiến</p>
-                        <div className="mt-1 flex items-center gap-1">
-                            <Coins className={`h-4 w-4 ${insufficient ? "text-[var(--app-warning)]" : "text-[var(--app-accent)]"}`} aria-hidden="true" />
-                            <span className={`text-base font-semibold ${insufficient ? "text-[var(--app-warning)]" : "text-[var(--app-text)]"}`}>
-                                {estimatedCredits.toLocaleString("vi-VN")}
-                            </span>
-                            <span className="text-xs text-[var(--app-text-muted)]">credit</span>
+                    {fairUse ? (
+                        <div>
+                            <p className="text-xs text-[var(--app-text-muted)]">Lượt tạo video hôm nay</p>
+                            <p className="mt-1 text-base font-semibold text-[var(--app-text)]">
+                                {fairUse.today.toLocaleString("vi-VN")}{fairUse.limit !== null ? ` / ${fairUse.limit.toLocaleString("vi-VN")}` : ""}
+                                <span className="ml-1 text-xs font-normal text-[var(--app-text-muted)]">gói không trừ credit</span>
+                            </p>
                         </div>
-                    </div>
+                    ) : (
+                        <div>
+                            <p className="text-xs text-[var(--app-text-muted)]">Chi phí dự kiến</p>
+                            <div className="mt-1 flex items-center gap-1">
+                                <Coins className={`h-4 w-4 ${insufficient ? "text-[var(--app-warning)]" : "text-[var(--app-accent)]"}`} aria-hidden="true" />
+                                <span className={`text-base font-semibold ${insufficient ? "text-[var(--app-warning)]" : "text-[var(--app-text)]"}`}>
+                                    {estimatedCredits.toLocaleString("vi-VN")}
+                                </span>
+                                <span className="text-xs text-[var(--app-text-muted)]">credit</span>
+                            </div>
+                        </div>
+                    )}
                     {balance !== null && (
                         <>
                             <div className="h-7 w-px bg-[var(--app-border)]" aria-hidden="true" />

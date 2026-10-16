@@ -17,7 +17,11 @@ import {
     dashboardService,
 } from "@/services/dashboard.service";
 
+import { Link } from "react-router-dom";
+
 import type { PortalMeResponse } from "@/types/api";
+import { expiryText, planChargesCredits, planExpiry } from "@/features/plan/planCopy";
+import { SystemModeBanner } from "@/features/plan/SystemModeBanner";
 import GeneratorPanel from "@/components/generator/generatorPanel";
 import RecentRunsPanel from "@/components/runs/RecentRunsPanel";
 import { Spinner } from "@/components/ui";
@@ -57,6 +61,11 @@ export default function Dashboard() {
 
         load();
     }, []);
+
+    // Mô hình bán hàng: subscription ⇒ thẻ gói hiện hạn; gói không trừ credit ⇒ thẻ lượt tạo hôm nay thay số dư
+    const subscription = me?.commercialMode === "subscription";
+    const expiry = planExpiry(me?.user.planExpiresAt);
+    const fairUse = me && !planChargesCredits(me.plan) ? { limit: me.user.fairUsePerDayOverride ?? me.plan?.fairUsePerDay ?? null } : null;
 
     if (loading) {
         return (
@@ -110,20 +119,24 @@ export default function Dashboard() {
                     </div>
                 </div>
 
+                <SystemModeBanner />
                 <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
 
-                    <StatCard
-                        icon={
-                            <Coins className="h-4 w-4 sm:h-5 sm:w-5" />
-                        }
-                        label="Số dư"
-                        value={
-                            me.balance.display
-                        }
-                        description={`${me.user.credits.toLocaleString(
-                            "vi-VN"
-                        )} credits`}
-                    />
+                    {fairUse ? (
+                        <StatCard
+                            icon={<Coins className="h-4 w-4 sm:h-5 sm:w-5" />}
+                            label="Lượt tạo video hôm nay"
+                            value={fairUse.limit !== null ? `${me.usage.fairUseToday.toLocaleString("vi-VN")} / ${fairUse.limit.toLocaleString("vi-VN")}` : me.usage.fairUseToday.toLocaleString("vi-VN")}
+                            description="gói không trừ credit"
+                        />
+                    ) : (
+                        <StatCard
+                            icon={<Coins className="h-4 w-4 sm:h-5 sm:w-5" />}
+                            label="Số dư"
+                            value={me.balance.display}
+                            description={`${me.user.credits.toLocaleString("vi-VN")} credits`}
+                        />
+                    )}
 
                     <StatCard
                         icon={
@@ -159,9 +172,11 @@ export default function Dashboard() {
                             "Không có gói"
                         }
                         description={
-                            me.plan
-                                ? `${me.plan.maxConcurrent} task đồng thời`
-                                : "Chưa có gói"
+                            subscription
+                                ? <span>{expiry.state === "none" ? "Không thời hạn" : expiryText(expiry)} · <Link to="/my-plan" className="underline">Gói của tôi</Link></span>
+                                : me.plan
+                                    ? `${me.plan.maxConcurrent} task đồng thời`
+                                    : "Chưa có gói"
                         }
                     />
                 </div>
@@ -192,7 +207,7 @@ function StatCard({
     icon: ReactNode;
     label: string;
     value: string;
-    description: string;
+    description: ReactNode;
 }) {
     return (
         <div className="rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-3 transition-colors sm:rounded-2xl sm:p-5">

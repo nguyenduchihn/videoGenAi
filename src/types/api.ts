@@ -64,8 +64,16 @@ export interface PortalUser {
 }
 
 
+/** Mô hình bán hàng: payg = nạp credit theo lượt (mặc định); subscription = bán gói dịch vụ, nạp credit tắt. */
+export type CommercialMode = "payg" | "subscription";
+
 export interface PortalPlan {
     name: string;
+    /** Bán gói (subscription): giá mỗi kỳ (VND, 0 = không bán công khai), kỳ hạn, mô tả, thứ tự. */
+    priceVnd: number;
+    periodDays: number;
+    description: string | null;
+    sortOrder: number;
 
     maxConcurrent: number;
     maxPending: number;
@@ -129,6 +137,8 @@ export interface PortalUsage {
     creditsSpent7d: number;
 
     activeTasks: number;
+    /** Job video trả phí tạo hôm nay — so với plan.fairUsePerDay của gói không trừ credit. */
+    fairUseToday: number;
 }
 
 
@@ -142,6 +152,10 @@ export interface PortalMeResponse {
     balance: PortalBalance;
 
     usage: PortalUsage;
+
+    commercialMode: CommercialMode;
+    /** subscription: số ngày dùng thử gói mặc định cho khách mới (0 = không hạn). */
+    trialDays: number;
 }
 
 
@@ -338,8 +352,25 @@ export interface PortalPricingResponse {
     >;
     /** false ⇒ nạp tiền tạm tắt (vẫn hiện gói để khách xem giá). */
     topupEnabled: boolean;
-    /** Gói nạp công khai (không kèm thông tin ngân hàng). */
+    /** Gói nạp công khai (không kèm thông tin ngân hàng); [] ở chế độ subscription. */
     packages: PaymentPackage[];
+    commercialMode: CommercialMode;
+    /** Gói dịch vụ đang mở bán (chỉ subscription), đã sắp theo thứ tự hiển thị. */
+    plans: PricingPlan[];
+}
+
+export interface PricingPlan {
+    id: string;
+    name: string;
+    description: string | null;
+    priceVnd: number;
+    periodDays: number;
+    maxConcurrent: number;
+    maxPending: number;
+    chargesCredits: boolean;
+    monthlyCredits: number;
+    fairUsePerDay: number | null;
+    allowRealMode: boolean;
 }
 
 
@@ -398,6 +429,9 @@ export type PaymentStatus =
     | "cancelled"
     | "failed";
 
+/** topup = nạp credit; plan_purchase = mua / gia hạn gói dịch vụ (package = gói dịch vụ, credits = credit cấp ngay). */
+export type PaymentIntentKind = "topup" | "plan_purchase";
+
 export interface PaymentIntent {
     intentId: string;
 
@@ -406,6 +440,10 @@ export interface PaymentIntent {
     qrImageUrl: string;
 
     isExisting: boolean;
+
+    kind: PaymentIntentKind;
+    planId: string | null;
+    periodDays: number | null;
 
     status: PaymentStatus;
 
@@ -428,6 +466,10 @@ export interface PaymentIntent {
 
 export interface CreatePaymentIntentRequest {
     packageId: string;
+}
+
+export interface CreatePlanIntentRequest {
+    planId: string;
 }
 
 
@@ -472,6 +514,7 @@ export interface V1Me {
     status: UserStatus;
     emailVerified: boolean;
     planExpiresAt: string | null;
+    commercialMode: CommercialMode;
     plan: {
         id: string;
         name: string;

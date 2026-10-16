@@ -28,6 +28,8 @@ export interface GeneratorLayoutProps {
     submitError: string | null;
     estimatedCredits: number;
     balance: number | null;
+    /** Gói không trừ credit: lượt tạo video hôm nay / giới hạn. */
+    fairUse: { today: number; limit: number | null } | null;
     isGenerating: boolean;
     uploadProgress: UploadProgress | null;
     /** Tiến độ gửi lô (đã gửi/tổng) khi lượt nhiều chunk. */

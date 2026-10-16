@@ -1612,6 +1612,34 @@
                           "default": false,
                           "description": "R5: gói được gọi Google thật khi GOOGLE_MODE=real; false ⇒ mô phỏng"
                         },
+                        "priceVnd": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 1000000000,
+                          "default": 0,
+                          "description": "Bán gói (subscription): giá mỗi kỳ (VND); 0 = không bán công khai"
+                        },
+                        "periodDays": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 3650,
+                          "default": 30,
+                          "description": "Kỳ hạn mỗi lần mua/gia hạn (ngày)"
+                        },
+                        "description": {
+                          "type": "string",
+                          "maxLength": 200,
+                          "nullable": true,
+                          "default": null,
+                          "description": "Một dòng mô tả trên trang bán gói"
+                        },
+                        "sortOrder": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 1000,
+                          "default": 0,
+                          "description": "Thứ tự hiển thị trên trang bán gói (nhỏ trước)"
+                        },
                         "id": {
                           "type": "string",
                           "description": "starter | pro | unlimited | …"
@@ -1716,6 +1744,10 @@
                         "activeTasks": {
                           "type": "integer",
                           "description": "Đang chờ + đang chạy"
+                        },
+                        "fairUseToday": {
+                          "type": "integer",
+                          "description": "Job video trả phí tạo hôm nay (giờ VN) — so với plan.fairUsePerDay của gói không trừ credit"
                         }
                       },
                       "required": [
@@ -1723,9 +1755,22 @@
                         "last7Days",
                         "creditsSpentToday",
                         "creditsSpent7d",
-                        "activeTasks"
+                        "activeTasks",
+                        "fairUseToday"
                       ],
                       "additionalProperties": false
+                    },
+                    "commercialMode": {
+                      "type": "string",
+                      "enum": [
+                        "payg",
+                        "subscription"
+                      ],
+                      "description": "payg = nạp credit theo lượt (mặc định); subscription = bán gói dịch vụ, nạp credit tắt"
+                    },
+                    "trialDays": {
+                      "type": "integer",
+                      "description": "subscription: số ngày dùng thử gói mặc định cho khách mới (0 = không hạn)"
                     }
                   },
                   "required": [
@@ -1733,7 +1778,9 @@
                     "plan",
                     "keys",
                     "balance",
-                    "usage"
+                    "usage",
+                    "commercialMode",
+                    "trialDays"
                   ],
                   "additionalProperties": false
                 }
@@ -4357,6 +4404,7 @@
     },
     "/portal/pricing": {
       "get": {
+        "description": "Không cần đăng nhập. `packages` chỉ có id/nhãn/giá/credit (không có thông tin ngân hàng — xem /portal/payments/packages khi đã đăng nhập). `topupEnabled=false` ⇒ tạm tắt nạp tiền.",
         "operationId": "PortalController_pricing",
         "parameters": [],
         "responses": {
@@ -4391,10 +4439,112 @@
                         ],
                         "additionalProperties": false
                       }
+                    },
+                    "topupEnabled": {
+                      "type": "boolean",
+                      "description": "false ⇒ nạp tiền tạm tắt (trang giá vẫn hiện gói); luôn false ở chế độ subscription"
+                    },
+                    "packages": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "amountVnd": {
+                            "type": "integer"
+                          },
+                          "credits": {
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "label",
+                          "amountVnd",
+                          "credits"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Gói nạp công khai, không kèm thông tin ngân hàng; [] ở chế độ subscription"
+                    },
+                    "commercialMode": {
+                      "type": "string",
+                      "enum": [
+                        "payg",
+                        "subscription"
+                      ],
+                      "description": "payg = nạp credit theo lượt (mặc định); subscription = bán gói dịch vụ, nạp credit tắt"
+                    },
+                    "plans": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "priceVnd": {
+                            "type": "integer"
+                          },
+                          "periodDays": {
+                            "type": "integer"
+                          },
+                          "maxConcurrent": {
+                            "type": "integer"
+                          },
+                          "maxPending": {
+                            "type": "integer"
+                          },
+                          "chargesCredits": {
+                            "type": "boolean"
+                          },
+                          "monthlyCredits": {
+                            "type": "integer"
+                          },
+                          "fairUsePerDay": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "allowRealMode": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "description",
+                          "priceVnd",
+                          "periodDays",
+                          "maxConcurrent",
+                          "maxPending",
+                          "chargesCredits",
+                          "monthlyCredits",
+                          "fairUsePerDay",
+                          "allowRealMode"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Gói dịch vụ đang mở bán (active, priceVnd > 0), sắp theo sortOrder rồi giá; [] ở chế độ payg"
                     }
                   },
                   "required": [
-                    "workers"
+                    "workers",
+                    "topupEnabled",
+                    "packages",
+                    "commercialMode",
+                    "plans"
                   ],
                   "additionalProperties": false
                 }
@@ -4402,7 +4552,7 @@
             }
           }
         },
-        "summary": "Bảng giá công khai (credit/job theo worker, model)",
+        "summary": "Bảng giá công khai (credit/job theo worker, model) + gói nạp hoặc gói dịch vụ theo chế độ bán",
         "tags": [
           "Portal"
         ]
@@ -4410,7 +4560,7 @@
     },
     "/portal/payments/packages": {
       "get": {
-        "description": "`enabled=false` ⇒ tạm tắt nạp tiền.",
+        "description": "`enabled=false` ⇒ tạm tắt nạp tiền (SePay tắt hoặc hệ thống đang ở chế độ bán gói dịch vụ ⇒ `packages=[]`).",
         "operationId": "PaymentsController_packages",
         "parameters": [],
         "responses": {
@@ -4660,6 +4810,24 @@
                       "type": "boolean",
                       "description": "true = trả lại lệnh đang chờ của cùng gói (bấm 2 lần)"
                     },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "topup",
+                        "plan_purchase"
+                      ],
+                      "description": "topup = nạp credit; plan_purchase = mua/gia hạn gói dịch vụ"
+                    },
+                    "planId": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "plan_purchase: gói mua"
+                    },
+                    "periodDays": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "plan_purchase: kỳ hạn (ngày) cộng vào hạn gói khi thanh toán"
+                    },
                     "status": {
                       "type": "string",
                       "enum": [
@@ -4695,7 +4863,8 @@
                         "credits",
                         "amountVnd"
                       ],
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "description": "topup: gói nạp; plan_purchase: gói dịch vụ (credits = credit cấp ngay)"
                     },
                     "bankInfo": {
                       "type": "object",
@@ -4750,6 +4919,9 @@
                     "code",
                     "qrImageUrl",
                     "isExisting",
+                    "kind",
+                    "planId",
+                    "periodDays",
                     "status",
                     "expired",
                     "package",
@@ -4924,6 +5096,59 @@
               }
             }
           },
+          "409": {
+            "description": "Xung đột (`EMAIL_TAKEN`, `IN_PROGRESS`…)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "429": {
             "description": "Vượt giới hạn tốc độ (`RATE_LIMITED`)",
             "content": {
@@ -5042,23 +5267,36 @@
         ]
       }
     },
-    "/portal/payments/intents/{id}/status": {
-      "get": {
-        "description": "`paid` ⇒ credit đã cộng. `expired=true` ⇒ tạo lệnh mới. 120 lần/phút.",
-        "operationId": "PaymentsController_status",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
+    "/portal/payments/seapay/create-plan-intent": {
+      "post": {
+        "description": "Chỉ khi hệ thống bán gói dịch vụ (`commercialMode=subscription`), gói đang mở bán (`priceVnd > 0`). Thanh toán xong ⇒ hạn gói cộng thêm `periodDays` kể từ hạn hiện tại (hoặc từ lúc thanh toán nếu đã hết hạn), đổi gói có hiệu lực ngay, credit theo gói cấp ngay. 409 `MODE_MISMATCH` khi đang ở chế độ nạp credit.",
+        "operationId": "PaymentsController_createPlan",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "planId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40,
+                    "description": "id gói dịch vụ đang mở bán trong GET /portal/pricing.plans"
+                  }
+                },
+                "required": [
+                  "planId"
+                ],
+                "additionalProperties": false
+              }
             }
           }
-        ],
+        },
         "responses": {
-          "200": {
-            "description": "Trạng thái",
+          "201": {
+            "description": "Lệnh mua gói",
             "content": {
               "application/json": {
                 "schema": {
@@ -5079,6 +5317,24 @@
                     "isExisting": {
                       "type": "boolean",
                       "description": "true = trả lại lệnh đang chờ của cùng gói (bấm 2 lần)"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "topup",
+                        "plan_purchase"
+                      ],
+                      "description": "topup = nạp credit; plan_purchase = mua/gia hạn gói dịch vụ"
+                    },
+                    "planId": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "plan_purchase: gói mua"
+                    },
+                    "periodDays": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "plan_purchase: kỳ hạn (ngày) cộng vào hạn gói khi thanh toán"
                     },
                     "status": {
                       "type": "string",
@@ -5115,7 +5371,8 @@
                         "credits",
                         "amountVnd"
                       ],
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "description": "topup: gói nạp; plan_purchase: gói dịch vụ (credits = credit cấp ngay)"
                     },
                     "bankInfo": {
                       "type": "object",
@@ -5170,6 +5427,504 @@
                     "code",
                     "qrImageUrl",
                     "isExisting",
+                    "kind",
+                    "planId",
+                    "periodDays",
+                    "status",
+                    "expired",
+                    "package",
+                    "bankInfo",
+                    "failureReason",
+                    "cancellationReason",
+                    "paidAt",
+                    "expiresAt",
+                    "createdAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dữ liệu không hợp lệ (`VALIDATION_FAILED`: xem `details[].path`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy (hoặc không thuộc về bạn)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Xung đột (`EMAIL_TAKEN`, `IN_PROGRESS`…)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Vượt giới hạn tốc độ (`RATE_LIMITED`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Lỗi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "portalCookie": []
+          }
+        ],
+        "summary": "Mua / gia hạn gói dịch vụ (chế độ subscription): mã chuyển khoản + VietQR",
+        "tags": [
+          "Portal · Nạp tiền"
+        ]
+      }
+    },
+    "/portal/payments/intents/{id}/status": {
+      "get": {
+        "description": "`paid` ⇒ credit đã cộng. `expired=true` ⇒ tạo lệnh mới. 120 lần/phút.",
+        "operationId": "PaymentsController_status",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trạng thái",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "intentId": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "Nội dung chuyển khoản — webhook đối soát bằng mã này"
+                    },
+                    "qrImageUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Ảnh VietQR (img.vietqr.io) đã gắn số tiền + mã"
+                    },
+                    "isExisting": {
+                      "type": "boolean",
+                      "description": "true = trả lại lệnh đang chờ của cùng gói (bấm 2 lần)"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "topup",
+                        "plan_purchase"
+                      ],
+                      "description": "topup = nạp credit; plan_purchase = mua/gia hạn gói dịch vụ"
+                    },
+                    "planId": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "plan_purchase: gói mua"
+                    },
+                    "periodDays": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "plan_purchase: kỳ hạn (ngày) cộng vào hạn gói khi thanh toán"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "paid",
+                        "cancelled",
+                        "failed"
+                      ]
+                    },
+                    "expired": {
+                      "type": "boolean",
+                      "description": "pending nhưng quá 30 phút ⇒ tạo lại"
+                    },
+                    "package": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string"
+                        },
+                        "credits": {
+                          "type": "integer"
+                        },
+                        "amountVnd": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "label",
+                        "credits",
+                        "amountVnd"
+                      ],
+                      "additionalProperties": false,
+                      "description": "topup: gói nạp; plan_purchase: gói dịch vụ (credits = credit cấp ngay)"
+                    },
+                    "bankInfo": {
+                      "type": "object",
+                      "properties": {
+                        "bank": {
+                          "type": "string"
+                        },
+                        "bankCode": {
+                          "type": "string"
+                        },
+                        "accountNumber": {
+                          "type": "string"
+                        },
+                        "accountName": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "bank",
+                        "bankCode",
+                        "accountNumber",
+                        "accountName"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Hiện kèm để khách chuyển tay khi không quét được QR"
+                    },
+                    "failureReason": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "'amount_mismatch' = chuyển sai số tiền, admin đối soát"
+                    },
+                    "cancellationReason": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "paidAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "intentId",
+                    "code",
+                    "qrImageUrl",
+                    "isExisting",
+                    "kind",
+                    "planId",
+                    "periodDays",
                     "status",
                     "expired",
                     "package",
@@ -5379,6 +6134,20 @@
               "maximum": 50,
               "default": 20
             }
+          },
+          {
+            "name": "kind",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "topup",
+                "plan_purchase"
+              ],
+              "description": "Lọc theo loại lệnh: nạp credit / mua gói"
+            },
+            "description": "Lọc theo loại lệnh: nạp credit / mua gói"
           }
         ],
         "responses": {
@@ -5409,6 +6178,24 @@
                           "isExisting": {
                             "type": "boolean",
                             "description": "true = trả lại lệnh đang chờ của cùng gói (bấm 2 lần)"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "topup",
+                              "plan_purchase"
+                            ],
+                            "description": "topup = nạp credit; plan_purchase = mua/gia hạn gói dịch vụ"
+                          },
+                          "planId": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "plan_purchase: gói mua"
+                          },
+                          "periodDays": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "plan_purchase: kỳ hạn (ngày) cộng vào hạn gói khi thanh toán"
                           },
                           "status": {
                             "type": "string",
@@ -5445,7 +6232,8 @@
                               "credits",
                               "amountVnd"
                             ],
-                            "additionalProperties": false
+                            "additionalProperties": false,
+                            "description": "topup: gói nạp; plan_purchase: gói dịch vụ (credits = credit cấp ngay)"
                           },
                           "bankInfo": {
                             "type": "object",
@@ -5500,6 +6288,9 @@
                           "code",
                           "qrImageUrl",
                           "isExisting",
+                          "kind",
+                          "planId",
+                          "periodDays",
                           "status",
                           "expired",
                           "package",
@@ -5689,6 +6480,14 @@
                       "type": "string",
                       "description": "ignored_outgoing | no_code | unknown_code | already_settled | amount_mismatch"
                     },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "topup",
+                        "plan_purchase"
+                      ],
+                      "description": "Loại lệnh đã tất toán"
+                    },
                     "credits": {
                       "type": "integer"
                     },
@@ -5697,6 +6496,12 @@
                     },
                     "balanceAfter": {
                       "type": "integer"
+                    },
+                    "planExpiresAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true,
+                      "description": "plan_purchase: hạn gói mới"
                     }
                   },
                   "required": [
@@ -6014,7 +6819,15 @@
                       "type": "string",
                       "format": "date-time",
                       "nullable": true,
-                      "description": "null = không hết hạn"
+                      "description": "null = không hết hạn; chỉ chế độ subscription mới chặn khi quá hạn"
+                    },
+                    "commercialMode": {
+                      "type": "string",
+                      "enum": [
+                        "payg",
+                        "subscription"
+                      ],
+                      "description": "payg = nạp credit theo lượt; subscription = bán gói dịch vụ"
                     },
                     "plan": {
                       "type": "object",
@@ -6067,6 +6880,7 @@
                     "status",
                     "emailVerified",
                     "planExpiresAt",
+                    "commercialMode",
                     "plan"
                   ],
                   "additionalProperties": false

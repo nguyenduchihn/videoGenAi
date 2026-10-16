@@ -21,6 +21,9 @@ import type {
 } from "@/types/api";
 import { Link, useNavigate } from "react-router";
 
+import { PlanCard } from "@/features/plan/PlanCard";
+import { useAuthStore } from "@/stores/auth.store";
+
 interface WorkerInfo {
     key: string;
     label: string;
@@ -403,6 +406,10 @@ export default function Pricing() {
     const hasPackages =
         paymentPackages.length > 0;
 
+    if (pricing?.commercialMode === "subscription") {
+        return <PlansPricing pricing={pricing} workers={workers} />;
+    }
+
     return (
         <div className="min-h-screen bg-[var(--app-bg)] transition-colors">
             <header className="border-b border-[var(--app-border)] bg-[var(--app-surface)]/80 backdrop-blur">
@@ -530,6 +537,63 @@ export default function Pricing() {
                         worker và model được sử dụng.
                     </p>
                 </div>
+            </div>
+        </div>
+    );
+}
+
+/** Chế độ bán gói dịch vụ: gói là sản phẩm chính; bảng giá AI thu gọn phía dưới (có ích cho gói trừ credit). */
+function PlansPricing({ pricing, workers }: { pricing: PortalPricingResponse; workers: Array<[string, { credits: number | null; models: Record<string, number> }]> }) {
+    const navigate = useNavigate();
+    const me = useAuthStore((state) => state.user);
+    const choose = (planId: string) => navigate(me ? `/my-plan?buy=${planId}` : `/login?from=${encodeURIComponent(`/my-plan?buy=${planId}`)}`);
+    const highlighted = pricing.plans.length > 1 ? pricing.plans[Math.floor((pricing.plans.length - 1) / 2)]?.id : undefined;
+    return (
+        <div className="min-h-screen bg-[var(--app-bg)] transition-colors">
+            <header className="border-b border-[var(--app-border)] bg-[var(--app-surface)]/80 backdrop-blur">
+                <nav aria-label="Điều hướng bảng giá" className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-6 py-3 lg:px-8">
+                    <Link to="/" className="flex items-center gap-2 text-sm font-semibold text-[var(--app-text)]">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--app-accent)]"><Sparkles className="h-3.5 w-3.5 text-white" aria-hidden /></span>
+                        VideoGen <span className="text-[var(--app-accent)]">AI</span>
+                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Link to="/dashboard" className="rounded-lg px-3 py-1.5 text-sm text-[var(--app-text-secondary)] transition hover:bg-[var(--app-surface-soft)] hover:text-[var(--app-text)]">Vào ứng dụng</Link>
+                        <Link to="/my-plan" className="rounded-lg bg-[var(--app-accent)] px-3 py-1.5 text-sm font-medium text-white transition hover:bg-[var(--app-accent-hover)]">Gói của tôi</Link>
+                    </div>
+                </nav>
+            </header>
+            <div className="mx-auto max-w-[1400px] px-6 py-8 lg:px-8">
+                <div className="mb-10">
+                    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[var(--app-accent)]/20 bg-[var(--app-accent-soft)] px-3 py-1.5">
+                        <Sparkles className="h-3.5 w-3.5 text-[var(--app-accent)]" />
+                        <span className="text-xs font-medium text-[var(--app-accent)]">Gói dịch vụ</span>
+                    </div>
+                    <h1 className="text-3xl font-bold tracking-tight text-[var(--app-text)]">Chọn gói phù hợp</h1>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--app-text-secondary)]">Mua gói theo kỳ để bắt đầu tạo video AI. Thanh toán bằng chuyển khoản ngân hàng, kích hoạt tự động sau khi nhận tiền; gia hạn trước hạn sẽ cộng dồn số ngày.</p>
+                </div>
+                <section aria-labelledby="plans-heading">
+                    <h2 id="plans-heading" className="mb-5 text-lg font-semibold text-[var(--app-text)]">Các gói dịch vụ</h2>
+                    {pricing.plans.length === 0 ? (
+                        <EmptyState title="Chưa có gói nào mở bán" description="Quản trị viên chưa đặt giá cho gói dịch vụ. Vui lòng quay lại sau." />
+                    ) : (
+                        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                            {pricing.plans.map((plan) => (
+                                <PlanCard key={plan.id} plan={plan} current={me?.user.planId === plan.id} highlighted={plan.id === highlighted} ctaLabel={me?.user.planId === plan.id ? "Gia hạn gói" : "Mua gói"} onChoose={() => choose(plan.id)} />
+                            ))}
+                        </div>
+                    )}
+                </section>
+                <details className="mt-14 rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5">
+                    <summary className="cursor-pointer text-base font-semibold text-[var(--app-text)]">Chi phí credit theo lượt tạo (gói có trừ credit)</summary>
+                    <p className="mt-1 text-sm text-[var(--app-text-secondary)]">Gói không trừ credit dùng không giới hạn trong mức fair-use mỗi ngày; gói còn lại trừ credit theo bảng dưới.</p>
+                    {workers.length === 0 ? (
+                        <EmptyState title="Chưa có bảng giá AI" description="Hiện chưa có worker hoặc model nào được cấu hình trong hệ thống." />
+                    ) : (
+                        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                            {workers.map(([workerKey, worker]) => <WorkerPricingCard key={workerKey} workerKey={workerKey} worker={worker} />)}
+                        </div>
+                    )}
+                </details>
             </div>
         </div>
     );

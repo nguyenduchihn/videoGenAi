@@ -406,7 +406,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Bảng giá công khai (credit/job theo worker, model) */
+        /**
+         * Bảng giá công khai (credit/job theo worker, model) + gói nạp hoặc gói dịch vụ theo chế độ bán
+         * @description Không cần đăng nhập. `packages` chỉ có id/nhãn/giá/credit (không có thông tin ngân hàng — xem /portal/payments/packages khi đã đăng nhập). `topupEnabled=false` ⇒ tạm tắt nạp tiền.
+         */
         get: operations["PortalController_pricing"];
         put?: never;
         post?: never;
@@ -425,7 +428,7 @@ export interface paths {
         };
         /**
          * Gói nạp + thông tin ngân hàng
-         * @description `enabled=false` ⇒ tạm tắt nạp tiền.
+         * @description `enabled=false` ⇒ tạm tắt nạp tiền (SePay tắt hoặc hệ thống đang ở chế độ bán gói dịch vụ ⇒ `packages=[]`).
          */
         get: operations["PaymentsController_packages"];
         put?: never;
@@ -450,6 +453,26 @@ export interface paths {
          * @description Mỗi khách chỉ có 1 lệnh đang chờ: gọi lại cùng gói ⇒ trả lệnh cũ (`isExisting`); đổi gói ⇒ huỷ lệnh cũ. Lệnh sống 30 phút. Chuyển ĐÚNG số tiền, nội dung = `code`. 10 lần/phút.
          */
         post: operations["PaymentsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/portal/payments/seapay/create-plan-intent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mua / gia hạn gói dịch vụ (chế độ subscription): mã chuyển khoản + VietQR
+         * @description Chỉ khi hệ thống bán gói dịch vụ (`commercialMode=subscription`), gói đang mở bán (`priceVnd > 0`). Thanh toán xong ⇒ hạn gói cộng thêm `periodDays` kể từ hạn hiện tại (hoặc từ lúc thanh toán nếu đã hết hạn), đổi gói có hiệu lực ngay, credit theo gói cấp ngay. 409 `MODE_MISMATCH` khi đang ở chế độ nạp credit.
+         */
+        post: operations["PaymentsController_createPlan"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1755,6 +1778,26 @@ export interface operations {
                              * @default false
                              */
                             allowRealMode: boolean;
+                            /**
+                             * @description Bán gói (subscription): giá mỗi kỳ (VND); 0 = không bán công khai
+                             * @default 0
+                             */
+                            priceVnd: number;
+                            /**
+                             * @description Kỳ hạn mỗi lần mua/gia hạn (ngày)
+                             * @default 30
+                             */
+                            periodDays: number;
+                            /**
+                             * @description Một dòng mô tả trên trang bán gói
+                             * @default null
+                             */
+                            description: string | null;
+                            /**
+                             * @description Thứ tự hiển thị trên trang bán gói (nhỏ trước)
+                             * @default 0
+                             */
+                            sortOrder: number;
                             /** @description starter | pro | unlimited | … */
                             id: string;
                         } | null;
@@ -1789,7 +1832,16 @@ export interface operations {
                             creditsSpent7d: number;
                             /** @description Đang chờ + đang chạy */
                             activeTasks: number;
+                            /** @description Job video trả phí tạo hôm nay (giờ VN) — so với plan.fairUsePerDay của gói không trừ credit */
+                            fairUseToday: number;
                         };
+                        /**
+                         * @description payg = nạp credit theo lượt (mặc định); subscription = bán gói dịch vụ, nạp credit tắt
+                         * @enum {string}
+                         */
+                        commercialMode: "payg" | "subscription";
+                        /** @description subscription: số ngày dùng thử gói mặc định cho khách mới (0 = không hạn) */
+                        trialDays: number;
                     };
                 };
             };
@@ -3041,6 +3093,34 @@ export interface operations {
                                 };
                             };
                         };
+                        /** @description false ⇒ nạp tiền tạm tắt (trang giá vẫn hiện gói); luôn false ở chế độ subscription */
+                        topupEnabled: boolean;
+                        /** @description Gói nạp công khai, không kèm thông tin ngân hàng; [] ở chế độ subscription */
+                        packages: {
+                            id: string;
+                            label: string;
+                            amountVnd: number;
+                            credits: number;
+                        }[];
+                        /**
+                         * @description payg = nạp credit theo lượt (mặc định); subscription = bán gói dịch vụ, nạp credit tắt
+                         * @enum {string}
+                         */
+                        commercialMode: "payg" | "subscription";
+                        /** @description Gói dịch vụ đang mở bán (active, priceVnd > 0), sắp theo sortOrder rồi giá; [] ở chế độ payg */
+                        plans: {
+                            id: string;
+                            name: string;
+                            description: string | null;
+                            priceVnd: number;
+                            periodDays: number;
+                            maxConcurrent: number;
+                            maxPending: number;
+                            chargesCredits: boolean;
+                            monthlyCredits: number;
+                            fairUsePerDay: number | null;
+                            allowRealMode: boolean;
+                        }[];
                     };
                 };
             };
@@ -3171,10 +3251,20 @@ export interface operations {
                         qrImageUrl: string;
                         /** @description true = trả lại lệnh đang chờ của cùng gói (bấm 2 lần) */
                         isExisting: boolean;
+                        /**
+                         * @description topup = nạp credit; plan_purchase = mua/gia hạn gói dịch vụ
+                         * @enum {string}
+                         */
+                        kind: "topup" | "plan_purchase";
+                        /** @description plan_purchase: gói mua */
+                        planId: string | null;
+                        /** @description plan_purchase: kỳ hạn (ngày) cộng vào hạn gói khi thanh toán */
+                        periodDays: number | null;
                         /** @enum {string} */
                         status: "pending" | "paid" | "cancelled" | "failed";
                         /** @description pending nhưng quá 30 phút ⇒ tạo lại */
                         expired: boolean;
+                        /** @description topup: gói nạp; plan_purchase: gói dịch vụ (credits = credit cấp ngay) */
                         package: {
                             id: string;
                             label: string;
@@ -3258,6 +3348,276 @@ export interface operations {
             };
             /** @description Không tìm thấy (hoặc không thuộc về bạn) */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Xung đột (`EMAIL_TAKEN`, `IN_PROGRESS`…) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Vượt giới hạn tốc độ (`RATE_LIMITED`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Lỗi */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    PaymentsController_createPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description id gói dịch vụ đang mở bán trong GET /portal/pricing.plans */
+                    planId: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Lệnh mua gói */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        intentId: string;
+                        /** @description Nội dung chuyển khoản — webhook đối soát bằng mã này */
+                        code: string;
+                        /**
+                         * Format: uri
+                         * @description Ảnh VietQR (img.vietqr.io) đã gắn số tiền + mã
+                         */
+                        qrImageUrl: string;
+                        /** @description true = trả lại lệnh đang chờ của cùng gói (bấm 2 lần) */
+                        isExisting: boolean;
+                        /**
+                         * @description topup = nạp credit; plan_purchase = mua/gia hạn gói dịch vụ
+                         * @enum {string}
+                         */
+                        kind: "topup" | "plan_purchase";
+                        /** @description plan_purchase: gói mua */
+                        planId: string | null;
+                        /** @description plan_purchase: kỳ hạn (ngày) cộng vào hạn gói khi thanh toán */
+                        periodDays: number | null;
+                        /** @enum {string} */
+                        status: "pending" | "paid" | "cancelled" | "failed";
+                        /** @description pending nhưng quá 30 phút ⇒ tạo lại */
+                        expired: boolean;
+                        /** @description topup: gói nạp; plan_purchase: gói dịch vụ (credits = credit cấp ngay) */
+                        package: {
+                            id: string;
+                            label: string;
+                            credits: number;
+                            amountVnd: number;
+                        };
+                        /** @description Hiện kèm để khách chuyển tay khi không quét được QR */
+                        bankInfo: {
+                            bank: string;
+                            bankCode: string;
+                            accountNumber: string;
+                            accountName: string;
+                        };
+                        /** @description 'amount_mismatch' = chuyển sai số tiền, admin đối soát */
+                        failureReason: string | null;
+                        cancellationReason: string | null;
+                        /** Format: date-time */
+                        paidAt: string | null;
+                        /** Format: date-time */
+                        expiresAt: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                    };
+                };
+            };
+            /** @description Dữ liệu không hợp lệ (`VALIDATION_FAILED`: xem `details[].path`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không tìm thấy (hoặc không thuộc về bạn) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Xung đột (`EMAIL_TAKEN`, `IN_PROGRESS`…) */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3370,10 +3730,20 @@ export interface operations {
                         qrImageUrl: string;
                         /** @description true = trả lại lệnh đang chờ của cùng gói (bấm 2 lần) */
                         isExisting: boolean;
+                        /**
+                         * @description topup = nạp credit; plan_purchase = mua/gia hạn gói dịch vụ
+                         * @enum {string}
+                         */
+                        kind: "topup" | "plan_purchase";
+                        /** @description plan_purchase: gói mua */
+                        planId: string | null;
+                        /** @description plan_purchase: kỳ hạn (ngày) cộng vào hạn gói khi thanh toán */
+                        periodDays: number | null;
                         /** @enum {string} */
                         status: "pending" | "paid" | "cancelled" | "failed";
                         /** @description pending nhưng quá 30 phút ⇒ tạo lại */
                         expired: boolean;
+                        /** @description topup: gói nạp; plan_purchase: gói dịch vụ (credits = credit cấp ngay) */
                         package: {
                             id: string;
                             label: string;
@@ -3490,6 +3860,8 @@ export interface operations {
             query?: {
                 cursor?: string;
                 limit?: number;
+                /** @description Lọc theo loại lệnh: nạp credit / mua gói */
+                kind?: "topup" | "plan_purchase";
             };
             header?: never;
             path?: never;
@@ -3515,10 +3887,20 @@ export interface operations {
                             qrImageUrl: string;
                             /** @description true = trả lại lệnh đang chờ của cùng gói (bấm 2 lần) */
                             isExisting: boolean;
+                            /**
+                             * @description topup = nạp credit; plan_purchase = mua/gia hạn gói dịch vụ
+                             * @enum {string}
+                             */
+                            kind: "topup" | "plan_purchase";
+                            /** @description plan_purchase: gói mua */
+                            planId: string | null;
+                            /** @description plan_purchase: kỳ hạn (ngày) cộng vào hạn gói khi thanh toán */
+                            periodDays: number | null;
                             /** @enum {string} */
                             status: "pending" | "paid" | "cancelled" | "failed";
                             /** @description pending nhưng quá 30 phút ⇒ tạo lại */
                             expired: boolean;
+                            /** @description topup: gói nạp; plan_purchase: gói dịch vụ (credits = credit cấp ngay) */
                             package: {
                                 id: string;
                                 label: string;
@@ -3634,9 +4016,19 @@ export interface operations {
                         credited?: boolean;
                         /** @description ignored_outgoing | no_code | unknown_code | already_settled | amount_mismatch */
                         reason?: string;
+                        /**
+                         * @description Loại lệnh đã tất toán
+                         * @enum {string}
+                         */
+                        kind?: "topup" | "plan_purchase";
                         credits?: number;
                         bonus?: number;
                         balanceAfter?: number;
+                        /**
+                         * Format: date-time
+                         * @description plan_purchase: hạn gói mới
+                         */
+                        planExpiresAt?: string | null;
                     };
                 };
             };
@@ -3806,9 +4198,14 @@ export interface operations {
                         emailVerified: boolean;
                         /**
                          * Format: date-time
-                         * @description null = không hết hạn
+                         * @description null = không hết hạn; chỉ chế độ subscription mới chặn khi quá hạn
                          */
                         planExpiresAt: string | null;
+                        /**
+                         * @description payg = nạp credit theo lượt; subscription = bán gói dịch vụ
+                         * @enum {string}
+                         */
+                        commercialMode: "payg" | "subscription";
                         plan: {
                             /** @description starter | pro | unlimited */
                             id: string;

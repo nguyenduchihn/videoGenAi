@@ -43,6 +43,10 @@ export const mockMeResponse: PortalMeResponse = {
         active: true,
 
         id: "pro",
+        priceVnd: 299_000,
+        periodDays: 30,
+        description: "4 luồng song song, 2.000 credit mỗi tháng.",
+        sortOrder: 2,
     },
 
     keys: [
@@ -70,5 +74,9 @@ export const mockMeResponse: PortalMeResponse = {
         creditsSpentToday: 180,
         creditsSpent7d: 760,
         activeTasks: 2,
+        fairUseToday: 0,
     },
+
+    commercialMode: "payg",
+    trialDays: 0,
 };

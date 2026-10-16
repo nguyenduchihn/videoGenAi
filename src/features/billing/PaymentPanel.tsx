@@ -116,10 +116,13 @@ function PaidState({ intent, onSwitchHistory }: { intent: PaymentIntent; onSwitc
     const navigate = useNavigate();
     return (
         <div className="space-y-3 rounded-xl border border-[var(--app-success)]/30 bg-[var(--app-success-soft)] p-5 text-center">
-            <p className="text-lg font-semibold text-[var(--app-success)]">+{formatCredits(intent.package.credits)} đã được cộng</p>
+            <p className="text-lg font-semibold text-[var(--app-success)]">
+                {intent.kind === "plan_purchase" ? `Đã kích hoạt gói ${intent.package.label}` : `+${formatCredits(intent.package.credits)} đã được cộng`}
+            </p>
+            {intent.kind === "plan_purchase" && intent.package.credits > 0 && <p className="text-sm text-[var(--app-text-secondary)]">+{formatCredits(intent.package.credits)} theo gói đã được cộng.</p>}
             {intent.paidAt && <p className="text-xs text-[var(--app-text-secondary)]">{formatDate(intent.paidAt)}</p>}
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-                <Button variant="secondary" onClick={onSwitchHistory}>Xem lịch sử nạp</Button>
+                <Button variant="secondary" onClick={onSwitchHistory}>{intent.kind === "plan_purchase" ? "Xem lịch sử mua gói" : "Xem lịch sử nạp"}</Button>
                 <Button variant="ghost" onClick={() => navigate("/dashboard")}>Về Dashboard</Button>
             </div>
         </div>

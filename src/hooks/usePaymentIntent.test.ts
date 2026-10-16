@@ -7,6 +7,7 @@ import type { PaymentIntent } from "@/types/api";
 
 vi.mock("@/api/billing.api", () => ({
     createIntent: vi.fn(),
+    createPlanIntent: vi.fn(),
     intentStatus: vi.fn(),
 }));
 
@@ -17,6 +18,9 @@ const makeIntent = (overrides: Partial<PaymentIntent> = {}): PaymentIntent => ({
     code: "VGAI123",
     qrImageUrl: "https://example.com/qr.png",
     isExisting: false,
+    kind: "topup",
+    planId: null,
+    periodDays: null,
     status: "pending",
     expired: false,
     package: { id: "p1", label: "Starter", amountVnd: 99_000, credits: 500 },
