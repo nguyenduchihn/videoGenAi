@@ -13,7 +13,7 @@ import { CreditEstimator } from "./CreditEstimator";
 import { PackageGrid } from "./PackageGrid";
 
 const SHOWN_PACKAGES = 3;
-const middleOf = <T,>(list: T[]): T | undefined => list[Math.floor((list.length - 1) / 2)];
+const middleOf = <T,>(list: T[]): T | undefined => list[Math.floor(list.length / 2)]; // 3 ⇒ giữa; 2 ⇒ gói cao hơn
 
 function PricingSkeleton() {
     return (

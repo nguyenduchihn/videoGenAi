@@ -22,7 +22,8 @@ export function FaqSection() {
 
     return (
         <section id="faq" aria-labelledby="faq-heading" className="scroll-mt-20 border-t border-app-border bg-app-surface">
-            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+            {/* JSON.stringify không escape "</" ⇒ thay "<" bằng \u003c để không thoát khỏi thẻ script (chuẩn Google structured data) */}
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
             <div className="mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:py-24 lg:grid-cols-[0.8fr_1.2fr] lg:px-8 lg:py-28">
                 <div ref={headRef} className={headClass}>
                     <p className="eyebrow text-app-accent">Câu hỏi thường gặp</p>

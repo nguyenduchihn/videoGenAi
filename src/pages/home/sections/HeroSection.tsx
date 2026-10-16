@@ -34,11 +34,11 @@ function StudioShot({ dark }: { dark: boolean }) {
 }
 
 /** Code mẫu tĩnh: đúng hình dạng POST /v1/tasks + phản hồi thật; tô màu bằng span, không thư viện. */
-function ApiPreview() {
+function ApiPreview({ batchMax }: { batchMax: number | undefined }) {
     return (
         <pre className="terminal m-0 overflow-x-auto rounded-b-2xl p-5 text-left" tabIndex={0} aria-label="Ví dụ gọi API tạo video">
             <code>
-                <span className="tok-cmt"># Tạo 1 video từ văn bản (lô tối đa 20 task)</span>{"\n"}
+                <span className="tok-cmt"># Tạo 1 video từ văn bản{batchMax ? ` (lô tối đa ${batchMax} task)` : ""}</span>{"\n"}
                 <span className="tok-kw">curl</span> -X POST https://api.aiveo3.org/v1/tasks \{"\n"}
                 {"  "}-H <span className="tok-str">"X-API-Key: vk_your_key"</span> \{"\n"}
                 {"  "}-H <span className="tok-str">"Idempotency-Key: 7f1c2c9e-..."</span> \{"\n"}
@@ -155,7 +155,7 @@ export function HeroSection() {
                             <span className="hidden text-[11px] text-white/35 sm:block">aiveo3.org</span>
                         </div>
                         <div role="tabpanel" id={`hero-panel-${tab}`} aria-labelledby={`hero-tab-${tab}`} className="min-h-[260px] bg-black/20">
-                            {tab === "studio" ? <StudioShot dark={isDark} /> : <ApiPreview />}
+                            {tab === "studio" ? <StudioShot dark={isDark} /> : <ApiPreview batchMax={batchMax} />}
                         </div>
                     </div>
                     <p className="mt-3 text-center text-[11px] text-white/40">
