@@ -4,6 +4,9 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
+/** Backend mà dev server chuyển tiếp /portal, /v1 tới: mặc định prod; đặt VITE_PROXY_TARGET=http://127.0.0.1:4100 để thử API local. */
+const PROXY_TARGET = process.env.VITE_PROXY_TARGET || "https://api.169-58-141-137.sslip.io";
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
@@ -19,12 +22,12 @@ export default defineConfig({
   server: {
     proxy: {
       "/portal": {
-        target: "https://api.169-58-141-137.sslip.io",
+        target: PROXY_TARGET,
         changeOrigin: true,
         secure: true,
       },
       "/v1": {
-        target: "https://api.169-58-141-137.sslip.io",
+        target: PROXY_TARGET,
         changeOrigin: true,
         secure: true,
       },

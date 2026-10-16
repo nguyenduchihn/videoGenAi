@@ -28,6 +28,15 @@ function seedBigRunIfRequested(): void {
 const error = (status: number, code: string, message: string, metadata?: Record<string, unknown>, headers?: Record<string, string>) =>
     HttpResponse.json({ error: { code, message, requestId: `mock-${Date.now()}`, ...(metadata ? { metadata } : {}) } }, { status, headers });
 
+/** e2e: localStorage `videogen:mock-topup-disabled` = "1" ⇒ admin tạm tắt nạp tiền (packages.enabled / pricing.topupEnabled = false). */
+function isMockTopupDisabled(): boolean {
+    try {
+        return typeof localStorage !== "undefined" && localStorage.getItem("videogen:mock-topup-disabled") === "1";
+    } catch {
+        return false;
+    }
+}
+
 /** e2e: đặt localStorage `videogen:mock-unauth` = "1" để giả lập chưa đăng nhập (handler chạy trong page). */
 function isMockUnauthenticated(): boolean {
     try {
@@ -150,10 +159,10 @@ export const handlers = [
             balance: mockMeResponse.balance.raw,
         }),
     ),
-    http.get("/portal/pricing", () => HttpResponse.json(mockPricingResponse)),
+    http.get("/portal/pricing", () => HttpResponse.json({ ...mockPricingResponse, topupEnabled: !isMockTopupDisabled() })),
 
     // ── Nạp tiền ──
-    http.get("/portal/payments/packages", () => HttpResponse.json(mockPaymentPackages)),
+    http.get("/portal/payments/packages", () => HttpResponse.json({ ...mockPaymentPackages, enabled: !isMockTopupDisabled() })),
     http.post("/portal/payments/seapay/create-intent", async ({ request }) => {
         const body = (await request.json()) as { packageId: string };
         try {

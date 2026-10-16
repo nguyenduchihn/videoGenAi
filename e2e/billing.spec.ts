@@ -34,3 +34,17 @@ test("?package= chọn sẵn gói từ trang bảng giá", async ({ page }) => {
     await expect(page).toHaveURL(/\/billing\?package=business/);
     await expect(page.getByRole("radio", { name: /Business/ })).toHaveAttribute("aria-checked", "true");
 });
+
+test("admin tạm tắt nạp tiền ⇒ tab Nạp credits vẫn hiện các gói (khoá) kèm thông báo và nút liên hệ hỗ trợ", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(() => localStorage.setItem("videogen:mock-topup-disabled", "1"));
+    await page.goto("/billing");
+    await expect(page.getByRole("status").filter({ hasText: "Nạp credits tạm thời chưa khả dụng" })).toBeVisible();
+    const group = page.getByRole("radiogroup", { name: "Chọn gói nạp" });
+    await expect(group).toHaveAttribute("aria-disabled", "true");
+    const pro = group.getByRole("radio", { name: /Pro/ });
+    await expect(pro).toHaveAttribute("aria-disabled", "true");
+    await pro.click({ force: true }); // aria-disabled ⇒ Playwright coi là disabled; ép click để chắc không mở thanh toán
+    await expect(page.getByRole("button", { name: "Tiếp tục thanh toán" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Liên hệ hỗ trợ" })).toBeVisible();
+});

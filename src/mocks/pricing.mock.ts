@@ -1,8 +1,11 @@
 import type {
     PortalPricingResponse,
 } from "@/types/api";
+import { mockPaymentPackages } from "./payment.mock";
 
 export const mockPricingResponse: PortalPricingResponse = {
+    topupEnabled: true,
+    packages: mockPaymentPackages.packages,
     workers: {
         "text-to-video": {
             credits: 80,

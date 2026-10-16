@@ -336,6 +336,10 @@ export interface PortalPricingResponse {
         string,
         PricingWorker
     >;
+    /** false ⇒ nạp tiền tạm tắt (vẫn hiện gói để khách xem giá). */
+    topupEnabled: boolean;
+    /** Gói nạp công khai (không kèm thông tin ngân hàng). */
+    packages: PaymentPackage[];
 }
 
 

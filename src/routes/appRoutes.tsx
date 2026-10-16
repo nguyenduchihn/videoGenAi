@@ -35,6 +35,7 @@ const router = createBrowserRouter([
         errorElement: <RouteErrorPage />,
         children: [
             { path: "/", element: <Home /> },
+            { path: "/pricing", element: <Pricing /> }, // công khai: landing dẫn tới, chưa đăng nhập vẫn xem được giá + gói nạp
             { path: "/welcome", element: <Navigate to="/dashboard" replace /> },
             {
                 element: <AuthLayout />,
@@ -55,7 +56,6 @@ const router = createBrowserRouter([
                     { path: "/projects", element: <Navigate to="/runs" replace /> },
                     { path: "/profile", element: <ProfilePage /> },
                     { path: "/my-plan", element: <Navigate to="/billing" replace /> },
-                    { path: "/pricing", element: <Pricing /> },
                     { path: "/library", element: <LibraryPage /> },
                     { path: "/billing", element: <BillingPage /> },
                     { path: "/tasks", element: <TasksPage /> },

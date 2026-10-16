@@ -53,9 +53,7 @@ function PendingState({ intent, remainingMs, pollError, pausedUntil, resumePolli
         <div className="space-y-4 rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-4 sm:p-5">
             <div className="grid gap-5 lg:grid-cols-[180px_1fr]">
                 <div className="flex justify-center">
-                    <div className="rounded-lg bg-white p-2.5 shadow-sm">
-                        <img src={intent.qrImageUrl} alt={`Mã QR thanh toán ${intent.package.label} ${formatVnd(intent.package.amountVnd)}`} width={164} height={164} className="block" />
-                    </div>
+                    <QrImage src={intent.qrImageUrl} alt={`Mã QR thanh toán ${intent.package.label} ${formatVnd(intent.package.amountVnd)}`} />
                 </div>
                 <div className="space-y-2.5">
                     {rows.map((r) => (
@@ -92,6 +90,24 @@ function PendingState({ intent, remainingMs, pollError, pausedUntil, resumePolli
             <p className="rounded-lg bg-[var(--app-surface-soft)] px-3 py-2 text-xs text-[var(--app-text-secondary)]">
                 Chuyển ĐÚNG số tiền và nội dung; credits cộng tự động trong vài giây sau khi chuyển.
             </p>
+        </div>
+    );
+}
+
+/** Ảnh VietQR từ img.vietqr.io; CDN lỗi hoặc tài khoản chưa hợp lệ ⇒ ô hướng dẫn chuyển tay thay vì ô trắng. */
+function QrImage({ src, alt }: { src: string; alt: string }) {
+    const [failed, setFailed] = useState(false);
+    if (failed) {
+        return (
+            <div role="img" aria-label="Không tải được mã QR" className="flex h-[184px] w-[184px] flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-[var(--app-border)] bg-[var(--app-surface-soft)] p-3 text-center text-xs text-[var(--app-text-secondary)]">
+                <span className="font-medium text-[var(--app-text)]">Không tải được mã QR</span>
+                Chuyển khoản tay theo số tài khoản, số tiền và nội dung bên cạnh.
+            </div>
+        );
+    }
+    return (
+        <div className="rounded-lg bg-white p-2.5 shadow-sm">
+            <img src={src} alt={alt} width={164} height={164} className="block" onError={() => setFailed(true)} />
         </div>
     );
 }

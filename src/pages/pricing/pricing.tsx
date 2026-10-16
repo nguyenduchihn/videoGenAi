@@ -17,10 +17,9 @@ import { subscriptionService } from "@/services/subscription.service";
 
 import type {
     PaymentPackage,
-    PaymentPackagesResponse,
     PortalPricingResponse,
 } from "@/types/api";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 interface WorkerInfo {
     key: string;
@@ -345,11 +344,6 @@ export default function Pricing() {
             null
         );
 
-    const [packages, setPackages] =
-        useState<PaymentPackagesResponse | null>(
-            null
-        );
-
     const [loading, setLoading] =
         useState(true);
 
@@ -361,16 +355,8 @@ export default function Pricing() {
             setLoading(true);
             setError("");
 
-            const [
-                pricingData,
-                packagesData,
-            ] = await Promise.all([
-                subscriptionService.getPricing(),
-                subscriptionService.getPackages(),
-            ]);
-
-            setPricing(pricingData);
-            setPackages(packagesData);
+            // /portal/pricing công khai (không cần đăng nhập) đã gồm gói nạp + cờ bật/tắt
+            setPricing(await subscriptionService.getPricing());
         } catch (error) {
             console.error(
                 "Load pricing error:",
@@ -407,7 +393,9 @@ export default function Pricing() {
         : [];
 
     const paymentPackages =
-        packages?.packages ?? [];
+        pricing?.packages ?? [];
+    const topupEnabled =
+        pricing?.topupEnabled ?? false;
 
     const hasWorkerPricing =
         workers.length > 0;
@@ -417,6 +405,18 @@ export default function Pricing() {
 
     return (
         <div className="min-h-screen bg-[var(--app-bg)] transition-colors">
+            <header className="border-b border-[var(--app-border)] bg-[var(--app-surface)]/80 backdrop-blur">
+                <nav aria-label="Điều hướng bảng giá" className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-6 py-3 lg:px-8">
+                    <Link to="/" className="flex items-center gap-2 text-sm font-semibold text-[var(--app-text)]">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--app-accent)]"><Sparkles className="h-3.5 w-3.5 text-white" aria-hidden /></span>
+                        VideoGen <span className="text-[var(--app-accent)]">AI</span>
+                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Link to="/dashboard" className="rounded-lg px-3 py-1.5 text-sm text-[var(--app-text-secondary)] transition hover:bg-[var(--app-surface-soft)] hover:text-[var(--app-text)]">Vào ứng dụng</Link>
+                        <Link to="/billing" className="rounded-lg bg-[var(--app-accent)] px-3 py-1.5 text-sm font-medium text-white transition hover:bg-[var(--app-accent-hover)]">Nạp credits</Link>
+                    </div>
+                </nav>
+            </header>
             <div className="mx-auto max-w-[1400px] px-6 py-8 lg:px-8">
                 <div className="mb-10">
                     <div className="flex items-start justify-between gap-6">
@@ -484,8 +484,8 @@ export default function Pricing() {
                         </p>
                     </div>
 
-                    {packages &&
-                        !packages.enabled && (
+                    {pricing &&
+                        !topupEnabled && (
                             <div className="mb-5 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-900/50 dark:bg-amber-950/20">
                                 <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
 
@@ -514,48 +514,13 @@ export default function Pricing() {
                                     key={packageItem.id}
                                     packageItem={packageItem}
                                     onChoose={() => navigate(`/billing?package=${packageItem.id}`)}
-                                    disabled={!packages?.enabled}
+                                    disabled={!topupEnabled}
                                 />
                             )
                             )}
                         </div>
                     )}
                 </section>
-
-                {packages &&
-                    packages.enabled &&
-                    hasPackages && (
-                        <section className="mt-10">
-                            <div className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-6 transition-colors">
-                                <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <CreditCard className="h-5 w-5 text-[var(--app-text-secondary)]" />
-
-                                            <h2 className="text-sm font-semibold text-[var(--app-text)]">
-                                                Thanh toán
-                                            </h2>
-                                        </div>
-
-                                        <p className="mt-2 max-w-2xl text-xs leading-5 text-[var(--app-text-secondary)]">
-                                            Thông tin thanh toán được cung cấp bởi hệ thống khi bạn
-                                            tạo lệnh nạp credits.
-                                        </p>
-                                    </div>
-
-                                    <div className="rounded-xl bg-[var(--app-surface-soft)] px-4 py-3">
-                                        <p className="text-[10px] uppercase tracking-wide text-[var(--app-text-muted)]">
-                                            Mã chuyển khoản
-                                        </p>
-
-                                        <p className="mt-1 text-sm font-semibold text-[var(--app-text)]">
-                                            {packages.transferCodePrefix}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-                    )}
 
                 <div className="mt-10 border-t border-[var(--app-border)] pt-6">
                     <p className="text-xs leading-5 text-[var(--app-text-muted)]">
