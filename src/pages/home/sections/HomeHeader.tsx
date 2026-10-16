@@ -28,17 +28,19 @@ export function HomeHeader() {
     }, []);
 
     return (
-        <header className="sticky top-0 z-50 border-b border-app-border/40 bg-app-bg/90 backdrop-blur-xl">
+        <header className="sticky top-0 z-50 border-b border-app-border/70 bg-app-bg/95 backdrop-blur-xl">
             <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 lg:px-8">
                 <button
                     type="button"
                     onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                    className="flex items-center gap-2.5"
+                    aria-label="VideoGen AI - Về đầu trang"
+                    className="group flex items-center gap-2.5"
                 >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-app-accent shadow-lg">
-                        <Sparkles className="h-4 w-4 text-white" />
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-app-accent shadow-md shadow-app-accent/20 transition-transform group-hover:scale-105">
+                        <Sparkles className="h-[18px] w-[18px] text-white" />
                     </span>
-                    <span className="text-base font-semibold tracking-tight text-app-text">
+
+                    <span className="text-lg font-bold tracking-tight text-app-text">
                         VideoGen <span className="text-app-accent">AI</span>
                     </span>
                 </button>
@@ -49,7 +51,7 @@ export function HomeHeader() {
                             key={n.id}
                             type="button"
                             onClick={() => scrollTo(n.id)}
-                            className="text-sm text-app-text-secondary transition hover:text-app-text"
+                            className="relative py-2 text-sm font-medium text-app-text-secondary transition-colors duration-200 hover:text-app-accent"
                         >
                             {n.label}
                         </button>
@@ -70,14 +72,14 @@ export function HomeHeader() {
                             <button
                                 type="button"
                                 onClick={() => navigate("/login")}
-                                className="px-3 py-2 text-sm font-medium text-app-text-secondary transition hover:text-app-text"
+                                className="rounded-lg px-3.5 py-2 text-sm font-medium text-app-text-secondary transition-colors hover:text-app-accent"
                             >
                                 Đăng nhập
                             </button>
                             <button
                                 type="button"
                                 onClick={() => navigate("/register")}
-                                className="rounded-lg border border-app-border bg-app-surface px-3.5 py-2 text-sm font-medium text-app-text transition hover:bg-app-surface-soft"
+                                className="rounded-lg bg-app-accent px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-app-accent/20 transition-all hover:bg-app-accent-hover hover:shadow-md"
                             >
                                 Đăng ký
                             </button>
@@ -97,7 +99,7 @@ export function HomeHeader() {
             </div>
 
             {open && (
-                <div className="border-t border-app-border/40 bg-app-bg px-4 py-5 sm:hidden">
+                <div className="border-t border-app-border/70 bg-app-bg/98 px-4 py-5 shadow-lg sm:hidden">
                     <div className="flex flex-col gap-1">
                         {NAV.map((n) => (
                             <button

@@ -18,7 +18,12 @@ export function toMediaItems(tasks: PortalTask[]): MediaItem[] {
         const id = task.result.mediaId || task.id;
         if (seen.has(id)) return [];
         seen.add(id);
-        return [{ id, url: task.result.url, kind, source: "generated" as const, title: task.model || task.worker, createdAt: task.completedAt || task.updatedAt }];
+        return [{
+            id,
+            // imageId: để xoá ảnh qua DELETE /v1/images/:id (feat/library); video chưa có API xoá
+            imageId: kind === "image" && task.result.mediaId ? task.result.mediaId : undefined,
+            url: task.result.url, kind, source: "generated" as const, title: task.model || task.worker, createdAt: task.completedAt || task.updatedAt,
+        }];
     });
 }
 

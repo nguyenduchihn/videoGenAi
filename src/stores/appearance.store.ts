@@ -1,3 +1,4 @@
+
 import { create } from "zustand";
 
 export type ThemeMode = "light" | "dark" | "system";
@@ -12,68 +13,129 @@ export interface AccentPreset {
     title: string;
     accent: string;
     hover: string;
-    /** Nền nhạt: pha accent với surface hiện tại ⇒ đúng ở cả light lẫn dark. */
     soft: string;
 }
 
-const softOf = (accent: string) => `color-mix(in srgb, ${accent} 18%, var(--app-surface))`;
+const softOf = (accent: string) =>
+    `color-mix(in srgb, ${accent} 18%, var(--app-surface))`;
 
-/** Nguồn duy nhất cho bảng màu accent (store áp dụng, trang Giao diện hiển thị). */
 export const ACCENT_PRESETS: Record<AccentColor, AccentPreset> = {
-    orange: { title: "Cam", accent: "#f4a261", hover: "#e88945", soft: softOf("#f4a261") },
-    violet: { title: "Tím", accent: "#7c3aed", hover: "#6d28d9", soft: softOf("#7c3aed") },
-    blue: { title: "Xanh dương", accent: "#2563eb", hover: "#1d4ed8", soft: softOf("#2563eb") },
-    green: { title: "Xanh lá", accent: "#16a34a", hover: "#15803d", soft: softOf("#16a34a") },
+    orange: {
+        title: "Cam",
+        accent: "#f4a261",
+        hover: "#e88945",
+        soft: softOf("#f4a261"),
+    },
+    violet: {
+        title: "Tím",
+        accent: "#3520f5",
+        hover: "#2916d9",
+        soft: softOf("#3520f5"),
+    },
+    blue: {
+        title: "Xanh dương",
+        accent: "#2563eb",
+        hover: "#1d4ed8",
+        soft: softOf("#2563eb"),
+    },
+    green: {
+        title: "Xanh lá",
+        accent: "#16a34a",
+        hover: "#15803d",
+        soft: softOf("#16a34a"),
+    },
 };
 
-interface AppearanceState {
+interface AppearancePreferences {
     theme: ThemeMode;
     accent: AccentColor;
     compactSidebar: boolean;
+}
 
+interface AppearanceState extends AppearancePreferences {
     setTheme: (theme: ThemeMode) => void;
     setAccent: (accent: AccentColor) => void;
     setCompactSidebar: (compact: boolean) => void;
+
+    loadForUser: (userId: string | null) => void;
 }
 
-const STORAGE_KEY = "videogen-appearance";
+const STORAGE_PREFIX = "videogen-appearance";
 
-const defaultState = {
-    theme: "light" as ThemeMode,
-    accent: "orange" as AccentColor,
+const DEFAULT_STATE: AppearancePreferences = {
+    theme: "light",
+    accent: "violet",
     compactSidebar: false,
 };
 
-function loadState() {
-    if (typeof window === "undefined") {
-        return defaultState;
+let activeUserId: string | null = null;
+
+function getStorageKey(userId: string) {
+    return `${STORAGE_PREFIX}:${encodeURIComponent(userId)}`;
+}
+
+function isThemeMode(value: unknown): value is ThemeMode {
+    return value === "light" || value === "dark" || value === "system";
+}
+
+function isAccentColor(value: unknown): value is AccentColor {
+    return (
+        value === "orange" ||
+        value === "violet" ||
+        value === "blue" ||
+        value === "green"
+    );
+}
+
+function loadState(userId: string | null): AppearancePreferences {
+    if (typeof window === "undefined" || !userId) {
+        return { ...DEFAULT_STATE };
     }
 
     try {
-        const saved = localStorage.getItem(STORAGE_KEY);
+        const saved = localStorage.getItem(getStorageKey(userId));
 
         if (!saved) {
-            return defaultState;
+            return { ...DEFAULT_STATE };
         }
 
+        const parsed: unknown = JSON.parse(saved);
+
+        if (!parsed || typeof parsed !== "object") {
+            return { ...DEFAULT_STATE };
+        }
+
+        const value = parsed as Partial<AppearancePreferences>;
+
         return {
-            ...defaultState,
-            ...JSON.parse(saved),
+            theme: isThemeMode(value.theme)
+                ? value.theme
+                : DEFAULT_STATE.theme,
+            accent: isAccentColor(value.accent)
+                ? value.accent
+                : DEFAULT_STATE.accent,
+            compactSidebar:
+                typeof value.compactSidebar === "boolean"
+                    ? value.compactSidebar
+                    : DEFAULT_STATE.compactSidebar,
         };
     } catch {
-        return defaultState;
+        return { ...DEFAULT_STATE };
     }
 }
 
-function saveState(state: {
-    theme: ThemeMode;
-    accent: AccentColor;
-    compactSidebar: boolean;
-}) {
-    localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(state)
-    );
+function saveState(state: AppearancePreferences) {
+    if (typeof window === "undefined" || !activeUserId) {
+        return;
+    }
+
+    try {
+        localStorage.setItem(
+            getStorageKey(activeUserId),
+            JSON.stringify(state),
+        );
+    } catch {
+    }
 }
 
 function applyTheme(theme: ThemeMode) {
@@ -81,15 +143,12 @@ function applyTheme(theme: ThemeMode) {
         return;
     }
 
-    const root = document.documentElement;
-
     const isDark =
         theme === "dark" ||
         (theme === "system" &&
-            window.matchMedia("(prefers-color-scheme: dark)")
-                .matches);
+            window.matchMedia("(prefers-color-scheme: dark)").matches);
 
-    root.classList.toggle("dark", isDark);
+    document.documentElement.classList.toggle("dark", isDark);
 }
 
 function applyAccent(accent: AccentColor) {
@@ -98,92 +157,83 @@ function applyAccent(accent: AccentColor) {
     }
 
     const root = document.documentElement;
-
     const selected = ACCENT_PRESETS[accent];
 
-    root.style.setProperty(
-        "--app-accent",
-        selected.accent
-    );
-
-    root.style.setProperty(
-        "--app-accent-hover",
-        selected.hover
-    );
-
-    root.style.setProperty(
-        "--app-accent-soft",
-        selected.soft
-    );
+    root.style.setProperty("--app-accent", selected.accent);
+    root.style.setProperty("--app-accent-hover", selected.hover);
+    root.style.setProperty("--app-accent-soft", selected.soft);
 }
 
-export const useAppearanceStore =
-    create<AppearanceState>((set, get) => ({
-        ...loadState(),
+function applyPreferences(state: AppearancePreferences) {
+    applyTheme(state.theme);
+    applyAccent(state.accent);
+}
 
-        setTheme: (theme) => {
-            set({ theme });
+export const useAppearanceStore = create<AppearanceState>((set, get) => ({
+    ...DEFAULT_STATE,
 
-            const state = {
-                ...get(),
-                theme,
-            };
+    setTheme: (theme) => {
+        set({ theme });
 
-            saveState({
-                theme: state.theme,
-                accent: state.accent,
-                compactSidebar: state.compactSidebar,
-            });
+        const state = get();
 
-            applyTheme(theme);
-        },
+        saveState({
+            theme: state.theme,
+            accent: state.accent,
+            compactSidebar: state.compactSidebar,
+        });
 
-        setAccent: (accent) => {
-            set({ accent });
+        applyTheme(theme);
+    },
 
-            const state = {
-                ...get(),
-                accent,
-            };
+    setAccent: (accent) => {
+        set({ accent });
 
-            saveState({
-                theme: state.theme,
-                accent: state.accent,
-                compactSidebar: state.compactSidebar,
-            });
+        const state = get();
 
-            applyAccent(accent);
-        },
+        saveState({
+            theme: state.theme,
+            accent: state.accent,
+            compactSidebar: state.compactSidebar,
+        });
 
-        setCompactSidebar: (compactSidebar) => {
-            set({ compactSidebar });
+        applyAccent(accent);
+    },
 
-            const state = {
-                ...get(),
-                compactSidebar,
-            };
+    setCompactSidebar: (compactSidebar) => {
+        set({ compactSidebar });
 
-            saveState({
-                theme: state.theme,
-                accent: state.accent,
-                compactSidebar: state.compactSidebar,
-            });
-        },
-    }));
+        const state = get();
+
+        saveState({
+            theme: state.theme,
+            accent: state.accent,
+            compactSidebar: state.compactSidebar,
+        });
+    },
+
+    loadForUser: (userId) => {
+        activeUserId = userId;
+
+        const preferences = loadState(userId);
+
+        set(preferences);
+        applyPreferences(preferences);
+    },
+}));
 
 if (typeof window !== "undefined") {
-    const initialState = loadState();
+    applyPreferences(DEFAULT_STATE);
 
-    applyTheme(initialState.theme);
-    applyAccent(initialState.accent);
+    const mediaQuery = window.matchMedia(
+        "(prefers-color-scheme: dark)",
+    );
 
-    if (initialState.theme === "system") {
-        const mediaQuery = window.matchMedia(
-            "(prefers-color-scheme: dark)"
-        );
+    mediaQuery.addEventListener("change", () => {
+        const { theme } = useAppearanceStore.getState();
 
-        mediaQuery.addEventListener("change", () => {
+        if (theme === "system") {
             applyTheme("system");
-        });
-    }
+        }
+    });
 }

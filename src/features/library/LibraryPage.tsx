@@ -8,6 +8,7 @@ import { useMediaDownload } from "./hooks/useMediaDownload";
 import LibraryGrid from "./components/libraryGrid";
 import MediaPreviewModal from "./components/mediaPreviewModal";
 import LibraryToolbar from "./components/libraryToolbar";
+import { useMediaDelete } from "./hooks/useMediaDelete";
 
 /** Dưới ngưỡng này mà API còn trang ⇒ tự lấy thêm (vd lọc "video" nhưng 50 task đầu toàn ảnh). */
 const MIN_VISIBLE = 12;
@@ -21,6 +22,8 @@ export default function LibraryPage() {
     const { downloading, downloadMedia, downloadSelectedMedia } = useMediaDownload();
     // Mốc cuối lưới: cuộn tới (trước 600 px) ⇒ lấy trang kế; media trong thẻ vẫn chỉ tải khi từng thẻ vào khung nhìn.
     const [sentinelRef, sentinelInView] = useInView<HTMLDivElement>({ rootMargin: "600px 0px", once: false });
+    const { deleteMedia, deletingId, error: deleteError, setError: setDeleteError } = useMediaDelete();
+    const [deletingSelected, setDeletingSelected] = useState(false);
 
     const filtered = media.filter((item) => item.kind === kind && (source === "all" || item.source === source));
 
@@ -37,6 +40,122 @@ export default function LibraryPage() {
     function changeSource(value: MediaSource) {
         setSource(value);
         clearSelection();
+    }
+
+    async function handleDelete(item: MediaItem) {
+        if (item.kind !== "image" || !item.imageId) {
+            setDeleteError(
+                item.kind === "video"
+                    ? "API xóa video AI chưa được tích hợp."
+                    : "API xóa ảnh AI hoặc ảnh này chưa được tích hợp.",
+            );
+            return;
+        }
+
+        const confirmed = window.confirm(
+            `Bạn có chắc muốn xóa ảnh "${item.title}" không? Hành động này không thể hoàn tác.`,
+        );
+
+        if (!confirmed) return;
+
+        setDeleteError("");
+
+        const success = await deleteMedia(item);
+
+        if (!success) return;
+
+        setSelected((current) =>
+            current?.id === item.id ? null : current,
+        );
+
+        clearSelection();
+        await loadTasks();
+    }
+
+    async function handleDeleteSelected() {
+        if (deletingSelected || deletingId !== null) return;
+
+        const selectedItems = filtered.filter((item) =>
+            selectedIds.includes(item.id),
+        );
+
+        if (selectedItems.length === 0) {
+            setDeleteError("Vui lòng chọn ít nhất một tệp.");
+            return;
+        }
+
+        const supportedImages = selectedItems.filter(
+            (item) => item.kind === "image" && Boolean(item.imageId),
+        );
+
+        const unsupportedCount =
+            selectedItems.length - supportedImages.length;
+
+        if (supportedImages.length === 0) {
+            setDeleteError(
+                "Các mục đã chọn chưa có API xóa tương ứng. Chưa có tệp nào bị xóa.",
+            );
+            return;
+        }
+
+        const message = unsupportedCount > 0
+            ? `Có ${selectedItems.length} tệp được chọn, nhưng hiện chỉ có thể thử xóa ${supportedImages.length} ảnh có ID hợp lệ. ${unsupportedCount} tệp còn lại chưa được hỗ trợ. Tiếp tục?`
+            : `Bạn có chắc muốn xóa ${supportedImages.length} ảnh đã chọn không? Hành động này không thể hoàn tác.`;
+
+        if (!window.confirm(message)) return;
+
+        setDeleteError("");
+        setDeletingSelected(true);
+
+        let successCount = 0;
+        const failedTitles: string[] = [];
+
+        try {
+            for (const item of supportedImages) {
+                const success = await deleteMedia(item);
+
+                if (success) {
+                    successCount++;
+                } else {
+                    failedTitles.push(item.title);
+                }
+            }
+
+            setSelected((current) =>
+                current &&
+                    supportedImages.some((item) => item.id === current.id)
+                    ? null
+                    : current,
+            );
+
+            clearSelection();
+
+            const messages: string[] = [];
+
+            messages.push(
+                `Đã xóa thành công ${successCount}/${supportedImages.length} ảnh.`,
+            );
+
+            if (unsupportedCount > 0) {
+                messages.push(
+                    `${unsupportedCount} tệp chưa được xử lý vì API xóa chưa được tích hợp.`,
+                );
+            }
+
+            if (failedTitles.length > 0) {
+                messages.push(
+                    `Xóa thất bại: ${failedTitles.join(", ")}.`,
+                );
+            }
+
+            if (successCount < supportedImages.length || unsupportedCount > 0) {
+                setDeleteError(messages.join(" "));
+            }
+
+            await loadTasks();
+        } finally {
+            setDeletingSelected(false);
+        }
     }
 
     return (
@@ -62,10 +181,20 @@ export default function LibraryPage() {
                 onDownloadSelected={() =>
                     void downloadSelectedMedia(filtered, selectedIds)
                 }
+                onDeleteSelected={() => void handleDeleteSelected()}
+                deleting={deletingId !== null || deletingSelected}
             />
             <div className="mt-3 text-right text-sm text-[var(--app-text-secondary)]" aria-live="polite">
                 {filtered.length} tệp{hasMore ? " · cuộn xuống để tải thêm" : ""}
             </div>
+
+
+            {deleteError && (
+                <p role="alert" className="text-sm text-red-600">
+                    {deleteError}
+                </p>
+            )}
+
 
             {loading ? (
                 <div className="flex min-h-64 items-center justify-center gap-3 text-sm text-[var(--app-text-secondary)]">
@@ -110,6 +239,8 @@ export default function LibraryPage() {
                         }
                     }}
                     onDownload={(item) => void downloadMedia(item)}
+                    onDelete={(item) => void handleDelete(item)}
+                    deletingId={deletingId}
                 />
             )}
 

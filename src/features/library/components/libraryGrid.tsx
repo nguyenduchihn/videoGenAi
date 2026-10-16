@@ -1,3 +1,4 @@
+
 import type { MediaItem } from "../library.types";
 import MediaCard from "./mediaCard";
 
@@ -5,16 +6,20 @@ interface LibraryGridProps {
     items: MediaItem[];
     isSelectionMode: boolean;
     selectedIds: string[];
+    deletingId: string | null;
     onOpen: (item: MediaItem) => void;
     onDownload: (item: MediaItem) => void;
+    onDelete: (item: MediaItem) => void;
 }
 
 export default function LibraryGrid({
     items,
     isSelectionMode,
     selectedIds,
+    deletingId,
     onOpen,
     onDownload,
+    onDelete,
 }: LibraryGridProps) {
     if (items.length === 0) {
         return null;
@@ -28,8 +33,10 @@ export default function LibraryGrid({
                     item={item}
                     isSelectionMode={isSelectionMode}
                     isSelected={selectedIds.includes(item.id)}
+                    isDeleting={deletingId === item.id}
                     onOpen={onOpen}
                     onDownload={onDownload}
+                    onDelete={onDelete}
                 />
             ))}
         </div>

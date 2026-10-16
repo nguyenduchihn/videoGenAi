@@ -1,3 +1,4 @@
+
 export type MediaKind = "image" | "video";
 
 export type MediaSource = "all" | "uploaded" | "generated";
@@ -9,4 +10,6 @@ export interface MediaItem {
     source: MediaSource;
     title: string;
     createdAt: string;
+
+    imageId?: string;
 }
