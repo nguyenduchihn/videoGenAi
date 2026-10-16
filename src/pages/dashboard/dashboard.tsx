@@ -1,9 +1,6 @@
 import {
     Activity,
-    CheckCircle2,
     Coins,
-    Film,
-    Plus,
     Sparkles,
     XCircle,
     Zap,
@@ -11,34 +8,26 @@ import {
 
 import {
     useEffect,
-    useMemo,
     useState,
     type ReactNode,
 } from "react";
 
-import { Link, useNavigate } from "react-router-dom";
 
 import {
     dashboardService,
 } from "@/services/dashboard.service";
 
-import type {
-    PortalMeResponse,
-    PortalTask,
-} from "@/types/api";
+import type { PortalMeResponse } from "@/types/api";
 import GeneratorPanel from "@/components/generator/generatorPanel";
-import { Spinner, StatusBadge } from "@/components/ui";
+import RecentRunsPanel from "@/components/runs/RecentRunsPanel";
+import { Spinner } from "@/components/ui";
 
 export default function Dashboard() {
-    const navigate = useNavigate();
 
     const [me, setMe] =
         useState<PortalMeResponse | null>(
             null
         );
-
-    const [tasks, setTasks] =
-        useState<PortalTask[]>([]);
 
     const [loading, setLoading] =
         useState(true);
@@ -55,7 +44,6 @@ export default function Dashboard() {
                     await dashboardService.getDashboardData();
 
                 setMe(data.me);
-                setTasks(data.tasks.tasks);
             } catch (err) {
                 console.error(err);
 
@@ -69,30 +57,6 @@ export default function Dashboard() {
 
         load();
     }, []);
-
-    const recentTasks = useMemo(() => {
-        return [...tasks]
-            .sort(
-                (a, b) =>
-                    new Date(
-                        b.createdAt
-                    ).getTime() -
-                    new Date(
-                        a.createdAt
-                    ).getTime()
-            )
-            .slice(0, 5);
-    }, [tasks]);
-
-    const successCount = tasks.filter(
-        (task) =>
-            task.status === "succeeded"
-    ).length;
-
-    const failedCount = tasks.filter(
-        (task) =>
-            task.status === "failed"
-    ).length;
 
     if (loading) {
         return (
@@ -144,19 +108,6 @@ export default function Dashboard() {
                             của bạn.
                         </p>
                     </div>
-
-                    <button
-                        type="button"
-                        onClick={() =>
-                            navigate(
-                                "/projects"
-                            )
-                        }
-                        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--app-accent)] px-5 text-sm font-medium text-white transition hover:bg-[var(--app-accent-hover)] md:w-auto"
-                    >
-                        <Plus className="h-4 w-4" />
-                        Dự án mới
-                    </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
@@ -221,65 +172,10 @@ export default function Dashboard() {
 
                     {/* GeneratorPanel trả fragment (form + kết quả) ⇒ bọc lại để không tách thành 2 ô lưới. */}
                     <div className="flex min-w-0 flex-col gap-3 sm:gap-4 xl:col-span-3">
-                        <GeneratorPanel variant="quick" />
+                        <GeneratorPanel />
                     </div>
 
-                    <section className="flex min-w-0 flex-col rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] transition-colors xl:col-span-1">
-
-                        <div className="flex items-center justify-between gap-3 border-b border-[var(--app-border)] px-5 py-4 sm:px-6 sm:py-5">
-
-                            <div>
-                                <h2 className="text-sm font-semibold text-[var(--app-text)]">
-                                    Hoạt động gần đây
-                                </h2>
-
-                                <p className="mt-1 text-xs text-[var(--app-text-secondary)]">
-                                    Các task gần đây
-                                </p>
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                                <span className="flex items-center gap-1 text-xs text-[var(--app-success)]">
-                                    <CheckCircle2 className="h-4 w-4" />
-                                    {successCount}
-                                </span>
-                                <span className="flex items-center gap-1 text-xs text-[var(--app-danger)]">
-                                    <XCircle className="h-4 w-4" />
-                                    {failedCount}
-                                </span>
-                                <Link to="/tasks" className="text-xs font-medium text-[var(--app-accent)] transition hover:underline">
-                                    Xem tất cả
-                                </Link>
-                            </div>
-                        </div>
-
-                        {recentTasks.length === 0 ? (
-                            <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
-                                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--app-surface-soft)] text-[var(--app-text-muted)]">
-                                    <Film className="h-5 w-5" />
-                                </div>
-
-                                <p className="mt-4 text-sm font-medium text-[var(--app-text)]">
-                                    Chưa có task nào
-                                </p>
-
-                                <p className="mt-1 text-xs text-[var(--app-text-secondary)]">
-                                    Nhập prompt và bấm Tạo để bắt đầu.
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="divide-y divide-[var(--app-border)]">
-                                {recentTasks.map(
-                                    (task) => (
-                                        <TaskRow
-                                            key={task.id}
-                                            task={task}
-                                        />
-                                    )
-                                )}
-                            </div>
-                        )}
-                    </section>
+                    <RecentRunsPanel />
                 </div>
             </div>
         </div>
@@ -318,28 +214,5 @@ function StatCard({
                 {description}
             </p>
         </div>
-    );
-}
-
-
-function TaskRow({ task }: { task: PortalTask }) {
-    return (
-        <Link
-            to={`/tasks?id=${task.id}`}
-            className="flex items-center gap-3 px-4 py-3.5 transition hover:bg-[var(--app-surface-soft)] sm:px-5"
-        >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--app-surface-soft)]">
-                <Film className="h-4 w-4 text-[var(--app-text-secondary)]" />
-            </div>
-            <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-sm font-medium text-[var(--app-text)]">{task.worker}</p>
-                    <StatusBadge status={task.status} />
-                </div>
-                <p className="mt-0.5 truncate text-xs text-[var(--app-text-muted)]">
-                    {task.model ?? "Default model"} · {task.priceCredits} credits
-                </p>
-            </div>
-        </Link>
     );
 }

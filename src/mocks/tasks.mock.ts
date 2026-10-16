@@ -19,6 +19,15 @@ export const mockTasksResponse: PortalTasksResponse = {
 
             generationMode: "mock",
 
+
+            runId: null,
+
+
+            runIndex: null,
+
+
+            prompt: null,
+
             result: {
                 mediaId: "media_demo_001",
                 url: null,
@@ -62,6 +71,15 @@ export const mockTasksResponse: PortalTasksResponse = {
 
             generationMode: "mock",
 
+
+            runId: null,
+
+
+            runIndex: null,
+
+
+            prompt: null,
+
             result: null,
 
             error: null,
@@ -91,6 +109,15 @@ export const mockTasksResponse: PortalTasksResponse = {
 
 
             generationMode: "mock",
+
+
+            runId: null,
+
+
+            runIndex: null,
+
+
+            prompt: null,
 
             result: null,
 
@@ -123,6 +150,15 @@ export const mockTasksResponse: PortalTasksResponse = {
 
 
             generationMode: "mock",
+
+
+            runId: null,
+
+
+            runIndex: null,
+
+
+            prompt: null,
 
             result: null,
 
@@ -159,6 +195,15 @@ export const mockTasksResponse: PortalTasksResponse = {
 
             generationMode: "mock",
 
+
+            runId: null,
+
+
+            runIndex: null,
+
+
+            prompt: null,
+
             result: null,
 
             error: {
@@ -193,6 +238,15 @@ export const mockTasksResponse: PortalTasksResponse = {
 
 
             generationMode: "mock",
+
+
+            runId: null,
+
+
+            runIndex: null,
+
+
+            prompt: null,
 
             result: {
                 mediaId: "media_demo_006",
@@ -231,16 +285,37 @@ export const mockTasksResponse: PortalTasksResponse = {
 };
 // ── Mô phỏng /v1/tasks + /v1/batches/:id: task chuyển pending → processing → succeeded sau vài lần poll ──
 import type { CreateTasksRequest, PortalTask } from "@/types/api";
+import { loadMockState, scheduleMockPersist } from "./mockState";
 
-const mockBatches = new Map<string, { tasks: PortalTask[]; polls: number }>();
+type MockBatch = { tasks: MockTask[]; polls: number };
+const persisted = loadMockState<{ seq: number; batches: Array<[string, MockBatch]> }>("tasks");
+const mockBatches = new Map<string, MockBatch>(persisted?.batches ?? []);
 const MOCK_VIDEO_URL = "https://samplelib.com/lib/preview/mp4/sample-5s.mp4";
 /** PNG 1×1 trong suốt: kết quả ảnh giả không cần mạng. */
 const MOCK_IMAGE_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
 
-export function createMockBatch(body: CreateTasksRequest, priceCredits = 5): { batchId: string; totalCredits: number; tasks: PortalTask[] } {
-    const batchId = `batch_mock_${Date.now().toString(36)}`;
+/** Task mock giữ thêm `retriedAt` (API thật không lộ) để mô phỏng "thử lại job thất bại". */
+export type MockTask = PortalTask & { retriedAt?: string };
+
+let batchSeq = persisted?.seq ?? 0;
+
+/** Ghi lại sau mỗi thay đổi (kể cả khi runs.mock sửa task trực tiếp). */
+export const persistMockTasks = (): void => scheduleMockPersist("tasks", () => ({ seq: batchSeq, batches: [...mockBatches] }));
+
+/** runIndex đã có trong lượt (task đã tạo) — mô phỏng 409 RUN_INDEX_TAKEN. */
+export function takenRunIndices(runId: string): number[] {
+    return mockTasksOfRun(runId).map((t) => t.runIndex).filter((i): i is number => i !== null);
+}
+
+export function mockTasksOfRun(runId: string): MockTask[] {
+    return [...mockBatches.values()].flatMap((b) => b.tasks).filter((t) => t.runId === runId);
+}
+
+export function createMockBatch(body: CreateTasksRequest, priceCredits = 5, runIndices?: number[]): { batchId: string; totalCredits: number; tasks: PortalTask[] } {
+    batchSeq += 1;
+    const batchId = `batch_mock_${Date.now().toString(36)}_${batchSeq}`;
     const now = new Date().toISOString();
-    const tasks: PortalTask[] = body.tasks.map((item, index) => ({
+    const tasks: MockTask[] = body.tasks.map((item, index) => ({
         id: `${batchId}_t${index + 1}`,
         batchId,
         status: "pending",
@@ -255,8 +330,12 @@ export function createMockBatch(body: CreateTasksRequest, priceCredits = 5): { b
         createdAt: now,
         updatedAt: now,
         completedAt: null,
+        runId: body.runId ?? null,
+        runIndex: body.runId ? (runIndices?.[index] ?? (body.runOffset ?? 0) + index) : null,
+        prompt: typeof item.params.prompt === "string" ? item.params.prompt.slice(0, 500) : null,
     }));
     mockBatches.set(batchId, { tasks, polls: 0 });
+    persistMockTasks();
     return { batchId, totalCredits: priceCredits * tasks.length, tasks };
 }
 
@@ -267,7 +346,7 @@ export function getMockBatch(batchId: string): { tasks: PortalTask[] } | null {
     const now = new Date().toISOString();
     entry.tasks = entry.tasks.map((task, index) => {
         if (task.status !== "pending" && task.status !== "processing") return task;
-        const threshold = 2 + index;
+        const threshold = 2 + Math.min(index, 3); // lô 20 task xong sau ~6 lần poll (e2e lượt lớn không chờ quá lâu)
         if (entry.polls >= threshold + 1) {
             return {
                 ...task,
@@ -280,6 +359,7 @@ export function getMockBatch(batchId: string): { tasks: PortalTask[] } | null {
         if (entry.polls >= threshold) return { ...task, status: "processing", updatedAt: now };
         return task;
     });
+    persistMockTasks();
     return { tasks: entry.tasks };
 }
 
@@ -290,6 +370,7 @@ export function cancelMockTask(taskId: string): PortalTask | null {
         const current = entry.tasks[index]!;
         if (current.status === "pending" || current.status === "processing") {
             entry.tasks[index] = { ...current, status: "cancelled", updatedAt: new Date().toISOString() };
+            persistMockTasks();
         }
         return entry.tasks[index]!;
     }

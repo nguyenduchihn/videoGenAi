@@ -211,6 +211,12 @@ export interface PortalTask {
     completedAt: string | null;
 
     generationMode?: "mock" | "real";
+
+    /** Lượt tạo (portal); null = tạo ngoài lượt / task cũ. */
+    runId: string | null;
+    runIndex: number | null;
+    /** params.prompt cắt 500 ký tự — để hiển thị. */
+    prompt: string | null;
 }
 
 export interface PortalTasksResponse {
@@ -277,6 +283,10 @@ export interface CreateTasksRequest {
     tasks: CreateTaskItem[];
 
     webhookUrl?: string;
+
+    /** Lượt tạo: task i nhận runIndex = runOffset + i; trùng ⇒ 409 RUN_INDEX_TAKEN (không tạo gì). */
+    runId?: string;
+    runOffset?: number;
 }
 
 export interface CreateTasksResponse {
@@ -465,6 +475,62 @@ export interface V1Me {
         maxPending: number;
         chargesCredits: boolean;
     };
+}
+
+// ── Lượt tạo (/v1/runs) ──
+export type RunStatus = "active" | "done" | "cancelled";
+export type RunPausedReason = "INSUFFICIENT_CREDITS";
+
+export interface RunCounts {
+    pending: number;
+    processing: number;
+    succeeded: number;
+    failed: number;
+    cancelled: number;
+}
+
+export interface RunSummary {
+    id: string;
+    name: string | null;
+    totalPlanned: number;
+    /** Số task đã tạo (= tổng counts). */
+    created: number;
+    /** Job còn xếp hàng trên máy chủ, chưa thành task. */
+    queuedOnServer: number;
+    counts: RunCounts;
+    /** Task failed đã được thử lại (không còn là lỗi mở). */
+    retried: number;
+    status: RunStatus;
+    pausedReason: RunPausedReason | null;
+    etaSec: number | null;
+    cancelledAt: string | null;
+    createdAt: string;
+    updatedAt: string;
+    lastActivityAt: string;
+}
+
+export interface RunsPage {
+    runs: RunSummary[];
+    nextCursor: string | null;
+}
+
+export interface RunTasksPage {
+    tasks: PortalTask[];
+    /** runIndex cuối trang (chuỗi) — truyền vào `cursor`. */
+    nextCursor: string | null;
+}
+
+export interface CancelRunResponse {
+    run: RunSummary;
+    cancelled: number;
+    queuedCancelled: number;
+    creditsRefunded: number;
+}
+
+export interface EnqueueRunItemsResponse {
+    added: number;
+    duplicates: number[];
+    run: RunSummary;
 }
 
 export interface V1ModelEntry {

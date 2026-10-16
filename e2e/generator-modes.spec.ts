@@ -109,26 +109,28 @@ test("Tiếp tục video từ thẻ kết quả: chuyển sang extend-video vớ
     await page.getByRole("button", { name: /^Tạo video$/ }).click();
     await expect(resultVideos(page).first()).toBeVisible({ timeout: 30_000 });
 
-    await page.getByRole("button", { name: "Tiếp tục video" }).click();
+    await page.getByRole("button", { name: "Tiếp tục video" }).first().click();
     await expect(page.getByRole("button", { name: /^Chế độ/ })).toContainText("Tiếp tục video");
     await expect(page.getByText(/Đã chọn: Job #1/)).toBeVisible();
     await page.getByPlaceholder(/Nhập prompt/).fill("Chú mèo lên bờ và vẫy đuôi");
     await page.getByRole("button", { name: /^Tạo video$/ }).click();
 
-    await expect(resultVideos(page)).toHaveCount(2, { timeout: 30_000 });
+    // Video của lượt trước vẫn hiển thị tới khi lượt mới thay thế ⇒ chờ đúng yêu cầu thứ 2 tới mock rồi mới đọc.
+    await expect.poll(async () => (await sentRequests(page)).length, { timeout: 15_000 }).toBe(2);
+    await expect(resultVideos(page).first()).toBeVisible({ timeout: 30_000 });
     const requests = await sentRequests(page);
     expect(requests[1]?.tasks[0]).toMatchObject({ worker: "extend-video", sourceMediaId: expect.stringMatching(/^media_/) });
     expect(requests[1]?.tasks[0]?.params).not.toHaveProperty("duration");
 });
 
-test("QUEUE_FULL: hiện banner đếm ngược rồi tự gửi lại thành công", async ({ page }) => {
+test("QUEUE_FULL: phần còn lại xếp hàng trên máy chủ rồi vẫn hoàn thành (tắt tab không mất)", async ({ page }) => {
     await page.evaluate(() => localStorage.setItem("videogen:mock-queue-full", "1"));
     await page.getByPlaceholder(/Nhập prompt/).fill("Hoàng hôn trên núi");
     await page.getByRole("button", { name: /^Tạo video$/ }).click();
 
-    await expect(page.getByRole("status").filter({ hasText: "Hàng đợi đang đầy" })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: /xếp hàng trên máy chủ|hoàn thành/ }).first()).toBeVisible({ timeout: 15_000 });
     await expect(resultVideos(page).first()).toBeVisible({ timeout: 30_000 });
-    expect(await sentRequests(page)).toHaveLength(1);
+    expect(await sentRequests(page)).toHaveLength(0); // chunk đầu bị 429 ⇒ đi đường POST /v1/runs/:id/items
 });
 
 test("đổi chế độ xoá ảnh đã chọn; chọn chế độ bằng bàn phím", async ({ page }) => {

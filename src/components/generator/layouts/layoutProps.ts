@@ -2,19 +2,11 @@ import type { Dispatch, SetStateAction } from "react";
 import type { ModeSpec } from "@/features/generator/modes";
 import type { UploadProgress } from "@/features/generator/uploadAttachments";
 import type { ValidationResult } from "@/features/generator/validation";
-import type { QueueNotice } from "@/features/generator/useBatchRunner";
 import type { SessionVideo } from "../sourceVideoPicker";
-import type {
-    GeneratorAttachments,
-    GeneratorMode,
-    GeneratorResultItem,
-    GeneratorSettingsState,
-    PromptSplitMode,
-} from "../types";
+import type { GeneratorAttachments, GeneratorMode, GeneratorSettingsState, PromptSplitMode } from "../types";
 
-/** Props chung cho hai layout (default/project) — GeneratorPanel nối với form + runner. */
+/** Props của layout trình tạo (form) — GeneratorPanel nối với form; kết quả hiển thị ở khối lượt tạo bên ngoài. */
 export interface GeneratorLayoutProps {
-    variant: "quick" | "advanced";
     mode: GeneratorMode;
     spec: ModeSpec;
     aspectRatio: string;
@@ -38,12 +30,7 @@ export interface GeneratorLayoutProps {
     balance: number | null;
     isGenerating: boolean;
     uploadProgress: UploadProgress | null;
+    /** Tiến độ gửi lô (đã gửi/tổng) khi lượt nhiều chunk. */
+    sendProgress: { sent: number; total: number } | null;
     handleGenerate: () => void;
-    results: GeneratorResultItem[];
-    queueNotice: QueueNotice | null;
-    handleRetry: (result: GeneratorResultItem) => void;
-    handleDownload: (result: GeneratorResultItem) => void;
-    handleCancel: (result: GeneratorResultItem) => void;
-    handleCancelAll: () => void;
-    handleExtend: (result: GeneratorResultItem) => void;
 }

@@ -54,23 +54,3 @@ export const EMPTY_ATTACHMENTS: GeneratorAttachments = {
     sourceMediaId: null,
     sourceLabel: null,
 };
-
-export type GeneratorResultStatus = "pending" | "processing" | "completed" | "failed";
-
-export type GeneratorResultType = "video" | "image";
-
-/** Một thẻ trong khu Kết quả: placeholder trước khi có task id, rồi bám theo task backend. */
-export interface GeneratorResultItem {
-    id: string;
-    jobIndex: number;
-    prompt: string;
-    status: GeneratorResultStatus;
-    type: GeneratorResultType;
-    worker: string;
-    batchId?: string;
-    url?: string;
-    mediaId?: string;
-    ratio?: string;
-    upscale?: "done" | "failed";
-    error?: string;
-}

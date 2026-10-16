@@ -13,6 +13,7 @@ export interface GeneratorFooterProps {
     submitError: string | null;
     isGenerating: boolean;
     uploadProgress: UploadProgress | null;
+    sendProgress?: { sent: number; total: number } | null;
     onGenerate: () => void;
     /** Project layout xếp dọc; default layout xếp ngang trên màn rộng. */
     stacked?: boolean;
@@ -44,12 +45,19 @@ export default function GeneratorFooter({
     submitError,
     isGenerating,
     uploadProgress,
+    sendProgress = null,
     onGenerate,
     stacked = false,
 }: GeneratorFooterProps) {
     const insufficient = balance !== null && estimatedCredits > balance;
     const validationMessage = showValidation && !validation.valid ? validation.message : null;
-    const buttonLabel = spec.kind === "image" ? "Tạo ảnh" : "Tạo video";
+    const kindLabel = spec.kind === "image" ? "ảnh" : "video";
+    const buttonLabel = jobCount > 1 ? `Tạo ${jobCount.toLocaleString("vi-VN")} job` : `Tạo ${kindLabel}`;
+    const busyLabel = uploadProgress
+        ? `Đang tải ảnh lên… ${percent(uploadProgress)}%`
+        : sendProgress && sendProgress.total > 20
+            ? `Đang gửi ${sendProgress.sent.toLocaleString("vi-VN")}/${sendProgress.total.toLocaleString("vi-VN")} job…`
+            : "Đang gửi...";
 
     return (
         <div className="mt-5 border-t border-[var(--app-border)] pt-4">
@@ -93,13 +101,13 @@ export default function GeneratorFooter({
                     <button
                         type="button"
                         onClick={onGenerate}
-                        disabled={jobCount === 0 || isGenerating || insufficient}
+                        disabled={jobCount === 0 || isGenerating}
                         className={`inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--app-accent)] px-5 text-sm font-semibold text-white transition hover:bg-[var(--app-accent-hover)] disabled:cursor-not-allowed disabled:bg-[var(--app-surface-soft)] disabled:text-[var(--app-text-muted)] ${stacked ? "w-full" : "w-full sm:w-auto"}`}
                     >
                         {isGenerating ? (
                             <>
                                 <Loader2 className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
-                                {uploadProgress ? `Đang tải ảnh lên… ${percent(uploadProgress)}%` : "Đang gửi..."}
+                                {busyLabel}
                             </>
                         ) : (
                             <>

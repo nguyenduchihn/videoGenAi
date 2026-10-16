@@ -11,7 +11,19 @@ import {
 } from "./payment.mock";
 import { mockPricingResponse } from "./pricing.mock";
 import { mockUploadedImage } from "./images.mock";
-import { cancelMockTask, createMockBatch, getMockBatch, mockTasksResponse, validateMockTask } from "./tasks.mock";
+import { cancelMockRun, enqueueMockItems, getMockRunSummary, listMockRuns, mockRunTasksPage, renameMockRun, retryMockFailed, seedMockBigRun, upsertMockRun } from "./runs.mock";
+import { cancelMockTask, createMockBatch, getMockBatch, mockTasksResponse, takenRunIndices, validateMockTask } from "./tasks.mock";
+import type { RunStatus, TaskStatus } from "@/types/api";
+
+/** e2e: localStorage `videogen:mock-big-run` = N ⇒ /v1/runs có sẵn lượt `run_mock_big` với N task đã xong. */
+function seedBigRunIfRequested(): void {
+    try {
+        const n = Number(localStorage.getItem("videogen:mock-big-run") ?? 0);
+        if (n > 0) seedMockBigRun("run_mock_big", n);
+    } catch {
+        /* bỏ qua */
+    }
+}
 
 const error = (status: number, code: string, message: string, metadata?: Record<string, unknown>, headers?: Record<string, string>) =>
     HttpResponse.json({ error: { code, message, requestId: `mock-${Date.now()}`, ...(metadata ? { metadata } : {}) } }, { status, headers });
@@ -184,8 +196,66 @@ export const handlers = [
             const failure = validateMockTask(item);
             if (failure) return error(failure.status, failure.code, `tasks[${index}]: ${failure.message}`, { index, ...failure.metadata });
         }
+        if (body.runId) {
+            const offset = body.runOffset ?? 0;
+            const taken = takenRunIndices(body.runId).filter((i) => i >= offset && i < offset + body.tasks.length);
+            if (taken.length) return error(409, "RUN_INDEX_TAKEN", "runIndex already created", { runId: body.runId, taken });
+            upsertMockRun(body.runId, { totalPlanned: offset + body.tasks.length });
+        }
         rememberMockRequest(body);
         return HttpResponse.json(createMockBatch(body), { status: 202 });
+    }),
+
+    // ── Lượt tạo ──
+    http.put("/v1/runs/:id", async ({ params, request }) => {
+        const denied = requireApiKey(request);
+        if (denied) return denied;
+        const body = (await request.json()) as { name?: string | null; totalPlanned: number };
+        const r = upsertMockRun(params.id as string, body);
+        return HttpResponse.json(r.run, { status: r.created ? 201 : 200 });
+    }),
+    http.get("/v1/runs", ({ request }) => {
+        const denied = requireApiKey(request);
+        if (denied) return denied;
+        seedBigRunIfRequested();
+        const status = (new URL(request.url).searchParams.get("status") || undefined) as RunStatus | undefined;
+        return HttpResponse.json({ runs: listMockRuns(status).slice(0, 50), nextCursor: null });
+    }),
+    http.get("/v1/runs/:id", ({ params, request }) => {
+        const denied = requireApiKey(request);
+        if (denied) return denied;
+        seedBigRunIfRequested();
+        const run = getMockRunSummary(params.id as string);
+        return run ? HttpResponse.json(run) : error(404, "RUN_NOT_FOUND", "run not found");
+    }),
+    http.get("/v1/runs/:id/tasks", ({ params, request }) => {
+        const denied = requireApiKey(request);
+        if (denied) return denied;
+        seedBigRunIfRequested();
+        const url = new URL(request.url);
+        const status = (url.searchParams.get("status") || undefined) as TaskStatus | undefined;
+        const cursorRaw = url.searchParams.get("cursor");
+        const page = mockRunTasksPage(params.id as string, status, cursorRaw ? Number(cursorRaw) : undefined, Number(url.searchParams.get("limit") ?? 50));
+        return page ? HttpResponse.json(page) : error(404, "RUN_NOT_FOUND", "run not found");
+    }),
+    http.post("/v1/runs/:id/cancel", ({ params }) => {
+        const r = cancelMockRun(params.id as string);
+        return r ? HttpResponse.json(r) : error(404, "RUN_NOT_FOUND", "run not found");
+    }),
+    http.patch("/v1/runs/:id", async ({ params, request }) => {
+        const body = (await request.json()) as { name: string | null };
+        const r = renameMockRun(params.id as string, body.name);
+        return r ? HttpResponse.json(r) : error(404, "RUN_NOT_FOUND", "run not found");
+    }),
+    http.post("/v1/runs/:id/items", async ({ params, request }) => {
+        const body = (await request.json()) as { items: CreateTasksRequest["tasks"]; runOffset: number };
+        const r = enqueueMockItems(params.id as string, body);
+        return r ? HttpResponse.json(r, { status: 202 }) : error(404, "RUN_NOT_FOUND", "run not found");
+    }),
+    http.post("/v1/runs/:id/retry-failed", async ({ params, request }) => {
+        const body = (await request.json().catch(() => ({}))) as { taskIds?: string[] };
+        const r = retryMockFailed(params.id as string, body.taskIds);
+        return r ? HttpResponse.json(r, { status: 202 }) : error(404, "RUN_NOT_FOUND", "run not found");
     }),
     http.get("/v1/batches/:id", ({ params, request }) => {
         const denied = requireApiKey(request);

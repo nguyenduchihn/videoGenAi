@@ -8,7 +8,6 @@ import {
     type PromptSplitMode,
 } from "@/components/generator/types";
 import { FIXED_SEPARATOR } from "@/components/generator/settings/constants";
-import { persistDraftPrompt, readDraftPrompt } from "@/features/projects/useProjectDrafts";
 import { useModelCatalog } from "@/hooks/useModels";
 import { usePricing } from "@/hooks/usePricing";
 import { useAuthStore } from "@/stores/auth.store";
@@ -66,22 +65,18 @@ export interface UseGeneratorFormReturn {
     handleModeChange: (nextMode: GeneratorMode) => void;
     /** "Tiếp tục video" từ thẻ kết quả: chuyển sang extend-video với video nguồn đã chọn. */
     startExtendFrom: (mediaId: string, label: string) => void;
+    /** Khôi phục bản nháp tự lưu (prompt + chế độ + tỷ lệ + cài đặt). */
+    applyDraft: (draft: { prompt: string; mode: GeneratorMode; ratio: string; settings: GeneratorSettingsState }) => void;
 }
 
-export function useGeneratorForm({
-    variant = "advanced",
-    draftId,
-}: {
-    variant?: "quick" | "advanced";
-    draftId?: string;
-}): UseGeneratorFormReturn {
+export function useGeneratorForm({ variant = "advanced" }: { variant?: "quick" | "advanced" } = {}): UseGeneratorFormReturn {
     const catalog = useModelCatalog();
     const pricing = usePricing().data;
     const balance = useAuthStore((state) => state.user?.balance.raw ?? state.user?.user.credits ?? null);
     const [showValidation, setShowValidation] = useState(false);
     const [mode, setMode] = useState<GeneratorMode>(DEFAULT_MODE);
     const [aspectRatio, setAspectRatio] = useState(defaultRatio("video"));
-    const [prompt, setPrompt] = useState(() => (draftId ? readDraftPrompt(draftId) : ""));
+    const [prompt, setPrompt] = useState("");
     const [attachments, setAttachments] = useState<GeneratorAttachments>(EMPTY_ATTACHMENTS);
     const [uploadCache] = useState<UploadCache>(() => new Map());
     const [promptSplitMode, setPromptSplitMode] = useState<PromptSplitMode>("newline");
@@ -100,13 +95,6 @@ export function useGeneratorForm({
     useEffect(() => { attachmentsRef.current = attachments; }, [attachments]);
     useEffect(() => () => { releaseAttachments(attachmentsRef.current); }, []);
 
-    const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    useEffect(() => {
-        if (!draftId) return;
-        if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
-        draftSaveTimerRef.current = setTimeout(() => { persistDraftPrompt(draftId, prompt); }, 500);
-        return () => { if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current); };
-    }, [prompt, draftId]);
 
     const jobs = useMemo(() => {
         const input = prompt.trim();
@@ -162,11 +150,18 @@ export function useGeneratorForm({
         setAttachments({ ...EMPTY_ATTACHMENTS, sourceMediaId: mediaId, sourceLabel: label });
     }, [handleModeChange]);
 
+    const applyDraft = useCallback((draft: { prompt: string; mode: GeneratorMode; ratio: string; settings: GeneratorSettingsState }) => {
+        handleModeChange(draft.mode);
+        setPrompt(draft.prompt);
+        setAspectRatio(draft.ratio);
+        setSettings(draft.settings);
+    }, [handleModeChange]);
+
     return {
         catalog, mode, spec, modelOptions, aspectRatio, setAspectRatio,
         prompt, setPrompt, attachments, updateAttachments, uploadCache,
         promptSplitMode, setPromptSplitMode, settingsOpen, setSettingsOpen, settings, setSettings,
         jobs, creditPerJob, estimatedCredits, balance, validation,
-        showValidation, setShowValidation, handleModeChange, startExtendFrom,
+        showValidation, setShowValidation, handleModeChange, startExtendFrom, applyDraft,
     };
 }

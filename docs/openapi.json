@@ -3147,6 +3147,21 @@
                             "type": "string",
                             "format": "date-time",
                             "nullable": true
+                          },
+                          "runId": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Lượt tạo (portal); null khi tạo ngoài lượt"
+                          },
+                          "runIndex": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Thứ tự job trong lượt (0-based)"
+                          },
+                          "prompt": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "params.prompt cắt 500 ký tự — để hiển thị"
                           }
                         },
                         "required": [
@@ -3163,7 +3178,10 @@
                           "creditsRefunded",
                           "createdAt",
                           "updatedAt",
-                          "completedAt"
+                          "completedAt",
+                          "runId",
+                          "runIndex",
+                          "prompt"
                         ],
                         "additionalProperties": false
                       }
@@ -3465,6 +3483,21 @@
                       "type": "string",
                       "format": "date-time",
                       "nullable": true
+                    },
+                    "runId": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Lượt tạo (portal); null khi tạo ngoài lượt"
+                    },
+                    "runIndex": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "Thứ tự job trong lượt (0-based)"
+                    },
+                    "prompt": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "params.prompt cắt 500 ký tự — để hiển thị"
                     }
                   },
                   "required": [
@@ -3481,7 +3514,10 @@
                     "creditsRefunded",
                     "createdAt",
                     "updatedAt",
-                    "completedAt"
+                    "completedAt",
+                    "runId",
+                    "runIndex",
+                    "prompt"
                   ],
                   "additionalProperties": false
                 }
@@ -3824,6 +3860,21 @@
                       "type": "string",
                       "format": "date-time",
                       "nullable": true
+                    },
+                    "runId": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Lượt tạo (portal); null khi tạo ngoài lượt"
+                    },
+                    "runIndex": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "Thứ tự job trong lượt (0-based)"
+                    },
+                    "prompt": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "params.prompt cắt 500 ký tự — để hiển thị"
                     }
                   },
                   "required": [
@@ -3840,7 +3891,10 @@
                     "creditsRefunded",
                     "createdAt",
                     "updatedAt",
-                    "completedAt"
+                    "completedAt",
+                    "runId",
+                    "runIndex",
+                    "prompt"
                   ],
                   "additionalProperties": false
                 }
@@ -7145,6 +7199,17 @@
                     "type": "string",
                     "format": "uri",
                     "description": "Server nhận thông báo khi task kết thúc (succeeded/failed/cancelled), ký HMAC bằng WEBHOOK_SECRET"
+                  },
+                  "runId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Lượt tạo (PUT /v1/runs/:id trước); task i của lô nhận runIndex = runOffset + i"
+                  },
+                  "runOffset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9999,
+                    "description": "Thứ tự job đầu lô trong lượt; chunk gửi lại trùng runIndex ⇒ 409 RUN_INDEX_TAKEN, không tạo gì"
                   }
                 },
                 "required": [
@@ -7544,6 +7609,21 @@
                             "type": "string",
                             "format": "date-time",
                             "nullable": true
+                          },
+                          "runId": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Lượt tạo (portal); null khi tạo ngoài lượt"
+                          },
+                          "runIndex": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Thứ tự job trong lượt (0-based)"
+                          },
+                          "prompt": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "params.prompt cắt 500 ký tự — để hiển thị"
                           }
                         },
                         "required": [
@@ -7560,7 +7640,10 @@
                           "creditsRefunded",
                           "createdAt",
                           "updatedAt",
-                          "completedAt"
+                          "completedAt",
+                          "runId",
+                          "runIndex",
+                          "prompt"
                         ],
                         "additionalProperties": false
                       }
@@ -8216,6 +8299,21 @@
                             "type": "string",
                             "format": "date-time",
                             "nullable": true
+                          },
+                          "runId": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Lượt tạo (portal); null khi tạo ngoài lượt"
+                          },
+                          "runIndex": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Thứ tự job trong lượt (0-based)"
+                          },
+                          "prompt": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "params.prompt cắt 500 ký tự — để hiển thị"
                           }
                         },
                         "required": [
@@ -8232,7 +8330,10 @@
                           "creditsRefunded",
                           "createdAt",
                           "updatedAt",
-                          "completedAt"
+                          "completedAt",
+                          "runId",
+                          "runIndex",
+                          "prompt"
                         ],
                         "additionalProperties": false
                       }
@@ -8594,6 +8695,21 @@
                             "type": "string",
                             "format": "date-time",
                             "nullable": true
+                          },
+                          "runId": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Lượt tạo (portal); null khi tạo ngoài lượt"
+                          },
+                          "runIndex": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Thứ tự job trong lượt (0-based)"
+                          },
+                          "prompt": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "params.prompt cắt 500 ký tự — để hiển thị"
                           }
                         },
                         "required": [
@@ -8610,7 +8726,10 @@
                           "creditsRefunded",
                           "createdAt",
                           "updatedAt",
-                          "completedAt"
+                          "completedAt",
+                          "runId",
+                          "runIndex",
+                          "prompt"
                         ],
                         "additionalProperties": false
                       }
@@ -9020,6 +9139,21 @@
                       "type": "string",
                       "format": "date-time",
                       "nullable": true
+                    },
+                    "runId": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Lượt tạo (portal); null khi tạo ngoài lượt"
+                    },
+                    "runIndex": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "Thứ tự job trong lượt (0-based)"
+                    },
+                    "prompt": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "params.prompt cắt 500 ký tự — để hiển thị"
                     }
                   },
                   "required": [
@@ -9036,7 +9170,10 @@
                     "creditsRefunded",
                     "createdAt",
                     "updatedAt",
-                    "completedAt"
+                    "completedAt",
+                    "runId",
+                    "runIndex",
+                    "prompt"
                   ],
                   "additionalProperties": false
                 }
@@ -9432,6 +9569,21 @@
                       "type": "string",
                       "format": "date-time",
                       "nullable": true
+                    },
+                    "runId": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Lượt tạo (portal); null khi tạo ngoài lượt"
+                    },
+                    "runIndex": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "Thứ tự job trong lượt (0-based)"
+                    },
+                    "prompt": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "params.prompt cắt 500 ký tự — để hiển thị"
                     }
                   },
                   "required": [
@@ -9448,7 +9600,10 @@
                     "creditsRefunded",
                     "createdAt",
                     "updatedAt",
-                    "completedAt"
+                    "completedAt",
+                    "runId",
+                    "runIndex",
+                    "prompt"
                   ],
                   "additionalProperties": false
                 }
@@ -9901,6 +10056,21 @@
                             "type": "string",
                             "format": "date-time",
                             "nullable": true
+                          },
+                          "runId": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Lượt tạo (portal); null khi tạo ngoài lượt"
+                          },
+                          "runIndex": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Thứ tự job trong lượt (0-based)"
+                          },
+                          "prompt": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "params.prompt cắt 500 ký tự — để hiển thị"
                           }
                         },
                         "required": [
@@ -9917,7 +10087,10 @@
                           "creditsRefunded",
                           "createdAt",
                           "updatedAt",
-                          "completedAt"
+                          "completedAt",
+                          "runId",
+                          "runIndex",
+                          "prompt"
                         ],
                         "additionalProperties": false
                       }
@@ -10161,6 +10334,3624 @@
         "summary": "Huỷ mọi task chưa kết thúc của lô",
         "tags": [
           "Tasks"
+        ]
+      }
+    },
+    "/v1/runs/{id}": {
+      "put": {
+        "description": "Gọi TRƯỚC khi gửi chunk đầu. Cùng id gọi lại ⇒ 200 trả lượt hiện có (không đổi tên/totalPlanned). Sau đó gửi từng lô ≤ 20 task bằng `POST /v1/tasks` kèm `runId` + `runOffset`.",
+        "operationId": "RunsController_upsert",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120,
+                    "nullable": true,
+                    "description": "Tên hiển thị; bỏ trống ⇒ portal tự đặt theo prompt đầu"
+                  },
+                  "totalPlanned": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10000,
+                    "description": "Số job dự kiến của lượt (để tính % khi còn chunk chưa gửi)"
+                  }
+                },
+                "required": [
+                  "totalPlanned"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Lượt vừa tạo (200 nếu đã có)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "totalPlanned": {
+                      "type": "integer",
+                      "description": "Số job dự kiến (tự nâng khi chunk gửi vượt kế hoạch)"
+                    },
+                    "created": {
+                      "type": "integer",
+                      "description": "Số task đã tạo (= tổng counts + retried)"
+                    },
+                    "retried": {
+                      "type": "integer",
+                      "description": "Task failed đã được thử lại (không còn là lỗi mở)"
+                    },
+                    "queuedOnServer": {
+                      "type": "integer",
+                      "description": "Job còn xếp hàng trên máy chủ (giai đoạn 2), chưa thành task"
+                    },
+                    "counts": {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "integer"
+                        },
+                        "processing": {
+                          "type": "integer"
+                        },
+                        "succeeded": {
+                          "type": "integer"
+                        },
+                        "failed": {
+                          "type": "integer"
+                        },
+                        "cancelled": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "pending",
+                        "processing",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "active",
+                        "done",
+                        "cancelled"
+                      ]
+                    },
+                    "pausedReason": {
+                      "type": "string",
+                      "enum": [
+                        "INSUFFICIENT_CREDITS"
+                      ],
+                      "nullable": true,
+                      "description": "Máy chủ tạm dừng đẩy job vì thiếu credit; nạp thêm ⇒ tự tiếp tục"
+                    },
+                    "etaSec": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "Ước tính giây còn lại theo nhịp hoàn thành 10 phút gần nhất; null khi chưa đủ dữ liệu"
+                    },
+                    "cancelledAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "lastActivityAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Lần cập nhật task gần nhất trong lượt"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "totalPlanned",
+                    "created",
+                    "retried",
+                    "queuedOnServer",
+                    "counts",
+                    "status",
+                    "pausedReason",
+                    "etaSec",
+                    "cancelledAt",
+                    "createdAt",
+                    "updatedAt",
+                    "lastActivityAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dữ liệu không hợp lệ (`VALIDATION_FAILED`: xem `details[].path`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Không có quyền / tài khoản bị khoá / gói hết hạn (`FORBIDDEN_ROLE`, `USER_SUSPENDED`, `PLAN_EXPIRED`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy (hoặc không thuộc về bạn)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Vượt giới hạn tốc độ (`RATE_LIMITED`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Tạo lượt (idempotent theo id client)",
+        "tags": [
+          "Runs"
+        ]
+      },
+      "get": {
+        "description": "Rẻ (GROUP BY trên index) ⇒ portal poll 3–20 s tuỳ quy mô.",
+        "operationId": "RunsController_one",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lượt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "totalPlanned": {
+                      "type": "integer",
+                      "description": "Số job dự kiến (tự nâng khi chunk gửi vượt kế hoạch)"
+                    },
+                    "created": {
+                      "type": "integer",
+                      "description": "Số task đã tạo (= tổng counts + retried)"
+                    },
+                    "retried": {
+                      "type": "integer",
+                      "description": "Task failed đã được thử lại (không còn là lỗi mở)"
+                    },
+                    "queuedOnServer": {
+                      "type": "integer",
+                      "description": "Job còn xếp hàng trên máy chủ (giai đoạn 2), chưa thành task"
+                    },
+                    "counts": {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "integer"
+                        },
+                        "processing": {
+                          "type": "integer"
+                        },
+                        "succeeded": {
+                          "type": "integer"
+                        },
+                        "failed": {
+                          "type": "integer"
+                        },
+                        "cancelled": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "pending",
+                        "processing",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "active",
+                        "done",
+                        "cancelled"
+                      ]
+                    },
+                    "pausedReason": {
+                      "type": "string",
+                      "enum": [
+                        "INSUFFICIENT_CREDITS"
+                      ],
+                      "nullable": true,
+                      "description": "Máy chủ tạm dừng đẩy job vì thiếu credit; nạp thêm ⇒ tự tiếp tục"
+                    },
+                    "etaSec": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "Ước tính giây còn lại theo nhịp hoàn thành 10 phút gần nhất; null khi chưa đủ dữ liệu"
+                    },
+                    "cancelledAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "lastActivityAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Lần cập nhật task gần nhất trong lượt"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "totalPlanned",
+                    "created",
+                    "retried",
+                    "queuedOnServer",
+                    "counts",
+                    "status",
+                    "pausedReason",
+                    "etaSec",
+                    "cancelledAt",
+                    "createdAt",
+                    "updatedAt",
+                    "lastActivityAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Không có quyền / tài khoản bị khoá / gói hết hạn (`FORBIDDEN_ROLE`, `USER_SUSPENDED`, `PLAN_EXPIRED`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy (hoặc không thuộc về bạn)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Vượt giới hạn tốc độ (`RATE_LIMITED`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Tóm tắt một lượt (đếm theo trạng thái, ETA)",
+        "tags": [
+          "Runs"
+        ]
+      },
+      "patch": {
+        "operationId": "RunsController_rename",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120,
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Lượt sau khi đổi tên",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "totalPlanned": {
+                      "type": "integer",
+                      "description": "Số job dự kiến (tự nâng khi chunk gửi vượt kế hoạch)"
+                    },
+                    "created": {
+                      "type": "integer",
+                      "description": "Số task đã tạo (= tổng counts + retried)"
+                    },
+                    "retried": {
+                      "type": "integer",
+                      "description": "Task failed đã được thử lại (không còn là lỗi mở)"
+                    },
+                    "queuedOnServer": {
+                      "type": "integer",
+                      "description": "Job còn xếp hàng trên máy chủ (giai đoạn 2), chưa thành task"
+                    },
+                    "counts": {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "integer"
+                        },
+                        "processing": {
+                          "type": "integer"
+                        },
+                        "succeeded": {
+                          "type": "integer"
+                        },
+                        "failed": {
+                          "type": "integer"
+                        },
+                        "cancelled": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "pending",
+                        "processing",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "active",
+                        "done",
+                        "cancelled"
+                      ]
+                    },
+                    "pausedReason": {
+                      "type": "string",
+                      "enum": [
+                        "INSUFFICIENT_CREDITS"
+                      ],
+                      "nullable": true,
+                      "description": "Máy chủ tạm dừng đẩy job vì thiếu credit; nạp thêm ⇒ tự tiếp tục"
+                    },
+                    "etaSec": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "Ước tính giây còn lại theo nhịp hoàn thành 10 phút gần nhất; null khi chưa đủ dữ liệu"
+                    },
+                    "cancelledAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "lastActivityAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Lần cập nhật task gần nhất trong lượt"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "totalPlanned",
+                    "created",
+                    "retried",
+                    "queuedOnServer",
+                    "counts",
+                    "status",
+                    "pausedReason",
+                    "etaSec",
+                    "cancelledAt",
+                    "createdAt",
+                    "updatedAt",
+                    "lastActivityAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dữ liệu không hợp lệ (`VALIDATION_FAILED`: xem `details[].path`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Không có quyền / tài khoản bị khoá / gói hết hạn (`FORBIDDEN_ROLE`, `USER_SUSPENDED`, `PLAN_EXPIRED`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy (hoặc không thuộc về bạn)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Vượt giới hạn tốc độ (`RATE_LIMITED`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Đổi tên lượt",
+        "tags": [
+          "Runs"
+        ]
+      }
+    },
+    "/v1/runs": {
+      "get": {
+        "operationId": "RunsController_list",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "done",
+                "cancelled"
+              ],
+              "description": "active = còn task chờ/đang chạy hoặc còn xếp hàng trên máy chủ"
+            },
+            "description": "active = còn task chờ/đang chạy hoặc còn xếp hàng trên máy chủ"
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 60
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lượt + số task theo trạng thái",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "runs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "totalPlanned": {
+                            "type": "integer",
+                            "description": "Số job dự kiến (tự nâng khi chunk gửi vượt kế hoạch)"
+                          },
+                          "created": {
+                            "type": "integer",
+                            "description": "Số task đã tạo (= tổng counts + retried)"
+                          },
+                          "retried": {
+                            "type": "integer",
+                            "description": "Task failed đã được thử lại (không còn là lỗi mở)"
+                          },
+                          "queuedOnServer": {
+                            "type": "integer",
+                            "description": "Job còn xếp hàng trên máy chủ (giai đoạn 2), chưa thành task"
+                          },
+                          "counts": {
+                            "type": "object",
+                            "properties": {
+                              "pending": {
+                                "type": "integer"
+                              },
+                              "processing": {
+                                "type": "integer"
+                              },
+                              "succeeded": {
+                                "type": "integer"
+                              },
+                              "failed": {
+                                "type": "integer"
+                              },
+                              "cancelled": {
+                                "type": "integer"
+                              }
+                            },
+                            "required": [
+                              "pending",
+                              "processing",
+                              "succeeded",
+                              "failed",
+                              "cancelled"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "active",
+                              "done",
+                              "cancelled"
+                            ]
+                          },
+                          "pausedReason": {
+                            "type": "string",
+                            "enum": [
+                              "INSUFFICIENT_CREDITS"
+                            ],
+                            "nullable": true,
+                            "description": "Máy chủ tạm dừng đẩy job vì thiếu credit; nạp thêm ⇒ tự tiếp tục"
+                          },
+                          "etaSec": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Ước tính giây còn lại theo nhịp hoàn thành 10 phút gần nhất; null khi chưa đủ dữ liệu"
+                          },
+                          "cancelledAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "lastActivityAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Lần cập nhật task gần nhất trong lượt"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "totalPlanned",
+                          "created",
+                          "retried",
+                          "queuedOnServer",
+                          "counts",
+                          "status",
+                          "pausedReason",
+                          "etaSec",
+                          "cancelledAt",
+                          "createdAt",
+                          "updatedAt",
+                          "lastActivityAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "nextCursor": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "runs",
+                    "nextCursor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Không có quyền / tài khoản bị khoá / gói hết hạn (`FORBIDDEN_ROLE`, `USER_SUSPENDED`, `PLAN_EXPIRED`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Vượt giới hạn tốc độ (`RATE_LIMITED`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Danh sách lượt tạo của tôi (mới hoạt động trước, cursor)",
+        "tags": [
+          "Runs"
+        ]
+      }
+    },
+    "/v1/runs/{id}/tasks": {
+      "get": {
+        "operationId": "RunsController_tasks",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "processing",
+                "succeeded",
+                "failed",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "runIndex của phần tử cuối trang trước (nextCursor)"
+            },
+            "description": "runIndex của phần tử cuối trang trước (nextCursor)"
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trang task",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tasks": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "batchId": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "pending",
+                              "processing",
+                              "succeeded",
+                              "failed",
+                              "cancelled"
+                            ]
+                          },
+                          "stage": {
+                            "type": "string",
+                            "enum": [
+                              "generate",
+                              "upscale"
+                            ],
+                            "description": "processing: đang gen hay đang upscale"
+                          },
+                          "worker": {
+                            "type": "string"
+                          },
+                          "model": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "generationMode": {
+                            "type": "string",
+                            "enum": [
+                              "mock",
+                              "real"
+                            ],
+                            "description": "mock = hệ thống đang mô phỏng (không gọi Google thật), kết quả chỉ để thử luồng"
+                          },
+                          "priceCredits": {
+                            "type": "integer",
+                            "description": "Credit đã giữ chỗ cho task này (gen + upscale)"
+                          },
+                          "result": {
+                            "type": "object",
+                            "properties": {
+                              "mediaId": {
+                                "type": "string"
+                              },
+                              "url": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "Link tải (presigned, có hạn); null nếu chưa có"
+                              },
+                              "mock": {
+                                "type": "boolean"
+                              },
+                              "resolution": {
+                                "type": "string",
+                                "description": "Có khi task có upscale"
+                              },
+                              "base": {
+                                "type": "object",
+                                "properties": {
+                                  "mediaId": {
+                                    "type": "string"
+                                  },
+                                  "url": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "description": "Link tải (presigned, có hạn); null nếu chưa có"
+                                  }
+                                },
+                                "required": [
+                                  "mediaId",
+                                  "url"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Bản gốc trước upscale"
+                              },
+                              "upscale": {
+                                "type": "object",
+                                "properties": {
+                                  "status": {
+                                    "type": "string",
+                                    "enum": [
+                                      "done",
+                                      "failed"
+                                    ]
+                                  },
+                                  "code": {
+                                    "type": "string"
+                                  },
+                                  "message": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "status"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "mediaId",
+                              "url"
+                            ],
+                            "additionalProperties": false,
+                            "nullable": true
+                          },
+                          "error": {
+                            "type": "object",
+                            "properties": {
+                              "code": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "code",
+                              "message"
+                            ],
+                            "additionalProperties": false,
+                            "nullable": true
+                          },
+                          "creditsRefunded": {
+                            "type": "integer",
+                            "description": "Credit đã hoàn (failed/cancelled: toàn bộ; upscale lỗi: phần upscale)"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "completedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "runId": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Lượt tạo (portal); null khi tạo ngoài lượt"
+                          },
+                          "runIndex": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Thứ tự job trong lượt (0-based)"
+                          },
+                          "prompt": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "params.prompt cắt 500 ký tự — để hiển thị"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "batchId",
+                          "status",
+                          "stage",
+                          "worker",
+                          "model",
+                          "generationMode",
+                          "priceCredits",
+                          "result",
+                          "error",
+                          "creditsRefunded",
+                          "createdAt",
+                          "updatedAt",
+                          "completedAt",
+                          "runId",
+                          "runIndex",
+                          "prompt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "nextCursor": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "runIndex cuối trang; truyền vào `cursor`"
+                    }
+                  },
+                  "required": [
+                    "tasks",
+                    "nextCursor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Không có quyền / tài khoản bị khoá / gói hết hạn (`FORBIDDEN_ROLE`, `USER_SUSPENDED`, `PLAN_EXPIRED`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy (hoặc không thuộc về bạn)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Vượt giới hạn tốc độ (`RATE_LIMITED`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Task của lượt theo thứ tự job (có prompt, URL kết quả presigned)",
+        "tags": [
+          "Runs"
+        ]
+      }
+    },
+    "/v1/runs/{id}/items": {
+      "post": {
+        "description": "Job được lưu và máy chủ tự đẩy vào pipeline mỗi 5 giây khi hàng đợi còn chỗ (maxPending) — đóng tab vẫn chạy. Credit giữ lúc đẩy; thiếu credit ⇒ lượt tạm dừng (`pausedReason`), nạp thêm sẽ tự tiếp tục. Ảnh tham chiếu được gia hạn 7 ngày.",
+        "operationId": "RunsController_items",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "worker": {
+                          "type": "string",
+                          "enum": [
+                            "text-to-video",
+                            "image-to-video",
+                            "reference-images-to-video",
+                            "start-end-image-to-video",
+                            "extend-video",
+                            "text-to-image",
+                            "image-to-image"
+                          ],
+                          "description": "Loại job"
+                        },
+                        "params": {
+                          "type": "object",
+                          "additionalProperties": {},
+                          "description": "Tham số theo worker. Video: prompt, model (Veo_3.1-Fast mặc định | Veo_3.1-Lite | Veo_3.1-Quality | Veo_3.1-Omni | \"Veo_3.1-Lite [Lower Priority]\"), ratio (16:9 | 9:16), duration (4|6|8|10), audioEnabled. Ảnh: prompt, model (Nano_Banana_Pro mặc định | Nano_Banana_2 | Nano_Banana_2_Lite), ratio (1:1 | 16:9 | 9:16 | 4:3 | 3:4), seed (10000–99999)."
+                        },
+                        "images": {
+                          "type": "object",
+                          "properties": {
+                            "start": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "minLength": 10,
+                                  "maxLength": 40
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "imageId": {
+                                      "type": "string",
+                                      "minLength": 10,
+                                      "maxLength": 40
+                                    },
+                                    "handle": {
+                                      "type": "string",
+                                      "pattern": "^[a-z][a-z0-9_-]{0,29}$"
+                                    }
+                                  },
+                                  "required": [
+                                    "imageId"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ],
+                              "description": "image-to-video, start-end-image-to-video: ảnh khung đầu"
+                            },
+                            "end": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "minLength": 10,
+                                  "maxLength": 40
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "imageId": {
+                                      "type": "string",
+                                      "minLength": 10,
+                                      "maxLength": 40
+                                    },
+                                    "handle": {
+                                      "type": "string",
+                                      "pattern": "^[a-z][a-z0-9_-]{0,29}$"
+                                    }
+                                  },
+                                  "required": [
+                                    "imageId"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ],
+                              "description": "start-end-image-to-video: ảnh khung cuối"
+                            },
+                            "references": {
+                              "type": "array",
+                              "items": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "minLength": 10,
+                                    "maxLength": 40
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "imageId": {
+                                        "type": "string",
+                                        "minLength": 10,
+                                        "maxLength": 40
+                                      },
+                                      "handle": {
+                                        "type": "string",
+                                        "pattern": "^[a-z][a-z0-9_-]{0,29}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "imageId"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ],
+                                "description": "imageId từ POST /v1/images, hoặc {imageId, handle} để nhắc @handle trong prompt"
+                              },
+                              "minItems": 1,
+                              "maxItems": 7,
+                              "description": "reference-images-to-video: tối đa 7 (Omni) hoặc 3 (model khác)"
+                            },
+                            "source": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "minLength": 10,
+                                  "maxLength": 40
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "imageId": {
+                                      "type": "string",
+                                      "minLength": 10,
+                                      "maxLength": 40
+                                    },
+                                    "handle": {
+                                      "type": "string",
+                                      "pattern": "^[a-z][a-z0-9_-]{0,29}$"
+                                    }
+                                  },
+                                  "required": [
+                                    "imageId"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ],
+                              "description": "image-to-image: 1 ảnh nguồn (tương thích cũ; tương đương sources: [source])"
+                            },
+                            "sources": {
+                              "type": "array",
+                              "items": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "minLength": 10,
+                                    "maxLength": 40
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "imageId": {
+                                        "type": "string",
+                                        "minLength": 10,
+                                        "maxLength": 40
+                                      },
+                                      "handle": {
+                                        "type": "string",
+                                        "pattern": "^[a-z][a-z0-9_-]{0,29}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "imageId"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ],
+                                "description": "imageId từ POST /v1/images, hoặc {imageId, handle} để nhắc @handle trong prompt"
+                              },
+                              "minItems": 1,
+                              "maxItems": 10,
+                              "description": "image-to-image: 1–10 ảnh tham chiếu (không dùng cùng `source`)"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "description": "imageId lấy từ POST /v1/images (ảnh giữ 24h, tạo task ⇒ gia hạn). Mỗi ảnh có thể kèm handle để nhắc @handle trong prompt (chỉ lưu/hiển thị; Google chưa nhận mention)."
+                        },
+                        "sourceMediaId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "extend-video: mediaId của 1 task video thành công trước đó"
+                        },
+                        "upscale": {
+                          "type": "object",
+                          "properties": {
+                            "resolution": {
+                              "type": "string",
+                              "enum": [
+                                "2K",
+                                "4K",
+                                "1080P"
+                              ],
+                              "description": "Ảnh: 2K | 4K. Video: 1080P | 4K"
+                            }
+                          },
+                          "required": [
+                            "resolution"
+                          ],
+                          "additionalProperties": false,
+                          "nullable": true,
+                          "description": "Mặc định không. Có ⇒ worker gen xong tự upscale ngay trên cùng tài khoản; upscale lỗi ⇒ vẫn nhận bản gốc, hoàn phần credit upscale"
+                        }
+                      },
+                      "required": [
+                        "worker",
+                        "params"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1,
+                    "maxItems": 500,
+                    "description": "1–500 job; mỗi phần tử y hệt một task của POST /v1/tasks"
+                  },
+                  "runOffset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9999,
+                    "description": "runIndex của job đầu; runIndex đã có ⇒ bỏ qua (duplicates), không lỗi"
+                  }
+                },
+                "required": [
+                  "items",
+                  "runOffset"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Đã nhận hàng",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "added": {
+                      "type": "integer"
+                    },
+                    "duplicates": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer"
+                      },
+                      "description": "runIndex đã có từ trước (task hoặc item) ⇒ bỏ qua"
+                    },
+                    "run": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "totalPlanned": {
+                          "type": "integer",
+                          "description": "Số job dự kiến (tự nâng khi chunk gửi vượt kế hoạch)"
+                        },
+                        "created": {
+                          "type": "integer",
+                          "description": "Số task đã tạo (= tổng counts + retried)"
+                        },
+                        "retried": {
+                          "type": "integer",
+                          "description": "Task failed đã được thử lại (không còn là lỗi mở)"
+                        },
+                        "queuedOnServer": {
+                          "type": "integer",
+                          "description": "Job còn xếp hàng trên máy chủ (giai đoạn 2), chưa thành task"
+                        },
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "pending": {
+                              "type": "integer"
+                            },
+                            "processing": {
+                              "type": "integer"
+                            },
+                            "succeeded": {
+                              "type": "integer"
+                            },
+                            "failed": {
+                              "type": "integer"
+                            },
+                            "cancelled": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "pending",
+                            "processing",
+                            "succeeded",
+                            "failed",
+                            "cancelled"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "active",
+                            "done",
+                            "cancelled"
+                          ]
+                        },
+                        "pausedReason": {
+                          "type": "string",
+                          "enum": [
+                            "INSUFFICIENT_CREDITS"
+                          ],
+                          "nullable": true,
+                          "description": "Máy chủ tạm dừng đẩy job vì thiếu credit; nạp thêm ⇒ tự tiếp tục"
+                        },
+                        "etaSec": {
+                          "type": "integer",
+                          "nullable": true,
+                          "description": "Ước tính giây còn lại theo nhịp hoàn thành 10 phút gần nhất; null khi chưa đủ dữ liệu"
+                        },
+                        "cancelledAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "lastActivityAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "Lần cập nhật task gần nhất trong lượt"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "totalPlanned",
+                        "created",
+                        "retried",
+                        "queuedOnServer",
+                        "counts",
+                        "status",
+                        "pausedReason",
+                        "etaSec",
+                        "cancelledAt",
+                        "createdAt",
+                        "updatedAt",
+                        "lastActivityAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "added",
+                    "duplicates",
+                    "run"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dữ liệu không hợp lệ (`VALIDATION_FAILED`: xem `details[].path`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Không có quyền / tài khoản bị khoá / gói hết hạn (`FORBIDDEN_ROLE`, `USER_SUSPENDED`, `PLAN_EXPIRED`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy (hoặc không thuộc về bạn)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Xung đột (`EMAIL_TAKEN`, `IN_PROGRESS`…)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Vượt giới hạn tốc độ (`RATE_LIMITED`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Xếp hàng job trên máy chủ (lượt vượt hạn mức hàng đợi của gói)",
+        "tags": [
+          "Runs"
+        ]
+      }
+    },
+    "/v1/runs/{id}/retry-failed": {
+      "post": {
+        "description": "Máy chủ dựng lại job từ spec/ảnh đã lưu, nối cuối lượt và xếp hàng (feeder đẩy trong vài giây). Task cũ không đếm là lỗi mở nữa.",
+        "operationId": "RunsController_retry",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "taskIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 10,
+                      "maxLength": 40
+                    },
+                    "minItems": 1,
+                    "maxItems": 1000,
+                    "description": "Bỏ trống = mọi task failed chưa thử lại"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Đã xếp hàng",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "created": {
+                      "type": "integer",
+                      "description": "Job mới đã xếp hàng trên máy chủ (nối cuối lượt)"
+                    },
+                    "skipped": {
+                      "type": "integer"
+                    },
+                    "run": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "totalPlanned": {
+                          "type": "integer",
+                          "description": "Số job dự kiến (tự nâng khi chunk gửi vượt kế hoạch)"
+                        },
+                        "created": {
+                          "type": "integer",
+                          "description": "Số task đã tạo (= tổng counts + retried)"
+                        },
+                        "retried": {
+                          "type": "integer",
+                          "description": "Task failed đã được thử lại (không còn là lỗi mở)"
+                        },
+                        "queuedOnServer": {
+                          "type": "integer",
+                          "description": "Job còn xếp hàng trên máy chủ (giai đoạn 2), chưa thành task"
+                        },
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "pending": {
+                              "type": "integer"
+                            },
+                            "processing": {
+                              "type": "integer"
+                            },
+                            "succeeded": {
+                              "type": "integer"
+                            },
+                            "failed": {
+                              "type": "integer"
+                            },
+                            "cancelled": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "pending",
+                            "processing",
+                            "succeeded",
+                            "failed",
+                            "cancelled"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "active",
+                            "done",
+                            "cancelled"
+                          ]
+                        },
+                        "pausedReason": {
+                          "type": "string",
+                          "enum": [
+                            "INSUFFICIENT_CREDITS"
+                          ],
+                          "nullable": true,
+                          "description": "Máy chủ tạm dừng đẩy job vì thiếu credit; nạp thêm ⇒ tự tiếp tục"
+                        },
+                        "etaSec": {
+                          "type": "integer",
+                          "nullable": true,
+                          "description": "Ước tính giây còn lại theo nhịp hoàn thành 10 phút gần nhất; null khi chưa đủ dữ liệu"
+                        },
+                        "cancelledAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "lastActivityAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "Lần cập nhật task gần nhất trong lượt"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "totalPlanned",
+                        "created",
+                        "retried",
+                        "queuedOnServer",
+                        "counts",
+                        "status",
+                        "pausedReason",
+                        "etaSec",
+                        "cancelledAt",
+                        "createdAt",
+                        "updatedAt",
+                        "lastActivityAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "created",
+                    "skipped",
+                    "run"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Không có quyền / tài khoản bị khoá / gói hết hạn (`FORBIDDEN_ROLE`, `USER_SUSPENDED`, `PLAN_EXPIRED`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy (hoặc không thuộc về bạn)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Xung đột (`EMAIL_TAKEN`, `IN_PROGRESS`…)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Vượt giới hạn tốc độ (`RATE_LIMITED`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Thử lại job thất bại",
+        "tags": [
+          "Runs"
+        ]
+      }
+    },
+    "/v1/runs/{id}/cancel": {
+      "post": {
+        "description": "Task pending/processing ⇒ huỷ + hoàn credit ngay; job xếp hàng trên máy chủ ⇒ bỏ; task đã xong giữ nguyên. Lượt chuyển `cancelled`.",
+        "operationId": "RunsController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Kết quả huỷ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "run": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "totalPlanned": {
+                          "type": "integer",
+                          "description": "Số job dự kiến (tự nâng khi chunk gửi vượt kế hoạch)"
+                        },
+                        "created": {
+                          "type": "integer",
+                          "description": "Số task đã tạo (= tổng counts + retried)"
+                        },
+                        "retried": {
+                          "type": "integer",
+                          "description": "Task failed đã được thử lại (không còn là lỗi mở)"
+                        },
+                        "queuedOnServer": {
+                          "type": "integer",
+                          "description": "Job còn xếp hàng trên máy chủ (giai đoạn 2), chưa thành task"
+                        },
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "pending": {
+                              "type": "integer"
+                            },
+                            "processing": {
+                              "type": "integer"
+                            },
+                            "succeeded": {
+                              "type": "integer"
+                            },
+                            "failed": {
+                              "type": "integer"
+                            },
+                            "cancelled": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "pending",
+                            "processing",
+                            "succeeded",
+                            "failed",
+                            "cancelled"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "active",
+                            "done",
+                            "cancelled"
+                          ]
+                        },
+                        "pausedReason": {
+                          "type": "string",
+                          "enum": [
+                            "INSUFFICIENT_CREDITS"
+                          ],
+                          "nullable": true,
+                          "description": "Máy chủ tạm dừng đẩy job vì thiếu credit; nạp thêm ⇒ tự tiếp tục"
+                        },
+                        "etaSec": {
+                          "type": "integer",
+                          "nullable": true,
+                          "description": "Ước tính giây còn lại theo nhịp hoàn thành 10 phút gần nhất; null khi chưa đủ dữ liệu"
+                        },
+                        "cancelledAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "lastActivityAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "Lần cập nhật task gần nhất trong lượt"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "totalPlanned",
+                        "created",
+                        "retried",
+                        "queuedOnServer",
+                        "counts",
+                        "status",
+                        "pausedReason",
+                        "etaSec",
+                        "cancelledAt",
+                        "createdAt",
+                        "updatedAt",
+                        "lastActivityAt"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "cancelled": {
+                      "type": "integer",
+                      "description": "Task pending/processing vừa huỷ (hoàn credit ngay)"
+                    },
+                    "queuedCancelled": {
+                      "type": "integer",
+                      "description": "Job xếp hàng trên máy chủ vừa huỷ"
+                    },
+                    "creditsRefunded": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "run",
+                    "cancelled",
+                    "queuedCancelled",
+                    "creditsRefunded"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Không có quyền / tài khoản bị khoá / gói hết hạn (`FORBIDDEN_ROLE`, `USER_SUSPENDED`, `PLAN_EXPIRED`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy (hoặc không thuộc về bạn)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Vượt giới hạn tốc độ (`RATE_LIMITED`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "example": "VALIDATION_FAILED",
+                          "description": "Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "invalid request"
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "example": "7f1c…",
+                          "description": "Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Huỷ phần chưa chạy của lượt",
+        "tags": [
+          "Runs"
         ]
       }
     },

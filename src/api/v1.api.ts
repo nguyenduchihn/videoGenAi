@@ -2,10 +2,18 @@ import api from "@/lib/api";
 import type {
     BatchTasksResponse,
     CancelBatchResponse,
+    CancelRunResponse,
+    CreateTaskItem,
     CreateTasksRequest,
     CreateTasksResponse,
+    EnqueueRunItemsResponse,
     ListTasksByIdsResponse,
     PortalTask,
+    RunStatus,
+    RunSummary,
+    RunsPage,
+    RunTasksPage,
+    TaskStatus,
     UploadImagesResponse,
     V1Me,
     V1Models,
@@ -74,4 +82,46 @@ export async function models(): Promise<V1Models> {
 
 export async function v1Me(): Promise<V1Me> {
     return (await api.get<V1Me>("/v1/me")).data;
+}
+
+// ── Lượt tạo ──
+export interface UpsertRunInput {
+    name?: string | null;
+    totalPlanned: number;
+}
+
+/** PUT idempotent theo id client: 201 lần đầu, 200 nếu đã có. */
+export async function upsertRun(id: string, input: UpsertRunInput): Promise<{ run: RunSummary; created: boolean }> {
+    const response = await api.put<RunSummary>(`/v1/runs/${id}`, input);
+    return { run: response.data, created: response.status === 201 };
+}
+
+export async function listRuns(params: { status?: RunStatus; cursor?: string; limit?: number } = {}): Promise<RunsPage> {
+    return (await api.get<RunsPage>("/v1/runs", { params })).data;
+}
+
+export async function getRun(id: string): Promise<RunSummary> {
+    return (await api.get<RunSummary>(`/v1/runs/${id}`)).data;
+}
+
+export async function listRunTasks(id: string, params: { status?: TaskStatus; cursor?: string; limit?: number } = {}): Promise<RunTasksPage> {
+    return (await api.get<RunTasksPage>(`/v1/runs/${id}/tasks`, { params })).data;
+}
+
+export async function cancelRun(id: string): Promise<CancelRunResponse> {
+    return (await api.post<CancelRunResponse>(`/v1/runs/${id}/cancel`)).data;
+}
+
+export async function renameRun(id: string, name: string | null): Promise<RunSummary> {
+    return (await api.patch<RunSummary>(`/v1/runs/${id}`, { name })).data;
+}
+
+/** Giai đoạn 2: xếp hàng job trên máy chủ (lượt vượt hạn mức hàng đợi của gói). */
+export async function enqueueRunItems(id: string, input: { items: CreateTaskItem[]; runOffset: number }): Promise<EnqueueRunItemsResponse> {
+    return (await api.post<EnqueueRunItemsResponse>(`/v1/runs/${id}/items`, input)).data;
+}
+
+/** Tạo lại các task thất bại của lượt (máy chủ giữ spec/ảnh); `taskIds` bỏ trống = tất cả. */
+export async function retryFailedRun(id: string, taskIds?: string[]): Promise<{ created: number; skipped: number; run: RunSummary }> {
+    return (await api.post<{ created: number; skipped: number; run: RunSummary }>(`/v1/runs/${id}/retry-failed`, taskIds ? { taskIds } : {})).data;
 }

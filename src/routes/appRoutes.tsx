@@ -14,7 +14,8 @@ import NotFound from "@/pages/notFound";
 // Trang nặng tách chunk riêng; Suspense + popup tải đặt ở RootLayout.
 const Home = lazy(() => import("@/pages/home/home"));
 const Dashboard = lazy(() => import("@/pages/dashboard/dashboard"));
-const Projects = lazy(() => import("@/pages/projects/projects"));
+const RunsPage = lazy(() => import("@/pages/runs/RunsPage"));
+const RunDetailPage = lazy(() => import("@/pages/runs/RunDetailPage"));
 const ProfilePage = lazy(() => import("@/features/profile/ProfilePage"));
 const BillingPage = lazy(() => import("@/features/billing/BillingPage"));
 const TasksPage = lazy(() => import("@/features/tasks/TasksPage"));
@@ -48,7 +49,9 @@ const router = createBrowserRouter([
                 element: <MainLayout />,
                 children: [
                     { path: "/dashboard", element: <Dashboard /> },
-                    { path: "/projects", element: <Projects /> },
+                    { path: "/runs", element: <RunsPage /> },
+                    { path: "/runs/:runId", element: <RunDetailPage /> },
+                    { path: "/projects", element: <Navigate to="/runs" replace /> },
                     { path: "/profile", element: <ProfilePage /> },
                     { path: "/my-plan", element: <Navigate to="/billing" replace /> },
                     { path: "/pricing", element: <Pricing /> },
