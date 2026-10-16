@@ -23,6 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 
+# Local environment variables
+.env
+.env.*
+!.env.example
 # Playwright
 e2e/.results
 test-results

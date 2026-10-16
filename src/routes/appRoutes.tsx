@@ -17,6 +17,7 @@ const Dashboard = lazy(() => import("@/pages/dashboard/dashboard"));
 const RunsPage = lazy(() => import("@/pages/runs/RunsPage"));
 const RunDetailPage = lazy(() => import("@/pages/runs/RunDetailPage"));
 const ProfilePage = lazy(() => import("@/features/profile/ProfilePage"));
+const LibraryPage = lazy(() => import("@/features/library/LibraryPage"));
 const BillingPage = lazy(() => import("@/features/billing/BillingPage"));
 const TasksPage = lazy(() => import("@/features/tasks/TasksPage"));
 const Pricing = lazy(() => import("@/pages/pricing/pricing"));
@@ -55,6 +56,7 @@ const router = createBrowserRouter([
                     { path: "/profile", element: <ProfilePage /> },
                     { path: "/my-plan", element: <Navigate to="/billing" replace /> },
                     { path: "/pricing", element: <Pricing /> },
+                    { path: "/library", element: <LibraryPage /> },
                     { path: "/billing", element: <BillingPage /> },
                     { path: "/tasks", element: <TasksPage /> },
                     { path: "/support", element: <Support /> },

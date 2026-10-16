@@ -36,7 +36,10 @@ export default function MainLayout() {
 
     useEffect(() => {
         if (location.pathname.startsWith("/projects")) {
-            setCompactSidebar(true);
+            //thu gọn khi trên desktop
+            if (window.matchMedia("(min-width: 1024px)").matches) {
+                setCompactSidebar(true);
+            }
         }
     }, [location.pathname, setCompactSidebar]);
 
