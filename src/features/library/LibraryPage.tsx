@@ -21,6 +21,7 @@ export default function LibraryPage() {
     const { selectedIds, isSelectionMode, toggleMediaSelection, toggleSelectCurrentPage, clearSelection, startSelection } = useMediaSelection();
     const { downloading, downloadMedia, downloadSelectedMedia } = useMediaDownload();
     const { deleteMedia, deletingId, error: deleteError, setError: setDeleteError } = useMediaDelete();
+    const [deletingSelected, setDeletingSelected] = useState(false);
 
 
     const filtered = media.filter((item) => {
@@ -55,10 +56,13 @@ export default function LibraryPage() {
         setPage(Math.max(1, Math.min(value, totalPages)));
     }
 
-
     async function handleDelete(item: MediaItem) {
         if (item.kind !== "image" || !item.imageId) {
-            setDeleteError("Không tìm thấy ID ảnh hợp lệ để xóa.");
+            setDeleteError(
+                item.kind === "video"
+                    ? "API xóa video AI chưa được tích hợp."
+                    : "API xóa ảnh AI hoặc ảnh này chưa được tích hợp.",
+            );
             return;
         }
 
@@ -82,6 +86,91 @@ export default function LibraryPage() {
         await loadTasks();
     }
 
+    async function handleDeleteSelected() {
+        if (deletingSelected || deletingId !== null) return;
+
+        const selectedItems = filtered.filter((item) =>
+            selectedIds.includes(item.id),
+        );
+
+        if (selectedItems.length === 0) {
+            setDeleteError("Vui lòng chọn ít nhất một tệp.");
+            return;
+        }
+
+        const supportedImages = selectedItems.filter(
+            (item) => item.kind === "image" && Boolean(item.imageId),
+        );
+
+        const unsupportedCount =
+            selectedItems.length - supportedImages.length;
+
+        if (supportedImages.length === 0) {
+            setDeleteError(
+                "Các mục đã chọn chưa có API xóa tương ứng. Chưa có tệp nào bị xóa.",
+            );
+            return;
+        }
+
+        const message = unsupportedCount > 0
+            ? `Có ${selectedItems.length} tệp được chọn, nhưng hiện chỉ có thể thử xóa ${supportedImages.length} ảnh có ID hợp lệ. ${unsupportedCount} tệp còn lại chưa được hỗ trợ. Tiếp tục?`
+            : `Bạn có chắc muốn xóa ${supportedImages.length} ảnh đã chọn không? Hành động này không thể hoàn tác.`;
+
+        if (!window.confirm(message)) return;
+
+        setDeleteError("");
+        setDeletingSelected(true);
+
+        let successCount = 0;
+        const failedTitles: string[] = [];
+
+        try {
+            for (const item of supportedImages) {
+                const success = await deleteMedia(item);
+
+                if (success) {
+                    successCount++;
+                } else {
+                    failedTitles.push(item.title);
+                }
+            }
+
+            setSelected((current) =>
+                current &&
+                    supportedImages.some((item) => item.id === current.id)
+                    ? null
+                    : current,
+            );
+
+            clearSelection();
+
+            const messages: string[] = [];
+
+            messages.push(
+                `Đã xóa thành công ${successCount}/${supportedImages.length} ảnh.`,
+            );
+
+            if (unsupportedCount > 0) {
+                messages.push(
+                    `${unsupportedCount} tệp chưa được xử lý vì API xóa chưa được tích hợp.`,
+                );
+            }
+
+            if (failedTitles.length > 0) {
+                messages.push(
+                    `Xóa thất bại: ${failedTitles.join(", ")}.`,
+                );
+            }
+
+            if (successCount < supportedImages.length || unsupportedCount > 0) {
+                setDeleteError(messages.join(" "));
+            }
+
+            await loadTasks();
+        } finally {
+            setDeletingSelected(false);
+        }
+    }
 
     return (
         <main className="min-h-full space-y-6 p-4 sm:p-6 lg:p-8">
@@ -106,6 +195,8 @@ export default function LibraryPage() {
                 onDownloadSelected={() =>
                     void downloadSelectedMedia(filtered, selectedIds)
                 }
+                onDeleteSelected={() => void handleDeleteSelected()}
+                deleting={deletingId !== null || deletingSelected}
             />
             <div className="mt-3 text-right text-sm text-[var(--app-text-secondary)]">
                 {filtered.length} Tệp

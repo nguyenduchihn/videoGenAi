@@ -1,4 +1,4 @@
-import { Image as ImageIcon, Film, RefreshCw, CheckSquare, X, Download } from "lucide-react";
+import { Image as ImageIcon, Film, RefreshCw, CheckSquare, X, Download, Trash2 } from "lucide-react";
 
 import type { MediaKind, MediaSource } from "../library.types";
 
@@ -15,6 +15,8 @@ interface LibraryToolbarProps {
     onSelectCurrentPage: () => void;
     onClearSelection: () => void;
     onDownloadSelected: () => void;
+    onDeleteSelected: () => void;
+    deleting: boolean;
 }
 
 export default function LibraryToolbar({
@@ -30,6 +32,8 @@ export default function LibraryToolbar({
     onSelectCurrentPage,
     onClearSelection,
     onDownloadSelected,
+    onDeleteSelected,
+    deleting,
 }: LibraryToolbarProps) {
     const tabClass = (active: boolean) =>
         `inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${active
@@ -142,6 +146,18 @@ export default function LibraryToolbar({
                         >
                             <Download size={16} />
                             {downloading ? "Đang tải..." : "Tải mục đã chọn"}
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={onDeleteSelected}
+                            disabled={selectedCount === 0 || deleting}
+                            className="inline-flex items-center gap-2 rounded-lg border
+               border-red-200 px-4 py-2 text-red-600
+               hover:bg-red-50 disabled:opacity-50"
+                        >
+                            <Trash2 size={16} />
+                            {deleting ? "Đang xóa..." : "Xóa mục đã chọn"}
                         </button>
                     </div>
                 )}

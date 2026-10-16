@@ -3,9 +3,9 @@ import { ArrowRight, Play, Sparkles, WandSparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const heroVars = {
-    "--hero-bg": "#0b0d14",
-    "--hero-surface": "#10131c",
-    "--hero-sidebar": "#0c0f17",
+    "--hero-bg": "#0b0b12",
+    "--hero-surface": "#12121c",
+    "--hero-sidebar": "#0e0e17",
 } as CSSProperties;
 
 export function HeroSection() {
@@ -16,7 +16,7 @@ export function HeroSection() {
     return (
         <section
             style={heroVars}
-            className="relative overflow-hidden [background:var(--hero-bg)]"
+            className="relative isolate overflow-hidden [background:var(--hero-bg)]"
             aria-labelledby="hero-heading"
         >
             <div
@@ -26,30 +26,33 @@ export function HeroSection() {
             />
             <div className="relative mx-auto max-w-7xl px-4 pb-24 pt-20 lg:px-8 lg:pb-32 lg:pt-28">
                 <div className="mx-auto max-w-4xl text-center">
-                    <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-app-accent/20 bg-app-accent/10 px-3.5 py-1.5 text-xs font-medium text-app-accent">
-                        <Sparkles className="h-3.5 w-3.5" />
-                        AI Creative Workspace
+                    <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium text-white/80 shadow-sm backdrop-blur">
+                        <Sparkles className="h-3.5 w-3.5 text-app-accent" />
+                        Không gian sáng tạo video bằng AI
+                        <span className="ml-1 rounded-full bg-app-accent/15 px-2 py-0.5 text-[10px] font-semibold text-app-accent">
+                            AI
+                        </span>
                     </div>
                     <h1
                         id="hero-heading"
-                        className="text-4xl font-semibold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-7xl"
+                        className="text-4xl font-bold leading-[1.08] tracking-[-0.04em] text-white sm:text-5xl lg:text-7xl"
                     >
                         Biến ý tưởng thành{" "}
                         <span
                             className="bg-clip-text text-transparent"
-                            style={{ backgroundImage: "linear-gradient(to right, var(--app-accent), var(--app-accent-hover))" }}
+                            style={{ backgroundImage: "linear-gradient(100deg, var(--app-accent) 0%, #8b7cff 55%, #c4b5fd 100%)", }}
                         >
                             video chuyên nghiệp.
                         </span>
                     </h1>
-                    <p className="mx-auto mt-7 max-w-2xl text-base leading-7 text-white/60 sm:text-lg">
+                    <p className="mx-auto mt-7 max-w-2xl text-base leading-8 text-white/60 sm:text-lg">
                         VideoGen AI giúp bạn biến prompt, kịch bản, hình ảnh và giọng nói thành những video hoàn chỉnh bằng AI — nhanh chóng, trực quan và dễ dàng.
                     </p>
                     <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
                         <button
                             type="button"
                             onClick={() => navigate("/register")}
-                            className="group flex w-full items-center justify-center gap-2 rounded-xl bg-app-accent px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-app-accent-hover sm:w-auto"
+                            className="group flex w-full items-center justify-center gap-2 rounded-xl bg-app-accent px-7 py-4 text-sm font-semibold text-white shadow-lg shadow-app-accent/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-app-accent-hover hover:shadow-xl hover:shadow-app-accent/30 sm:w-auto"
                         >
                             Đăng ký ngay
                             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -57,7 +60,7 @@ export function HeroSection() {
                         <button
                             type="button"
                             onClick={scrollHow}
-                            className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-6 py-3.5 text-sm font-medium text-white/80 transition hover:bg-white/[0.07] sm:w-auto"
+                            className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-7 py-4 text-sm font-medium text-white/85 transition-all duration-200 hover:border-white/25 hover:bg-white/[0.08] sm:w-auto"
                         >
                             <Play className="h-4 w-4" />
                             Xem cách hoạt động
@@ -65,7 +68,7 @@ export function HeroSection() {
                     </div>
                 </div>
 
-                <div className="relative mx-auto mt-16 max-w-6xl lg:mt-20">
+                <div className="relative overflow-hidden rounded-2xl border border-white/10 [background:var(--hero-surface)] shadow-2xl shadow-black/50">
                     <div
                         aria-hidden="true"
                         className="pointer-events-none absolute -inset-10 rounded-[32px] blur-3xl"
@@ -106,7 +109,7 @@ export function HeroSection() {
                                 <div className="mb-5 flex items-center justify-between">
                                     <div>
                                         <p className="text-[10px] uppercase tracking-[0.18em] text-app-accent">AI Video Generator</p>
-                                        <h3 className="mt-1 text-base font-semibold text-white">Tạo video mới</h3>
+                                        <h3 className="mt-1 text-lg font-semibold tracking-tight text-white">Tạo video mới</h3>
                                     </div>
                                 </div>
                                 <div className="rounded-xl border border-white/[0.07] [background:var(--hero-sidebar)] p-4">
@@ -115,12 +118,15 @@ export function HeroSection() {
                                         <span className="text-xs font-medium text-white/50">Bạn muốn tạo video gì?</span>
                                     </div>
                                     <div className="min-h-[80px] rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
-                                        <p className="text-xs leading-6 text-white/25">Tạo video quảng cáo thời trang nam, phong cách hiện đại, ánh sáng studio...</p>
+                                        <p className="text-xs leading-6 text-white/50">
+                                            Tạo video quảng cáo thời trang nam, phong cách hiện đại,
+                                            ánh sáng studio, chuyển động máy quay mượt mà...
+                                        </p>
                                     </div>
                                     <button
                                         type="button"
                                         onClick={() => navigate("/register")}
-                                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-app-accent px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-app-accent-hover"
+                                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-app-accent px-4 py-3 text-xs font-semibold text-white shadow-md shadow-app-accent/15 transition hover:bg-app-accent-hover"
                                     >
                                         <Sparkles className="h-3.5 w-3.5" />
                                         Tạo video
