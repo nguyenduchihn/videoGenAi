@@ -607,14 +607,46 @@ export interface paths {
         get: operations["TasksController_list"];
         put?: never;
         /**
-         * Tạo lô task (≤ 20)
-         * @description Cả lô được tạo hoặc bị từ chối cùng nhau (all-or-nothing); credit trừ ngay lúc tạo, hoàn đủ nếu task lỗi/huỷ.
+         * Tạo lô task (≤ 20) — mọi chế độ gen ảnh / video
+         * @description Cả lô được tạo hoặc bị từ chối cùng nhau (all-or-nothing); credit trừ ngay lúc tạo, hoàn đủ nếu task lỗi/huỷ. Gửi dần: tối đa 20 task/lần; khi 429 `QUEUE_FULL` đợi `Retry-After` giây rồi gửi tiếp.
          *
-         *     **Ảnh đầu vào**: upload trước bằng `POST /v1/images` (giữ 24h) rồi tham chiếu `imageId` trong `images` theo vai trò: image-to-video `{start}`, start-end-image-to-video `{start, end}`, reference-images-to-video `{references: [...]}` (Omni ≤ 7, khác ≤ 3), image-to-image `{source}`.
+         *     ### Các chế độ gen (`worker`)
          *
-         *     **Upscale** (tuỳ chọn): `upscale: { resolution }` — ảnh 2K/4K, video 1080P/4K. Worker gen xong tự upscale ngay trên cùng tài khoản. Upscale lỗi ⇒ task vẫn `succeeded` với bản gốc (`result.base`), hoàn phần credit upscale.
+         *     | worker | Ảnh đầu vào (`images`) | `params` chính | Model (`params.model`) | Credit / lane |
          *
-         *     Gửi dần: tối đa 20 task/lần; khi 429 QUEUE_FULL đợi `Retry-After` giây rồi gửi tiếp.
+         *     |---|---|---|---|---|
+         *
+         *     | `text-to-video` | không | `prompt`, `ratio` 16:9 \| 9:16, `duration` 4 \| 6 \| 8 \| 10, `audioEnabled` | Veo_3.1-Lite (mặc định) \| Fast \| Quality \| Omni \| `Veo_3.1-Lite [Lower Priority]` | video trả phí; Lite LP = miễn phí, xếp hàng chậm hơn |
+         *
+         *     | `image-to-video` (start frame) | `{ start }` — 1 ảnh khung đầu | như text-to-video | như trên | như trên |
+         *
+         *     | `start-end-image-to-video` (start + end frame) | `{ start, end }` — 2 ảnh | như text-to-video | như trên, **trừ Omni** (không hỗ trợ) | như trên |
+         *
+         *     | `reference-images-to-video` (ảnh tham chiếu → video) | `{ references: [...] }` — 1–3 ảnh; `Veo_3.1-Omni` tới 7 | như text-to-video + `audio` (giọng) | như trên | như trên |
+         *
+         *     | `extend-video` | không; `sourceMediaId` = `result.mediaId` của video đã `succeeded` | `prompt`, `end_second` | — | chạy đúng tài khoản đã tạo video gốc |
+         *
+         *     | `text-to-image` | không | `prompt`, `ratio` 1:1 \| 16:9 \| 9:16 \| 4:3 \| 3:4, `seed` 10000–99999 | Nano_Banana_Pro (mặc định) \| Nano_Banana_2 \| Nano_Banana_2_Lite | ảnh |
+         *
+         *     | `image-to-image` (ảnh tham chiếu → ảnh) | `{ source }` 1 ảnh **hoặc** `{ sources: [...] }` 1–10 ảnh (không dùng cả hai) | `prompt`, `ratio` | như text-to-image | ảnh |
+         *
+         *     ### Ảnh đầu vào
+         *
+         *     1. Upload trước bằng `POST /v1/images` (multipart, ≤ 100 file/request). Mỗi file trả về `imageId`, `name` (tên field bạn đặt, vd `start_001`), `filename`, `duplicateOf` ⇒ bạn luôn biết id nào gắn vào vai trò nào. Ảnh trùng nội dung dùng chung `imageId`.
+         *
+         *     2. Tham chiếu bằng `imageId` trần hoặc `{ "imageId", "handle" }`. `handle` (chữ thường, bắt đầu bằng chữ cái, ≤ 30 ký tự `[a-z0-9_-]`, duy nhất trong 1 task) là tên bạn đặt để nhắc trong prompt dạng `@handle`; prompt nhắc `@x` mà không có ảnh nào đặt handle `x` ⇒ 400. Hiện handle chỉ được lưu và hiển thị cho vận hành, chưa đổi cách Google hiểu prompt.
+         *
+         *     3. Ảnh giữ 24h; tạo task dùng ảnh ⇒ tự gia hạn thêm 24h. Ảnh hết hạn / không phải của bạn ⇒ 404 `IMAGE_NOT_FOUND`.
+         *
+         *     4. Hệ thống upload ảnh lên tài khoản Google đúng 1 lần cho mỗi ảnh (theo nội dung) và dùng lại cho các task sau; upload hỏng sau 5 lần thử ⇒ task `failed` mã `IMAGE_UPLOAD_FAILED`, hoàn credit.
+         *
+         *     ### Mã lỗi khi tạo lô (kèm `error.metadata` để tự sửa)
+         *
+         *     `BAD_IMAGE_INPUTS` (400): sai vai trò / thiếu ảnh / quá số lượng theo model / handle sai — `metadata: { field, constraint: required | roleNotAllowed | maxCount | exclusive | handleFormat | handleUnique | mentionUnbound, max, given, model, omniMax, handle }`. `IMAGE_NOT_FOUND` (404): `metadata: { imageId, ttlHours }`. `BAD_UPSCALE` (400), `SOURCE_MEDIA_NOT_FOUND` (404), `INSUFFICIENT_CREDITS` (402), `QUEUE_FULL` (429).
+         *
+         *     ### Upscale (tuỳ chọn)
+         *
+         *     `upscale: { resolution }` — ảnh 2K/4K, video 1080P/4K. Worker gen xong tự upscale ngay trên cùng tài khoản. Upscale lỗi ⇒ task vẫn `succeeded` với bản gốc (`result.base`), hoàn phần credit upscale.
          */
         post: operations["TasksController_create"];
         delete?: never;
@@ -694,6 +726,125 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/runs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Tóm tắt một lượt (đếm theo trạng thái, ETA)
+         * @description Rẻ (GROUP BY trên index) ⇒ portal poll 3–20 s tuỳ quy mô.
+         */
+        get: operations["RunsController_one"];
+        /**
+         * Tạo lượt (idempotent theo id client)
+         * @description Gọi TRƯỚC khi gửi chunk đầu. Cùng id gọi lại ⇒ 200 trả lượt hiện có (không đổi tên/totalPlanned). Sau đó gửi từng lô ≤ 20 task bằng `POST /v1/tasks` kèm `runId` + `runOffset`.
+         */
+        put: operations["RunsController_upsert"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Đổi tên lượt */
+        patch: operations["RunsController_rename"];
+        trace?: never;
+    };
+    "/v1/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Danh sách lượt tạo của tôi (mới hoạt động trước, cursor) */
+        get: operations["RunsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/runs/{id}/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Task của lượt theo thứ tự job (có prompt, URL kết quả presigned) */
+        get: operations["RunsController_tasks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/runs/{id}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Xếp hàng job trên máy chủ (lượt vượt hạn mức hàng đợi của gói)
+         * @description Job được lưu và máy chủ tự đẩy vào pipeline mỗi 5 giây khi hàng đợi còn chỗ (maxPending) — đóng tab vẫn chạy. Credit giữ lúc đẩy; thiếu credit ⇒ lượt tạm dừng (`pausedReason`), nạp thêm sẽ tự tiếp tục. Ảnh tham chiếu được gia hạn 7 ngày.
+         */
+        post: operations["RunsController_items"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/runs/{id}/retry-failed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Thử lại job thất bại
+         * @description Máy chủ dựng lại job từ spec/ảnh đã lưu, nối cuối lượt và xếp hàng (feeder đẩy trong vài giây). Task cũ không đếm là lỗi mở nữa.
+         */
+        post: operations["RunsController_retry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/runs/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Huỷ phần chưa chạy của lượt
+         * @description Task pending/processing ⇒ huỷ + hoàn credit ngay; job xếp hàng trên máy chủ ⇒ bỏ; task đã xong giữ nguyên. Lượt chuyển `cancelled`.
+         */
+        post: operations["RunsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/images": {
         parameters: {
             query?: never;
@@ -706,7 +857,7 @@ export interface paths {
         put?: never;
         /**
          * Upload ảnh (≤ 100 file/request, ≤ 20 MB/file)
-         * @description multipart/form-data, tên field tuỳ ý (mỗi file 1 part). Ảnh giữ 24h rồi tự xoá. Cần 1.000 ảnh ⇒ gọi nhiều lần. Kiểm theo nội dung file (jpeg/png/webp/gif/avif), không tin Content-Type.
+         * @description multipart/form-data, mỗi file 1 part; **tên field do khách đặt** (vd `start_001`, `end_001`) được trả lại cùng `imageId` và `filename` theo đúng thứ tự gửi ⇒ ghép id vào vai trò chắc chắn. Trùng nội dung ⇒ cùng `imageId`, `duplicateOf` chỉ ảnh gốc. Ảnh giữ 24h (tạo task dùng ảnh ⇒ gia hạn). Cần 1.000 ảnh ⇒ gọi nhiều lần (≤ 100/request). Kiểm theo nội dung file (jpeg/png/webp/gif/avif), không tin Content-Type.
          */
         post: operations["ImagesController_create"];
         delete?: never;
@@ -727,7 +878,7 @@ export interface paths {
         post?: never;
         /**
          * Xoá ảnh
-         * @description Task đã dùng ảnh vẫn giữ được lịch sử.
+         * @description Task đã dùng ảnh vẫn giữ được lịch sử. Bản sao đã upload lên tài khoản Google (nếu có) không xoá được, nhưng sẽ không được dùng lại.
          */
         delete: operations["ImagesController_remove"];
         options?: never;
@@ -2346,6 +2497,12 @@ export interface operations {
                             updatedAt: string;
                             /** Format: date-time */
                             completedAt: string | null;
+                            /** @description Lượt tạo (portal); null khi tạo ngoài lượt */
+                            runId: string | null;
+                            /** @description Thứ tự job trong lượt (0-based) */
+                            runIndex: number | null;
+                            /** @description params.prompt cắt 500 ký tự — để hiển thị */
+                            prompt: string | null;
                         }[];
                         nextCursor: string | null;
                     };
@@ -2477,6 +2634,12 @@ export interface operations {
                         updatedAt: string;
                         /** Format: date-time */
                         completedAt: string | null;
+                        /** @description Lượt tạo (portal); null khi tạo ngoài lượt */
+                        runId: string | null;
+                        /** @description Thứ tự job trong lượt (0-based) */
+                        runIndex: number | null;
+                        /** @description params.prompt cắt 500 ký tự — để hiển thị */
+                        prompt: string | null;
                     };
                 };
             };
@@ -2634,6 +2797,12 @@ export interface operations {
                         updatedAt: string;
                         /** Format: date-time */
                         completedAt: string | null;
+                        /** @description Lượt tạo (portal); null khi tạo ngoài lượt */
+                        runId: string | null;
+                        /** @description Thứ tự job trong lượt (0-based) */
+                        runIndex: number | null;
+                        /** @description params.prompt cắt 500 ký tự — để hiển thị */
+                        prompt: string | null;
                     };
                 };
             };
@@ -4153,6 +4322,12 @@ export interface operations {
                             updatedAt: string;
                             /** Format: date-time */
                             completedAt: string | null;
+                            /** @description Lượt tạo (portal); null khi tạo ngoài lượt */
+                            runId: string | null;
+                            /** @description Thứ tự job trong lượt (0-based) */
+                            runIndex: number | null;
+                            /** @description params.prompt cắt 500 ký tự — để hiển thị */
+                            prompt: string | null;
                         }[];
                         /** @description id không tồn tại hoặc không phải của bạn */
                         notFound: string[];
@@ -4269,16 +4444,33 @@ export interface operations {
                         params: {
                             [key: string]: unknown;
                         };
-                        /** @description imageId lấy từ POST /v1/images (ảnh giữ 24h) */
+                        /** @description imageId lấy từ POST /v1/images (ảnh giữ 24h, tạo task ⇒ gia hạn). Mỗi ảnh có thể kèm handle để nhắc @handle trong prompt (chỉ lưu/hiển thị; Google chưa nhận mention). */
                         images?: {
                             /** @description image-to-video, start-end-image-to-video: ảnh khung đầu */
-                            start?: string;
+                            start?: string | {
+                                imageId: string;
+                                handle?: string;
+                            };
                             /** @description start-end-image-to-video: ảnh khung cuối */
-                            end?: string;
+                            end?: string | {
+                                imageId: string;
+                                handle?: string;
+                            };
                             /** @description reference-images-to-video: tối đa 7 (Omni) hoặc 3 (model khác) */
-                            references?: string[];
-                            /** @description image-to-image: ảnh nguồn */
-                            source?: string;
+                            references?: (string | {
+                                imageId: string;
+                                handle?: string;
+                            })[];
+                            /** @description image-to-image: 1 ảnh nguồn (tương thích cũ; tương đương sources: [source]) */
+                            source?: string | {
+                                imageId: string;
+                                handle?: string;
+                            };
+                            /** @description image-to-image: 1–10 ảnh tham chiếu (không dùng cùng `source`) */
+                            sources?: (string | {
+                                imageId: string;
+                                handle?: string;
+                            })[];
                         };
                         /**
                          * Format: uuid
@@ -4299,6 +4491,13 @@ export interface operations {
                      * @description Server nhận thông báo khi task kết thúc (succeeded/failed/cancelled), ký HMAC bằng WEBHOOK_SECRET
                      */
                     webhookUrl?: string;
+                    /**
+                     * Format: uuid
+                     * @description Lượt tạo (PUT /v1/runs/:id trước); task i của lô nhận runIndex = runOffset + i
+                     */
+                    runId?: string;
+                    /** @description Thứ tự job đầu lô trong lượt; chunk gửi lại trùng runIndex ⇒ 409 RUN_INDEX_TAKEN, không tạo gì */
+                    runOffset?: number;
                 };
             };
         };
@@ -4363,6 +4562,12 @@ export interface operations {
                             updatedAt: string;
                             /** Format: date-time */
                             completedAt: string | null;
+                            /** @description Lượt tạo (portal); null khi tạo ngoài lượt */
+                            runId: string | null;
+                            /** @description Thứ tự job trong lượt (0-based) */
+                            runIndex: number | null;
+                            /** @description params.prompt cắt 500 ký tự — để hiển thị */
+                            prompt: string | null;
                         }[];
                     };
                 };
@@ -4662,6 +4867,12 @@ export interface operations {
                             updatedAt: string;
                             /** Format: date-time */
                             completedAt: string | null;
+                            /** @description Lượt tạo (portal); null khi tạo ngoài lượt */
+                            runId: string | null;
+                            /** @description Thứ tự job trong lượt (0-based) */
+                            runIndex: number | null;
+                            /** @description params.prompt cắt 500 ký tự — để hiển thị */
+                            prompt: string | null;
                         }[];
                         /** @description id không tồn tại hoặc không phải của bạn */
                         notFound: string[];
@@ -4850,6 +5061,12 @@ export interface operations {
                         updatedAt: string;
                         /** Format: date-time */
                         completedAt: string | null;
+                        /** @description Lượt tạo (portal); null khi tạo ngoài lượt */
+                        runId: string | null;
+                        /** @description Thứ tự job trong lượt (0-based) */
+                        runIndex: number | null;
+                        /** @description params.prompt cắt 500 ký tự — để hiển thị */
+                        prompt: string | null;
                     };
                 };
             };
@@ -5035,6 +5252,12 @@ export interface operations {
                         updatedAt: string;
                         /** Format: date-time */
                         completedAt: string | null;
+                        /** @description Lượt tạo (portal); null khi tạo ngoài lượt */
+                        runId: string | null;
+                        /** @description Thứ tự job trong lượt (0-based) */
+                        runIndex: number | null;
+                        /** @description params.prompt cắt 500 ký tự — để hiển thị */
+                        prompt: string | null;
                     };
                 };
             };
@@ -5249,9 +5472,1636 @@ export interface operations {
                             updatedAt: string;
                             /** Format: date-time */
                             completedAt: string | null;
+                            /** @description Lượt tạo (portal); null khi tạo ngoài lượt */
+                            runId: string | null;
+                            /** @description Thứ tự job trong lượt (0-based) */
+                            runIndex: number | null;
+                            /** @description params.prompt cắt 500 ký tự — để hiển thị */
+                            prompt: string | null;
                         }[];
                         /** @description Task đã kết thúc, không huỷ được */
                         skipped: number;
+                        creditsRefunded: number;
+                    };
+                };
+            };
+            /** @description Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không có quyền / tài khoản bị khoá / gói hết hạn (`FORBIDDEN_ROLE`, `USER_SUSPENDED`, `PLAN_EXPIRED`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không tìm thấy (hoặc không thuộc về bạn) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Vượt giới hạn tốc độ (`RATE_LIMITED`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    RunsController_one: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lượt */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        name: string | null;
+                        /** @description Số job dự kiến (tự nâng khi chunk gửi vượt kế hoạch) */
+                        totalPlanned: number;
+                        /** @description Số task đã tạo (= tổng counts + retried) */
+                        created: number;
+                        /** @description Task failed đã được thử lại (không còn là lỗi mở) */
+                        retried: number;
+                        /** @description Job còn xếp hàng trên máy chủ (giai đoạn 2), chưa thành task */
+                        queuedOnServer: number;
+                        counts: {
+                            pending: number;
+                            processing: number;
+                            succeeded: number;
+                            failed: number;
+                            cancelled: number;
+                        };
+                        /** @enum {string} */
+                        status: "active" | "done" | "cancelled";
+                        /**
+                         * @description Máy chủ tạm dừng đẩy job vì thiếu credit; nạp thêm ⇒ tự tiếp tục
+                         * @enum {string|null}
+                         */
+                        pausedReason: "INSUFFICIENT_CREDITS" | null;
+                        /** @description Ước tính giây còn lại theo nhịp hoàn thành 10 phút gần nhất; null khi chưa đủ dữ liệu */
+                        etaSec: number | null;
+                        /** Format: date-time */
+                        cancelledAt: string | null;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                        /**
+                         * Format: date-time
+                         * @description Lần cập nhật task gần nhất trong lượt
+                         */
+                        lastActivityAt: string;
+                    };
+                };
+            };
+            /** @description Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không có quyền / tài khoản bị khoá / gói hết hạn (`FORBIDDEN_ROLE`, `USER_SUSPENDED`, `PLAN_EXPIRED`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không tìm thấy (hoặc không thuộc về bạn) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Vượt giới hạn tốc độ (`RATE_LIMITED`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    RunsController_upsert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Tên hiển thị; bỏ trống ⇒ portal tự đặt theo prompt đầu */
+                    name?: string | null;
+                    /** @description Số job dự kiến của lượt (để tính % khi còn chunk chưa gửi) */
+                    totalPlanned: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Lượt vừa tạo (200 nếu đã có) */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        name: string | null;
+                        /** @description Số job dự kiến (tự nâng khi chunk gửi vượt kế hoạch) */
+                        totalPlanned: number;
+                        /** @description Số task đã tạo (= tổng counts + retried) */
+                        created: number;
+                        /** @description Task failed đã được thử lại (không còn là lỗi mở) */
+                        retried: number;
+                        /** @description Job còn xếp hàng trên máy chủ (giai đoạn 2), chưa thành task */
+                        queuedOnServer: number;
+                        counts: {
+                            pending: number;
+                            processing: number;
+                            succeeded: number;
+                            failed: number;
+                            cancelled: number;
+                        };
+                        /** @enum {string} */
+                        status: "active" | "done" | "cancelled";
+                        /**
+                         * @description Máy chủ tạm dừng đẩy job vì thiếu credit; nạp thêm ⇒ tự tiếp tục
+                         * @enum {string|null}
+                         */
+                        pausedReason: "INSUFFICIENT_CREDITS" | null;
+                        /** @description Ước tính giây còn lại theo nhịp hoàn thành 10 phút gần nhất; null khi chưa đủ dữ liệu */
+                        etaSec: number | null;
+                        /** Format: date-time */
+                        cancelledAt: string | null;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                        /**
+                         * Format: date-time
+                         * @description Lần cập nhật task gần nhất trong lượt
+                         */
+                        lastActivityAt: string;
+                    };
+                };
+            };
+            /** @description Dữ liệu không hợp lệ (`VALIDATION_FAILED`: xem `details[].path`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không có quyền / tài khoản bị khoá / gói hết hạn (`FORBIDDEN_ROLE`, `USER_SUSPENDED`, `PLAN_EXPIRED`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không tìm thấy (hoặc không thuộc về bạn) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Vượt giới hạn tốc độ (`RATE_LIMITED`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    RunsController_rename: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Lượt sau khi đổi tên */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        name: string | null;
+                        /** @description Số job dự kiến (tự nâng khi chunk gửi vượt kế hoạch) */
+                        totalPlanned: number;
+                        /** @description Số task đã tạo (= tổng counts + retried) */
+                        created: number;
+                        /** @description Task failed đã được thử lại (không còn là lỗi mở) */
+                        retried: number;
+                        /** @description Job còn xếp hàng trên máy chủ (giai đoạn 2), chưa thành task */
+                        queuedOnServer: number;
+                        counts: {
+                            pending: number;
+                            processing: number;
+                            succeeded: number;
+                            failed: number;
+                            cancelled: number;
+                        };
+                        /** @enum {string} */
+                        status: "active" | "done" | "cancelled";
+                        /**
+                         * @description Máy chủ tạm dừng đẩy job vì thiếu credit; nạp thêm ⇒ tự tiếp tục
+                         * @enum {string|null}
+                         */
+                        pausedReason: "INSUFFICIENT_CREDITS" | null;
+                        /** @description Ước tính giây còn lại theo nhịp hoàn thành 10 phút gần nhất; null khi chưa đủ dữ liệu */
+                        etaSec: number | null;
+                        /** Format: date-time */
+                        cancelledAt: string | null;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                        /**
+                         * Format: date-time
+                         * @description Lần cập nhật task gần nhất trong lượt
+                         */
+                        lastActivityAt: string;
+                    };
+                };
+            };
+            /** @description Dữ liệu không hợp lệ (`VALIDATION_FAILED`: xem `details[].path`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không có quyền / tài khoản bị khoá / gói hết hạn (`FORBIDDEN_ROLE`, `USER_SUSPENDED`, `PLAN_EXPIRED`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không tìm thấy (hoặc không thuộc về bạn) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Vượt giới hạn tốc độ (`RATE_LIMITED`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    RunsController_list: {
+        parameters: {
+            query?: {
+                /** @description active = còn task chờ/đang chạy hoặc còn xếp hàng trên máy chủ */
+                status?: "active" | "done" | "cancelled";
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lượt + số task theo trạng thái */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        runs: {
+                            id: string;
+                            name: string | null;
+                            /** @description Số job dự kiến (tự nâng khi chunk gửi vượt kế hoạch) */
+                            totalPlanned: number;
+                            /** @description Số task đã tạo (= tổng counts + retried) */
+                            created: number;
+                            /** @description Task failed đã được thử lại (không còn là lỗi mở) */
+                            retried: number;
+                            /** @description Job còn xếp hàng trên máy chủ (giai đoạn 2), chưa thành task */
+                            queuedOnServer: number;
+                            counts: {
+                                pending: number;
+                                processing: number;
+                                succeeded: number;
+                                failed: number;
+                                cancelled: number;
+                            };
+                            /** @enum {string} */
+                            status: "active" | "done" | "cancelled";
+                            /**
+                             * @description Máy chủ tạm dừng đẩy job vì thiếu credit; nạp thêm ⇒ tự tiếp tục
+                             * @enum {string|null}
+                             */
+                            pausedReason: "INSUFFICIENT_CREDITS" | null;
+                            /** @description Ước tính giây còn lại theo nhịp hoàn thành 10 phút gần nhất; null khi chưa đủ dữ liệu */
+                            etaSec: number | null;
+                            /** Format: date-time */
+                            cancelledAt: string | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                            /**
+                             * Format: date-time
+                             * @description Lần cập nhật task gần nhất trong lượt
+                             */
+                            lastActivityAt: string;
+                        }[];
+                        nextCursor: string | null;
+                    };
+                };
+            };
+            /** @description Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không có quyền / tài khoản bị khoá / gói hết hạn (`FORBIDDEN_ROLE`, `USER_SUSPENDED`, `PLAN_EXPIRED`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Vượt giới hạn tốc độ (`RATE_LIMITED`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    RunsController_tasks: {
+        parameters: {
+            query?: {
+                status?: "pending" | "processing" | "succeeded" | "failed" | "cancelled";
+                /** @description runIndex của phần tử cuối trang trước (nextCursor) */
+                cursor?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Trang task */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        tasks: {
+                            id: string;
+                            batchId: string;
+                            /** @enum {string} */
+                            status: "pending" | "processing" | "succeeded" | "failed" | "cancelled";
+                            /**
+                             * @description processing: đang gen hay đang upscale
+                             * @enum {string}
+                             */
+                            stage: "generate" | "upscale";
+                            worker: string;
+                            model: string | null;
+                            /**
+                             * @description mock = hệ thống đang mô phỏng (không gọi Google thật), kết quả chỉ để thử luồng
+                             * @enum {string}
+                             */
+                            generationMode: "mock" | "real";
+                            /** @description Credit đã giữ chỗ cho task này (gen + upscale) */
+                            priceCredits: number;
+                            result: {
+                                mediaId: string;
+                                /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                                url: string | null;
+                                mock?: boolean;
+                                /** @description Có khi task có upscale */
+                                resolution?: string;
+                                /** @description Bản gốc trước upscale */
+                                base?: {
+                                    mediaId: string;
+                                    /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                                    url: string | null;
+                                };
+                                upscale?: {
+                                    /** @enum {string} */
+                                    status: "done" | "failed";
+                                    code?: string;
+                                    message?: string;
+                                };
+                            } | null;
+                            error: {
+                                code: string;
+                                message: string;
+                            } | null;
+                            /** @description Credit đã hoàn (failed/cancelled: toàn bộ; upscale lỗi: phần upscale) */
+                            creditsRefunded: number;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                            /** Format: date-time */
+                            completedAt: string | null;
+                            /** @description Lượt tạo (portal); null khi tạo ngoài lượt */
+                            runId: string | null;
+                            /** @description Thứ tự job trong lượt (0-based) */
+                            runIndex: number | null;
+                            /** @description params.prompt cắt 500 ký tự — để hiển thị */
+                            prompt: string | null;
+                        }[];
+                        /** @description runIndex cuối trang; truyền vào `cursor` */
+                        nextCursor: string | null;
+                    };
+                };
+            };
+            /** @description Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không có quyền / tài khoản bị khoá / gói hết hạn (`FORBIDDEN_ROLE`, `USER_SUSPENDED`, `PLAN_EXPIRED`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không tìm thấy (hoặc không thuộc về bạn) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Vượt giới hạn tốc độ (`RATE_LIMITED`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    RunsController_items: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description 1–500 job; mỗi phần tử y hệt một task của POST /v1/tasks */
+                    items: {
+                        /**
+                         * @description Loại job
+                         * @enum {string}
+                         */
+                        worker: "text-to-video" | "image-to-video" | "reference-images-to-video" | "start-end-image-to-video" | "extend-video" | "text-to-image" | "image-to-image";
+                        /** @description Tham số theo worker. Video: prompt, model (Veo_3.1-Fast mặc định | Veo_3.1-Lite | Veo_3.1-Quality | Veo_3.1-Omni | "Veo_3.1-Lite [Lower Priority]"), ratio (16:9 | 9:16), duration (4|6|8|10), audioEnabled. Ảnh: prompt, model (Nano_Banana_Pro mặc định | Nano_Banana_2 | Nano_Banana_2_Lite), ratio (1:1 | 16:9 | 9:16 | 4:3 | 3:4), seed (10000–99999). */
+                        params: {
+                            [key: string]: unknown;
+                        };
+                        /** @description imageId lấy từ POST /v1/images (ảnh giữ 24h, tạo task ⇒ gia hạn). Mỗi ảnh có thể kèm handle để nhắc @handle trong prompt (chỉ lưu/hiển thị; Google chưa nhận mention). */
+                        images?: {
+                            /** @description image-to-video, start-end-image-to-video: ảnh khung đầu */
+                            start?: string | {
+                                imageId: string;
+                                handle?: string;
+                            };
+                            /** @description start-end-image-to-video: ảnh khung cuối */
+                            end?: string | {
+                                imageId: string;
+                                handle?: string;
+                            };
+                            /** @description reference-images-to-video: tối đa 7 (Omni) hoặc 3 (model khác) */
+                            references?: (string | {
+                                imageId: string;
+                                handle?: string;
+                            })[];
+                            /** @description image-to-image: 1 ảnh nguồn (tương thích cũ; tương đương sources: [source]) */
+                            source?: string | {
+                                imageId: string;
+                                handle?: string;
+                            };
+                            /** @description image-to-image: 1–10 ảnh tham chiếu (không dùng cùng `source`) */
+                            sources?: (string | {
+                                imageId: string;
+                                handle?: string;
+                            })[];
+                        };
+                        /**
+                         * Format: uuid
+                         * @description extend-video: mediaId của 1 task video thành công trước đó
+                         */
+                        sourceMediaId?: string;
+                        /** @description Mặc định không. Có ⇒ worker gen xong tự upscale ngay trên cùng tài khoản; upscale lỗi ⇒ vẫn nhận bản gốc, hoàn phần credit upscale */
+                        upscale?: {
+                            /**
+                             * @description Ảnh: 2K | 4K. Video: 1080P | 4K
+                             * @enum {string}
+                             */
+                            resolution: "2K" | "4K" | "1080P";
+                        } | null;
+                    }[];
+                    /** @description runIndex của job đầu; runIndex đã có ⇒ bỏ qua (duplicates), không lỗi */
+                    runOffset: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Đã nhận hàng */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        added: number;
+                        /** @description runIndex đã có từ trước (task hoặc item) ⇒ bỏ qua */
+                        duplicates: number[];
+                        run: {
+                            id: string;
+                            name: string | null;
+                            /** @description Số job dự kiến (tự nâng khi chunk gửi vượt kế hoạch) */
+                            totalPlanned: number;
+                            /** @description Số task đã tạo (= tổng counts + retried) */
+                            created: number;
+                            /** @description Task failed đã được thử lại (không còn là lỗi mở) */
+                            retried: number;
+                            /** @description Job còn xếp hàng trên máy chủ (giai đoạn 2), chưa thành task */
+                            queuedOnServer: number;
+                            counts: {
+                                pending: number;
+                                processing: number;
+                                succeeded: number;
+                                failed: number;
+                                cancelled: number;
+                            };
+                            /** @enum {string} */
+                            status: "active" | "done" | "cancelled";
+                            /**
+                             * @description Máy chủ tạm dừng đẩy job vì thiếu credit; nạp thêm ⇒ tự tiếp tục
+                             * @enum {string|null}
+                             */
+                            pausedReason: "INSUFFICIENT_CREDITS" | null;
+                            /** @description Ước tính giây còn lại theo nhịp hoàn thành 10 phút gần nhất; null khi chưa đủ dữ liệu */
+                            etaSec: number | null;
+                            /** Format: date-time */
+                            cancelledAt: string | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                            /**
+                             * Format: date-time
+                             * @description Lần cập nhật task gần nhất trong lượt
+                             */
+                            lastActivityAt: string;
+                        };
+                    };
+                };
+            };
+            /** @description Dữ liệu không hợp lệ (`VALIDATION_FAILED`: xem `details[].path`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không có quyền / tài khoản bị khoá / gói hết hạn (`FORBIDDEN_ROLE`, `USER_SUSPENDED`, `PLAN_EXPIRED`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không tìm thấy (hoặc không thuộc về bạn) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Xung đột (`EMAIL_TAKEN`, `IN_PROGRESS`…) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Vượt giới hạn tốc độ (`RATE_LIMITED`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    RunsController_retry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Bỏ trống = mọi task failed chưa thử lại */
+                    taskIds?: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description Đã xếp hàng */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Job mới đã xếp hàng trên máy chủ (nối cuối lượt) */
+                        created: number;
+                        skipped: number;
+                        run: {
+                            id: string;
+                            name: string | null;
+                            /** @description Số job dự kiến (tự nâng khi chunk gửi vượt kế hoạch) */
+                            totalPlanned: number;
+                            /** @description Số task đã tạo (= tổng counts + retried) */
+                            created: number;
+                            /** @description Task failed đã được thử lại (không còn là lỗi mở) */
+                            retried: number;
+                            /** @description Job còn xếp hàng trên máy chủ (giai đoạn 2), chưa thành task */
+                            queuedOnServer: number;
+                            counts: {
+                                pending: number;
+                                processing: number;
+                                succeeded: number;
+                                failed: number;
+                                cancelled: number;
+                            };
+                            /** @enum {string} */
+                            status: "active" | "done" | "cancelled";
+                            /**
+                             * @description Máy chủ tạm dừng đẩy job vì thiếu credit; nạp thêm ⇒ tự tiếp tục
+                             * @enum {string|null}
+                             */
+                            pausedReason: "INSUFFICIENT_CREDITS" | null;
+                            /** @description Ước tính giây còn lại theo nhịp hoàn thành 10 phút gần nhất; null khi chưa đủ dữ liệu */
+                            etaSec: number | null;
+                            /** Format: date-time */
+                            cancelledAt: string | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                            /**
+                             * Format: date-time
+                             * @description Lần cập nhật task gần nhất trong lượt
+                             */
+                            lastActivityAt: string;
+                        };
+                    };
+                };
+            };
+            /** @description Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không có quyền / tài khoản bị khoá / gói hết hạn (`FORBIDDEN_ROLE`, `USER_SUSPENDED`, `PLAN_EXPIRED`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không tìm thấy (hoặc không thuộc về bạn) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Xung đột (`EMAIL_TAKEN`, `IN_PROGRESS`…) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Vượt giới hạn tốc độ (`RATE_LIMITED`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    RunsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Kết quả huỷ */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        run: {
+                            id: string;
+                            name: string | null;
+                            /** @description Số job dự kiến (tự nâng khi chunk gửi vượt kế hoạch) */
+                            totalPlanned: number;
+                            /** @description Số task đã tạo (= tổng counts + retried) */
+                            created: number;
+                            /** @description Task failed đã được thử lại (không còn là lỗi mở) */
+                            retried: number;
+                            /** @description Job còn xếp hàng trên máy chủ (giai đoạn 2), chưa thành task */
+                            queuedOnServer: number;
+                            counts: {
+                                pending: number;
+                                processing: number;
+                                succeeded: number;
+                                failed: number;
+                                cancelled: number;
+                            };
+                            /** @enum {string} */
+                            status: "active" | "done" | "cancelled";
+                            /**
+                             * @description Máy chủ tạm dừng đẩy job vì thiếu credit; nạp thêm ⇒ tự tiếp tục
+                             * @enum {string|null}
+                             */
+                            pausedReason: "INSUFFICIENT_CREDITS" | null;
+                            /** @description Ước tính giây còn lại theo nhịp hoàn thành 10 phút gần nhất; null khi chưa đủ dữ liệu */
+                            etaSec: number | null;
+                            /** Format: date-time */
+                            cancelledAt: string | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                            /**
+                             * Format: date-time
+                             * @description Lần cập nhật task gần nhất trong lượt
+                             */
+                            lastActivityAt: string;
+                        };
+                        /** @description Task pending/processing vừa huỷ (hoàn credit ngay) */
+                        cancelled: number;
+                        /** @description Job xếp hàng trên máy chủ vừa huỷ */
+                        queuedCancelled: number;
                         creditsRefunded: number;
                     };
                 };
@@ -5391,6 +7241,8 @@ export interface operations {
                     "application/json": {
                         images: {
                             imageId: string;
+                            /** @description Tên file gốc lần upload đầu */
+                            filename: string | null;
                             mime: string;
                             size: number;
                             /** @description Cùng khách upload trùng nội dung ⇒ trả lại imageId cũ */
@@ -5399,7 +7251,7 @@ export interface operations {
                             createdAt: string;
                             /**
                              * Format: date-time
-                             * @description Tự xoá sau 24h
+                             * @description Tự xoá sau 24h; tạo task dùng ảnh ⇒ gia hạn thêm 24h
                              */
                             expiresAt: string;
                         }[];
@@ -5511,7 +7363,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Ảnh đã lưu (theo thứ tự gửi) */
+            /** @description Ảnh đã lưu — 1 phần tử cho mỗi file, đúng thứ tự gửi */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -5520,6 +7372,8 @@ export interface operations {
                     "application/json": {
                         images: {
                             imageId: string;
+                            /** @description Tên file gốc của part này */
+                            filename: string | null;
                             mime: string;
                             size: number;
                             /** @description Cùng khách upload trùng nội dung ⇒ trả lại imageId cũ */
@@ -5528,9 +7382,13 @@ export interface operations {
                             createdAt: string;
                             /**
                              * Format: date-time
-                             * @description Tự xoá sau 24h
+                             * @description Tự xoá sau 24h; tạo task dùng ảnh ⇒ gia hạn thêm 24h
                              */
                             expiresAt: string;
+                            /** @description Tên field multipart khách đặt (vd start_001) — trả lại nguyên vẹn */
+                            name: string;
+                            /** @description Trùng nội dung ảnh đã có (cùng imageId) ⇒ id ảnh gốc; null = ảnh mới */
+                            duplicateOf: string | null;
                         }[];
                     };
                 };

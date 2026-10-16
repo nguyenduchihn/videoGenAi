@@ -22,8 +22,12 @@ test("lịch sử tác vụ: lọc theo trạng thái, mở chi tiết, huỷ t�
     await expect(page.getByText("Đã huỷ tác vụ.")).toBeVisible();
 });
 
-test("dashboard liên kết sang lịch sử và chi tiết tác vụ", async ({ page }) => {
+test("dashboard liên kết sang danh sách lượt tạo; thanh bên dẫn tới lịch sử tác vụ", async ({ page }) => {
     await page.goto("/dashboard");
     await page.getByRole("link", { name: "Xem tất cả" }).click();
+    await expect(page).toHaveURL(/\/runs$/);
+    const openMenu = page.getByRole("button", { name: "Mở menu" });
+    if (await openMenu.isVisible()) await openMenu.click(); // mobile: thanh bên trượt ra ngoài màn hình tới khi mở menu
+    await page.getByRole("link", { name: "Lịch sử tác vụ" }).first().click();
     await expect(page).toHaveURL(/\/tasks$/);
 });

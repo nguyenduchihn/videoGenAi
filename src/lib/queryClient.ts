@@ -1,5 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
-import type { GetTasksParams } from "@/types/api";
+import type { GetTasksParams, RunStatus, TaskStatus } from "@/types/api";
 
 export const queryClient = new QueryClient({
     defaultOptions: {
@@ -15,4 +15,9 @@ export const qk = {
     ledger: (cursor?: string) => ["ledger", cursor ?? null] as const,
     tasks: (params?: GetTasksParams) => ["tasks", params ?? {}] as const,
     intents: (cursor?: string) => ["intents", cursor ?? null] as const,
+    runs: (status?: RunStatus) => ["runs", status ?? "all"] as const,
+    /** Bản kê lượt đang gửi dở (IndexedDB) của một khách. */
+    runManifests: (userId: string) => ["run-manifests", userId] as const,
+    run: (id: string) => ["run", id] as const,
+    runTasks: (id: string, status?: TaskStatus) => ["run", id, "tasks", status ?? "all"] as const,
 };

@@ -10,10 +10,23 @@ import {
     mockPaymentPackages,
 } from "./payment.mock";
 import { mockPricingResponse } from "./pricing.mock";
-import { cancelMockTask, createMockBatch, getMockBatch, mockTasksResponse } from "./tasks.mock";
+import { mockUploadedImage } from "./images.mock";
+import { cancelMockRun, enqueueMockItems, getMockRunSummary, listMockRuns, mockRunTasksPage, renameMockRun, retryMockFailed, seedMockBigRun, upsertMockRun } from "./runs.mock";
+import { cancelMockTask, createMockBatch, getMockBatch, mockTasksResponse, takenRunIndices, validateMockTask } from "./tasks.mock";
+import type { RunStatus, TaskStatus } from "@/types/api";
 
-const error = (status: number, code: string, message: string) =>
-    HttpResponse.json({ error: { code, message, requestId: `mock-${Date.now()}` } }, { status });
+/** e2e: localStorage `videogen:mock-big-run` = N ⇒ /v1/runs có sẵn lượt `run_mock_big` với N task đã xong. */
+function seedBigRunIfRequested(): void {
+    try {
+        const n = Number(localStorage.getItem("videogen:mock-big-run") ?? 0);
+        if (n > 0) seedMockBigRun("run_mock_big", n);
+    } catch {
+        /* bỏ qua */
+    }
+}
+
+const error = (status: number, code: string, message: string, metadata?: Record<string, unknown>, headers?: Record<string, string>) =>
+    HttpResponse.json({ error: { code, message, requestId: `mock-${Date.now()}`, ...(metadata ? { metadata } : {}) } }, { status, headers });
 
 /** e2e: đặt localStorage `videogen:mock-unauth` = "1" để giả lập chưa đăng nhập (handler chạy trong page). */
 function isMockUnauthenticated(): boolean {
@@ -25,9 +38,36 @@ function isMockUnauthenticated(): boolean {
 }
 
 export const mockModels = {
-    video: [{ model: "Veo_3.1-Lite", family: "veo", default: true, credits: 5 }],
-    image: [{ model: "Nano_Banana_2_Lite", family: "nano-banana", default: true, credits: 1 }],
+    video: [
+        { model: "Veo_3.1-Lite", family: "veo", default: true, credits: 5 },
+        { model: "Veo_3.1-Omni", family: "veo", default: false, credits: 20, note: "Tới 7 ảnh tham chiếu" },
+        { model: "Veo_3.1-Lite [Lower Priority]", family: "veo", default: false, credits: 0, note: "Miễn phí, xếp hàng chậm hơn" },
+    ],
+    image: [{ model: "Nano_Banana_Pro", family: "nano-banana", default: true, credits: 1 }],
 };
+
+/** e2e: thân các request POST /v1/tasks đã nhận (handler MSW chạy trong page) để test kiểm tra worker/images. */
+function rememberMockRequest(body: CreateTasksRequest): void {
+    try {
+        if (typeof localStorage === "undefined") return;
+        const previous = JSON.parse(localStorage.getItem("videogen:mock-task-requests") ?? "[]") as unknown[];
+        localStorage.setItem("videogen:mock-task-requests", JSON.stringify([...previous, body]));
+    } catch {
+        /* storage bị chặn: bỏ qua */
+    }
+}
+
+/** e2e: header `x-mock-queue-full` hoặc localStorage `videogen:mock-queue-full` = "1" ⇒ lần gọi /v1/tasks kế tiếp trả 429 (dùng một lần). */
+function consumeMockQueueFull(request: Request): boolean {
+    if (request.headers.get("x-mock-queue-full")) return true;
+    try {
+        if (typeof localStorage === "undefined" || localStorage.getItem("videogen:mock-queue-full") !== "1") return false;
+        localStorage.removeItem("videogen:mock-queue-full");
+        return true;
+    } catch {
+        return false;
+    }
+}
 
 /** /v1/* giống backend thật: X-API-Key (tích hợp ngoài) HOẶC cookie phiên web; mock coi "đã đăng nhập" = có cookie. */
 const requireApiKey = (request: Request): Response | null => {
@@ -77,9 +117,14 @@ export const handlers = [
 
     // ── Tasks (cookie) ──
     http.get("/portal/tasks", ({ request }) => {
-        const status = new URL(request.url).searchParams.get("status");
-        const tasks = status ? mockTasksResponse.tasks.filter((task) => task.status === status) : mockTasksResponse.tasks;
-        return HttpResponse.json({ tasks, nextCursor: null });
+        // Giống API thật: lọc status, cắt theo limit (≤ 50) và cursor (mock: cursor = vị trí bắt đầu), mới nhất trước.
+        const q = new URL(request.url).searchParams;
+        const status = q.get("status");
+        const limit = Math.min(50, Math.max(1, Number(q.get("limit")) || 20));
+        const offset = Math.max(0, Number(q.get("cursor")) || 0);
+        const all = status ? mockTasksResponse.tasks.filter((task) => task.status === status) : mockTasksResponse.tasks;
+        const tasks = all.slice(offset, offset + limit);
+        return HttpResponse.json({ tasks, nextCursor: offset + limit < all.length ? String(offset + limit) : null });
     }),
     http.get("/portal/tasks/:id", ({ params }) => {
         const task = mockTasksResponse.tasks.find((item) => item.id === params.id);
@@ -132,16 +177,90 @@ export const handlers = [
             plan: { id: "pro", name: "Pro", maxConcurrent: 4, maxPending: 50, chargesCredits: true },
         }),
     ),
-    http.post("/v1/images", ({ request }) =>
-        requireApiKey(request) ?? HttpResponse.json({
-            images: [{ imageId: `img_${Date.now().toString(36)}`, mime: "image/png", size: 1024, sha256: "", createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 86_400_000).toISOString() }],
-        }, { status: 201 }),
-    ),
+    http.post("/v1/images", async ({ request }) => {
+        const denied = requireApiKey(request);
+        if (denied) return denied;
+        const form = await request.formData();
+        const images = [];
+        for (const [name, value] of form.entries()) {
+            if (!(value instanceof File)) continue;
+            if (!value.type.startsWith("image/")) return error(400, "BAD_IMAGE_INPUTS", `${name}: không phải ảnh`, { field: name, constraint: "mime" });
+            images.push(mockUploadedImage(name, value));
+        }
+        return HttpResponse.json({ images }, { status: 201 });
+    }),
     http.post("/v1/tasks", async ({ request }) => {
         const denied = requireApiKey(request);
         if (denied) return denied;
+        if (consumeMockQueueFull(request)) return error(429, "QUEUE_FULL", "queue full", undefined, { "Retry-After": "2" });
         const body = (await request.json()) as CreateTasksRequest;
+        if (!Array.isArray(body.tasks) || body.tasks.length === 0 || body.tasks.length > 20) {
+            return error(400, "VALIDATION_FAILED", "tasks: 1–20 task mỗi request");
+        }
+        for (const [index, item] of body.tasks.entries()) {
+            const failure = validateMockTask(item);
+            if (failure) return error(failure.status, failure.code, `tasks[${index}]: ${failure.message}`, { index, ...failure.metadata });
+        }
+        if (body.runId) {
+            const offset = body.runOffset ?? 0;
+            const taken = takenRunIndices(body.runId).filter((i) => i >= offset && i < offset + body.tasks.length);
+            if (taken.length) return error(409, "RUN_INDEX_TAKEN", "runIndex already created", { runId: body.runId, taken });
+            upsertMockRun(body.runId, { totalPlanned: offset + body.tasks.length });
+        }
+        rememberMockRequest(body);
         return HttpResponse.json(createMockBatch(body), { status: 202 });
+    }),
+
+    // ── Lượt tạo ──
+    http.put("/v1/runs/:id", async ({ params, request }) => {
+        const denied = requireApiKey(request);
+        if (denied) return denied;
+        const body = (await request.json()) as { name?: string | null; totalPlanned: number };
+        const r = upsertMockRun(params.id as string, body);
+        return HttpResponse.json(r.run, { status: r.created ? 201 : 200 });
+    }),
+    http.get("/v1/runs", ({ request }) => {
+        const denied = requireApiKey(request);
+        if (denied) return denied;
+        seedBigRunIfRequested();
+        const status = (new URL(request.url).searchParams.get("status") || undefined) as RunStatus | undefined;
+        return HttpResponse.json({ runs: listMockRuns(status).slice(0, 50), nextCursor: null });
+    }),
+    http.get("/v1/runs/:id", ({ params, request }) => {
+        const denied = requireApiKey(request);
+        if (denied) return denied;
+        seedBigRunIfRequested();
+        const run = getMockRunSummary(params.id as string);
+        return run ? HttpResponse.json(run) : error(404, "RUN_NOT_FOUND", "run not found");
+    }),
+    http.get("/v1/runs/:id/tasks", ({ params, request }) => {
+        const denied = requireApiKey(request);
+        if (denied) return denied;
+        seedBigRunIfRequested();
+        const url = new URL(request.url);
+        const status = (url.searchParams.get("status") || undefined) as TaskStatus | undefined;
+        const cursorRaw = url.searchParams.get("cursor");
+        const page = mockRunTasksPage(params.id as string, status, cursorRaw ? Number(cursorRaw) : undefined, Number(url.searchParams.get("limit") ?? 50));
+        return page ? HttpResponse.json(page) : error(404, "RUN_NOT_FOUND", "run not found");
+    }),
+    http.post("/v1/runs/:id/cancel", ({ params }) => {
+        const r = cancelMockRun(params.id as string);
+        return r ? HttpResponse.json(r) : error(404, "RUN_NOT_FOUND", "run not found");
+    }),
+    http.patch("/v1/runs/:id", async ({ params, request }) => {
+        const body = (await request.json()) as { name: string | null };
+        const r = renameMockRun(params.id as string, body.name);
+        return r ? HttpResponse.json(r) : error(404, "RUN_NOT_FOUND", "run not found");
+    }),
+    http.post("/v1/runs/:id/items", async ({ params, request }) => {
+        const body = (await request.json()) as { items: CreateTasksRequest["tasks"]; runOffset: number };
+        const r = enqueueMockItems(params.id as string, body);
+        return r ? HttpResponse.json(r, { status: 202 }) : error(404, "RUN_NOT_FOUND", "run not found");
+    }),
+    http.post("/v1/runs/:id/retry-failed", async ({ params, request }) => {
+        const body = (await request.json().catch(() => ({}))) as { taskIds?: string[] };
+        const r = retryMockFailed(params.id as string, body.taskIds);
+        return r ? HttpResponse.json(r, { status: 202 }) : error(404, "RUN_NOT_FOUND", "run not found");
     }),
     http.get("/v1/batches/:id", ({ params, request }) => {
         const denied = requireApiKey(request);
@@ -152,8 +271,10 @@ export const handlers = [
     http.post("/v1/batches/:id/cancel", ({ params }) => {
         const batch = getMockBatch(params.id as string);
         if (!batch) return error(404, "BATCH_NOT_FOUND", "batch not found");
-        batch.tasks.forEach((task) => cancelMockTask(task.id));
-        return HttpResponse.json(getMockBatch(params.id as string));
+        const active = batch.tasks.filter((task) => task.status === "pending" || task.status === "processing");
+        const cancelled = active.map((task) => cancelMockTask(task.id)).filter((task) => task !== null);
+        const creditsRefunded = cancelled.reduce((sum, task) => sum + task.priceCredits, 0);
+        return HttpResponse.json({ cancelled, skipped: batch.tasks.length - cancelled.length, creditsRefunded });
     }),
     http.get("/v1/tasks/:id", ({ params }) => {
         const task = mockTasksResponse.tasks.find((item) => item.id === params.id);

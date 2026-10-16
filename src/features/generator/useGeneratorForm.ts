@@ -1,89 +1,100 @@
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import {
-    STATIC_FALLBACK,
+    EMPTY_ATTACHMENTS,
+    type GeneratorAttachments,
+    type GeneratorMode,
+    type GeneratorSettingsState,
+    type PromptSplitMode,
+} from "@/components/generator/types";
+import { FIXED_SEPARATOR } from "@/components/generator/settings/constants";
+import { useModelCatalog } from "@/hooks/useModels";
+import { usePricing } from "@/hooks/usePricing";
+import { useAuthStore } from "@/stores/auth.store";
+import {
     getCreditCost,
     getDefaultModel,
+    getModelOptions,
+    isModelInCatalogFor,
+    STATIC_FALLBACK,
     type ModelCatalog,
-} from "@/features/generator/modelCatalog";
-import { useModelCatalog } from "@/hooks/useModels";
-import { persistDraftPrompt, readDraftPrompt } from "@/features/projects/useProjectDrafts";
-import { validateGenerator, type ValidationResult } from "@/components/generator/ultils/generatorHelpers";
-import type {
-    GeneratorFilesState,
-    GeneratorMode,
-    GeneratorSettingsState,
-    PromptSplitMode,
-} from "@/components/generator/types";
+    type ModelOption,
+} from "./modelCatalog";
+import { defaultRatio, modeSpec, upscaleOptions, type ImageRole, type ModeSpec } from "./modes";
+import type { UploadCache } from "./uploadAttachments";
+import { validateGenerator, type ValidationResult } from "./validation";
 
-const EMPTY_FILES: GeneratorFilesState = {
-    startFrame: [],
-    endFrame: [],
-    components: [],
-    referenceImages: [],
-    fixedImages: [],
-    dynamicImages: [],
-    referenceVideos: [],
-    voiceAudio: [],
-    batchReferences: [],
-};
+const DEFAULT_MODE: GeneratorMode = "text-to-video";
+const ATTACHMENT_ROLES: readonly ImageRole[] = ["start", "end", "references", "sources"];
+const UPSCALE_PRICE_KEY = { video: "upscale-video", image: "upscale-image" } as const;
+
+/** Thu hồi object URL của mọi ảnh xem trước (đổi chế độ, xoá hết). */
+export function releaseAttachments(attachments: GeneratorAttachments): void {
+    if (typeof URL.revokeObjectURL !== "function") return;
+    for (const role of ATTACHMENT_ROLES) {
+        for (const item of attachments[role]) URL.revokeObjectURL(item.previewUrl);
+    }
+}
 
 export interface UseGeneratorFormReturn {
     catalog: ModelCatalog;
     mode: GeneratorMode;
+    spec: ModeSpec;
+    modelOptions: ModelOption[];
     aspectRatio: string;
-    setAspectRatio: (v: string) => void;
+    setAspectRatio: (value: string) => void;
     prompt: string;
-    setPrompt: (v: string) => void;
-    files: GeneratorFilesState;
+    setPrompt: (value: string) => void;
+    attachments: GeneratorAttachments;
+    updateAttachments: (patch: Partial<GeneratorAttachments>) => void;
+    uploadCache: UploadCache;
     promptSplitMode: PromptSplitMode;
-    setPromptSplitMode: (v: PromptSplitMode) => void;
+    setPromptSplitMode: (value: PromptSplitMode) => void;
     settingsOpen: boolean;
-    setSettingsOpen: (v: boolean) => void;
+    setSettingsOpen: (value: boolean) => void;
     settings: GeneratorSettingsState;
     setSettings: Dispatch<SetStateAction<GeneratorSettingsState>>;
     jobs: string[];
     creditPerJob: number;
     estimatedCredits: number;
+    /** Số dư credit hiện tại (null khi chưa tải xong hồ sơ). */
+    balance: number | null;
     validation: ValidationResult;
     showValidation: boolean;
-    setShowValidation: (v: boolean) => void;
-    handleFilesChange: (field: keyof GeneratorFilesState, nextFiles: File[]) => void;
+    setShowValidation: (value: boolean) => void;
     handleModeChange: (nextMode: GeneratorMode) => void;
+    /** "Tiếp tục video" từ thẻ kết quả: chuyển sang extend-video với video nguồn đã chọn. */
+    startExtendFrom: (mediaId: string, label: string) => void;
+    /** Khôi phục bản nháp tự lưu (prompt + chế độ + tỷ lệ + cài đặt). */
+    applyDraft: (draft: { prompt: string; mode: GeneratorMode; ratio: string; settings: GeneratorSettingsState }) => void;
 }
 
-export function useGeneratorForm({
-    variant = "advanced",
-    draftId,
-}: {
-    variant?: "quick" | "advanced";
-    draftId?: string;
-}): UseGeneratorFormReturn {
+export function useGeneratorForm({ variant = "advanced" }: { variant?: "quick" | "advanced" } = {}): UseGeneratorFormReturn {
     const catalog = useModelCatalog();
+    const pricing = usePricing().data;
+    const balance = useAuthStore((state) => state.user?.balance.raw ?? state.user?.user.credits ?? null);
     const [showValidation, setShowValidation] = useState(false);
-    const [mode, setMode] = useState<GeneratorMode>("text-to-video");
-    const [aspectRatio, setAspectRatio] = useState("16:9");
-    const [prompt, setPrompt] = useState(() => (draftId ? readDraftPrompt(draftId) : ""));
-    const [files, setFiles] = useState<GeneratorFilesState>(EMPTY_FILES);
+    const [mode, setMode] = useState<GeneratorMode>(DEFAULT_MODE);
+    const [aspectRatio, setAspectRatio] = useState(defaultRatio("video"));
+    const [prompt, setPrompt] = useState("");
+    const [attachments, setAttachments] = useState<GeneratorAttachments>(EMPTY_ATTACHMENTS);
+    const [uploadCache] = useState<UploadCache>(() => new Map());
     const [promptSplitMode, setPromptSplitMode] = useState<PromptSplitMode>("newline");
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [settings, setSettings] = useState<GeneratorSettingsState>({
-        model: getDefaultModel(STATIC_FALLBACK, "text-to-video"),
-        parallel: 8,
-        batchDelay: 10,
-        burstSize: 1,
-        generateAudio: true,
-        upscaleThreads: 1,
+        model: getDefaultModel(STATIC_FALLBACK, DEFAULT_MODE),
+        duration: 8,
+        audioEnabled: true,
+        upscale: "none",
+        seed: null,
         customSeparator: "===",
     });
 
-    const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    useEffect(() => {
-        if (!draftId) return;
-        if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
-        draftSaveTimerRef.current = setTimeout(() => { persistDraftPrompt(draftId, prompt); }, 500);
-        return () => { if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current); };
-    }, [prompt, draftId]);
+    // Rời trang khi còn ảnh xem trước ⇒ thu hồi object URL (đổi chế độ đã thu hồi riêng).
+    const attachmentsRef = useRef(attachments);
+    useEffect(() => { attachmentsRef.current = attachments; }, [attachments]);
+    useEffect(() => () => { releaseAttachments(attachmentsRef.current); }, []);
+
 
     const jobs = useMemo(() => {
         const input = prompt.trim();
@@ -95,36 +106,62 @@ export function useGeneratorForm({
             case "blank-line":
                 return input.split(/\r?\n\s*\r?\n/).map((s) => s.trim()).filter(Boolean);
             case "separator":
-                return input.split("====").map((s) => s.trim()).filter(Boolean);
+                return input.split(FIXED_SEPARATOR).map((s) => s.trim()).filter(Boolean);
             case "custom": {
                 const sep = settings.customSeparator.trim();
                 if (!sep) return [input];
                 return input.split(sep).map((s) => s.trim()).filter(Boolean);
             }
-            default: return [input];
+            default:
+                return [input];
         }
     }, [prompt, promptSplitMode, settings.customSeparator, variant]);
 
-    const creditPerJob = getCreditCost(catalog, settings.model);
+    const spec = modeSpec(mode);
+    const modelOptions = useMemo(() => getModelOptions(catalog, mode), [catalog, mode]);
+    const upscaleCredits = settings.upscale === "none" ? 0 : (pricing?.workers[UPSCALE_PRICE_KEY[spec.kind]]?.credits ?? 0);
+    const creditPerJob = getCreditCost(catalog, settings.model) + upscaleCredits;
     const estimatedCredits = jobs.length * creditPerJob;
-    const validation = validateGenerator(mode, jobs, files);
+    const validation = useMemo(
+        () => validateGenerator({ mode, jobs, settings, attachments }),
+        [mode, jobs, settings, attachments],
+    );
 
-    const handleFilesChange = (field: keyof GeneratorFilesState, nextFiles: File[]) => {
-        setFiles((cur) => ({ ...cur, [field]: nextFiles }));
-    };
+    const updateAttachments = useCallback((patch: Partial<GeneratorAttachments>) => {
+        setAttachments((current) => ({ ...current, ...patch }));
+    }, []);
 
-    const handleModeChange = (nextMode: GeneratorMode) => {
+    const handleModeChange = useCallback((nextMode: GeneratorMode) => {
+        const nextSpec = modeSpec(nextMode);
         setShowValidation(false);
         setMode(nextMode);
-        setSettings((cur) => ({ ...cur, model: getDefaultModel(catalog, nextMode) }));
-        setAspectRatio(nextMode === "text-to-image" || nextMode === "batch-image" ? "1:1" : "16:9");
-    };
+        if (nextSpec.kind !== spec.kind) setAspectRatio(defaultRatio(nextSpec.kind));
+        setSettings((current) => ({
+            ...current,
+            model: isModelInCatalogFor(catalog, nextMode, current.model) ? current.model : getDefaultModel(catalog, nextMode),
+            upscale: (upscaleOptions(nextSpec.kind) as string[]).includes(current.upscale) ? current.upscale : "none",
+        }));
+        releaseAttachments(attachments);
+        setAttachments(EMPTY_ATTACHMENTS);
+    }, [attachments, catalog, spec.kind]);
+
+    const startExtendFrom = useCallback((mediaId: string, label: string) => {
+        handleModeChange("extend-video");
+        setAttachments({ ...EMPTY_ATTACHMENTS, sourceMediaId: mediaId, sourceLabel: label });
+    }, [handleModeChange]);
+
+    const applyDraft = useCallback((draft: { prompt: string; mode: GeneratorMode; ratio: string; settings: GeneratorSettingsState }) => {
+        handleModeChange(draft.mode);
+        setPrompt(draft.prompt);
+        setAspectRatio(draft.ratio);
+        setSettings(draft.settings);
+    }, [handleModeChange]);
 
     return {
-        catalog, mode, aspectRatio, setAspectRatio,
-        prompt, setPrompt, files, promptSplitMode, setPromptSplitMode,
-        settingsOpen, setSettingsOpen, settings, setSettings,
-        jobs, creditPerJob, estimatedCredits, validation,
-        showValidation, setShowValidation, handleFilesChange, handleModeChange,
+        catalog, mode, spec, modelOptions, aspectRatio, setAspectRatio,
+        prompt, setPrompt, attachments, updateAttachments, uploadCache,
+        promptSplitMode, setPromptSplitMode, settingsOpen, setSettingsOpen, settings, setSettings,
+        jobs, creditPerJob, estimatedCredits, balance, validation,
+        showValidation, setShowValidation, handleModeChange, startExtendFrom, applyDraft,
     };
 }

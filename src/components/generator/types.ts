@@ -1,11 +1,6 @@
-export type GeneratorMode =
-    | "text-to-video"
-    | "image-to-video"
-    | "components"
-    | "text-to-image"
-    | "batch-image"
-    | "reference-video-voice"
-    | "batch-reference";
+import type { GeneratorMode } from "@/features/generator/modes";
+
+export type { GeneratorMode };
 
 export type PromptSplitMode =
     | "newline"
@@ -13,29 +8,49 @@ export type PromptSplitMode =
     | "separator"
     | "custom";
 
+export type VideoDuration = 4 | 6 | 8 | 10;
+
+export type UpscaleChoice = "none" | "2K" | "4K" | "1080P";
+
 export interface GeneratorSettingsState {
     model: string;
-    parallel: number;
-    batchDelay: number;
-    burstSize: number;
-    generateAudio: boolean;
-    upscaleThreads: number;
+    duration: VideoDuration;
+    audioEnabled: boolean;
+    upscale: UpscaleChoice;
+    /** null = để Google chọn ngẫu nhiên (chỉ text-to-image). */
+    seed: number | null;
     customSeparator: string;
 }
 
-export interface GeneratorFilesState {
-    startFrame: File[];
-    endFrame: File[];
-
-    components: File[];
-
-    referenceImages: File[];
-
-    fixedImages: File[];
-    dynamicImages: File[];
-
-    referenceVideos: File[];
-    voiceAudio: File[];
-
-    batchReferences: File[];
+/** Ảnh khách chọn trong form; chưa upload cho tới khi bấm Tạo. */
+export interface AttachedImage {
+    localId: string;
+    file: File;
+    previewUrl: string;
+    /** `@handle` để nhắc trong prompt; "" = không đặt. */
+    handle: string;
+    /** Cảnh báo mềm (vd ảnh > 16 MiB có thể bị Google từ chối). */
+    warning?: string;
 }
+
+export interface GeneratorAttachments {
+    start: AttachedImage[];
+    end: AttachedImage[];
+    references: AttachedImage[];
+    sources: AttachedImage[];
+    /** `params.audio` của reference-images-to-video. */
+    voice: string;
+    /** extend-video: `result.mediaId` của video đã tạo. */
+    sourceMediaId: string | null;
+    sourceLabel: string | null;
+}
+
+export const EMPTY_ATTACHMENTS: GeneratorAttachments = {
+    start: [],
+    end: [],
+    references: [],
+    sources: [],
+    voice: "",
+    sourceMediaId: null,
+    sourceLabel: null,
+};

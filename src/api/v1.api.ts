@@ -1,10 +1,19 @@
 import api from "@/lib/api";
 import type {
     BatchTasksResponse,
+    CancelBatchResponse,
+    CancelRunResponse,
+    CreateTaskItem,
     CreateTasksRequest,
     CreateTasksResponse,
+    EnqueueRunItemsResponse,
+    ListTasksByIdsResponse,
     PortalTask,
-    PortalTasksResponse,
+    RunStatus,
+    RunSummary,
+    RunsPage,
+    RunTasksPage,
+    TaskStatus,
     UploadImagesResponse,
     V1Me,
     V1Models,
@@ -25,8 +34,8 @@ export async function getTask(taskId: string): Promise<PortalTask> {
     return (await api.get<PortalTask>(`/v1/tasks/${taskId}`)).data;
 }
 
-export async function listTasks(ids: string[]): Promise<PortalTasksResponse> {
-    return (await api.get<PortalTasksResponse>("/v1/tasks", { params: { ids: ids.join(",") } })).data;
+export async function listTasks(ids: string[]): Promise<ListTasksByIdsResponse> {
+    return (await api.get<ListTasksByIdsResponse>("/v1/tasks", { params: { ids: ids.join(",") } })).data;
 }
 
 export async function batch(batchId: string): Promise<BatchTasksResponse> {
@@ -37,22 +46,34 @@ export async function cancelTask(taskId: string): Promise<PortalTask> {
     return (await api.post<PortalTask>(`/v1/tasks/${taskId}/cancel`)).data;
 }
 
-export async function cancelBatch(batchId: string): Promise<BatchTasksResponse> {
-    return (await api.post<BatchTasksResponse>(`/v1/batches/${batchId}/cancel`)).data;
+export async function cancelBatch(batchId: string): Promise<CancelBatchResponse> {
+    return (await api.post<CancelBatchResponse>(`/v1/batches/${batchId}/cancel`)).data;
 }
 
-export async function uploadImages(files: File[]): Promise<UploadImagesResponse> {
-    if (files.length === 0) return { images: [] };
-    const fd = new FormData();
-    files.forEach((f, i) => fd.append(i === 0 ? "file" : `file${i + 1}`, f));
-    return (await api.post<UploadImagesResponse>("/v1/images", fd)).data;
+/** Một part multipart: `name` là tên field do client đặt, backend trả lại cùng imageId để ghép vai trò. */
+export interface UploadPart {
+    name: string;
+    file: File;
 }
 
-export async function uploadImage(file: File): Promise<string> {
-    const r = await uploadImages([file]);
-    const img = r.images[0];
-    if (!img) throw new Error("IMAGE_UPLOAD_FAILED");
-    return img.imageId;
+export interface UploadOptions {
+    onUploadProgress?: (loaded: number, total: number) => void;
+    signal?: AbortSignal;
+}
+
+export async function uploadImages(parts: UploadPart[], options: UploadOptions = {}): Promise<UploadImagesResponse> {
+    if (parts.length === 0) return { images: [] };
+    const form = new FormData();
+    for (const part of parts) form.append(part.name, part.file, part.file.name);
+    const { onUploadProgress, signal } = options;
+    return (
+        await api.post<UploadImagesResponse>("/v1/images", form, {
+            signal,
+            onUploadProgress: onUploadProgress
+                ? (event) => onUploadProgress(event.loaded, event.total ?? event.loaded)
+                : undefined,
+        })
+    ).data;
 }
 
 export async function models(): Promise<V1Models> {
@@ -61,4 +82,46 @@ export async function models(): Promise<V1Models> {
 
 export async function v1Me(): Promise<V1Me> {
     return (await api.get<V1Me>("/v1/me")).data;
+}
+
+// ── Lượt tạo ──
+export interface UpsertRunInput {
+    name?: string | null;
+    totalPlanned: number;
+}
+
+/** PUT idempotent theo id client: 201 lần đầu, 200 nếu đã có. */
+export async function upsertRun(id: string, input: UpsertRunInput): Promise<{ run: RunSummary; created: boolean }> {
+    const response = await api.put<RunSummary>(`/v1/runs/${id}`, input);
+    return { run: response.data, created: response.status === 201 };
+}
+
+export async function listRuns(params: { status?: RunStatus; cursor?: string; limit?: number } = {}): Promise<RunsPage> {
+    return (await api.get<RunsPage>("/v1/runs", { params })).data;
+}
+
+export async function getRun(id: string): Promise<RunSummary> {
+    return (await api.get<RunSummary>(`/v1/runs/${id}`)).data;
+}
+
+export async function listRunTasks(id: string, params: { status?: TaskStatus; cursor?: string; limit?: number } = {}): Promise<RunTasksPage> {
+    return (await api.get<RunTasksPage>(`/v1/runs/${id}/tasks`, { params })).data;
+}
+
+export async function cancelRun(id: string): Promise<CancelRunResponse> {
+    return (await api.post<CancelRunResponse>(`/v1/runs/${id}/cancel`)).data;
+}
+
+export async function renameRun(id: string, name: string | null): Promise<RunSummary> {
+    return (await api.patch<RunSummary>(`/v1/runs/${id}`, { name })).data;
+}
+
+/** Giai đoạn 2: xếp hàng job trên máy chủ (lượt vượt hạn mức hàng đợi của gói). */
+export async function enqueueRunItems(id: string, input: { items: CreateTaskItem[]; runOffset: number }): Promise<EnqueueRunItemsResponse> {
+    return (await api.post<EnqueueRunItemsResponse>(`/v1/runs/${id}/items`, input)).data;
+}
+
+/** Tạo lại các task thất bại của lượt (máy chủ giữ spec/ảnh); `taskIds` bỏ trống = tất cả. */
+export async function retryFailedRun(id: string, taskIds?: string[]): Promise<{ created: number; skipped: number; run: RunSummary }> {
+    return (await api.post<{ created: number; skipped: number; run: RunSummary }>(`/v1/runs/${id}/retry-failed`, taskIds ? { taskIds } : {})).data;
 }

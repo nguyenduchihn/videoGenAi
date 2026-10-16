@@ -1,4 +1,4 @@
-import { ChevronDown, CreditCard, FolderKanban, HelpCircle, History, Home, Image, PanelLeftClose, PanelLeftOpen, Settings, Sparkles, X } from "lucide-react";
+import { ChevronDown, CreditCard, HelpCircle, History, Home, Image, Layers, PanelLeftClose, PanelLeftOpen, Settings, Sparkles, X } from "lucide-react";
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
@@ -13,7 +13,7 @@ interface SidebarProps {
 
 const mainMenu = [
     { label: "Trang chủ", path: "/dashboard", icon: Home },
-    { label: "Dự án", path: "/projects", icon: FolderKanban },
+    { label: "Lượt tạo", path: "/runs", icon: Layers }, // thay "Dự án" (/projects chuyển hướng về đây)
     { label: "Thư viện", path: "/library", icon: Image },
     { label: "Lịch sử tác vụ", path: "/tasks", icon: History },
     { label: "Nạp credits", path: "/billing", icon: CreditCard },
@@ -51,14 +51,8 @@ export default function Sidebar({
     const planName = me?.plan?.name ?? "Miễn phí";
 
     const initial = displayName.charAt(0).toUpperCase();
-    const handleNavClick = (path: string) => {
+    const handleNavClick = () => {
         onClose();
-        if (
-            path === "/projects" &&
-            window.matchMedia("(min-width: 1024px)").matches
-        ) {
-            setCompactSidebar(true);
-        }
     };
     return (
         <>
@@ -156,7 +150,7 @@ export default function Sidebar({
                                     <NavLink
                                         key={item.path}
                                         to={item.path}
-                                        onClick={() => handleNavClick(item.path)}
+                                        onClick={handleNavClick}
                                         title={
                                             compactSidebar
                                                 ? item.label
@@ -206,7 +200,7 @@ export default function Sidebar({
                                     <NavLink
                                         key={item.path}
                                         to={item.path}
-                                        onClick={() => handleNavClick(item.path)}
+                                        onClick={handleNavClick}
                                         title={
                                             compactSidebar
                                                 ? item.label

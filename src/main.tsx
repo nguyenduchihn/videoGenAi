@@ -4,8 +4,10 @@ import './index.css'
 import App from './App.tsx'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from '@/lib/queryClient'
+import { installStaleChunkReload } from '@/lib/staleChunkReload'
 
 async function bootstrap() {
+    installStaleChunkReload()
     if (import.meta.env.VITE_USE_MOCK_API === 'true') {
         const { worker } = await import('@/mocks/browser')
         await worker.start({ onUnhandledFrame: 'bypass' })

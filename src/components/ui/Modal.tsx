@@ -34,6 +34,12 @@ export function Modal({
     const id = useId();
     const titleId = `${id}-title`;
     const descId = `${id}-desc`;
+    // Giữ onClose trong ref: effect bẫy focus chỉ chạy lại khi mở/đóng, không chạy lại mỗi lần cha render
+    // (callback inline mới mỗi render ⇒ trước đây focus bị kéo về nút đầu tiên sau mỗi phím gõ trong form).
+    const onCloseRef = useRef(onClose);
+    useEffect(() => {
+        onCloseRef.current = onClose;
+    }, [onClose]);
 
     useEffect(() => {
         if (!open) return;
@@ -48,7 +54,7 @@ export function Modal({
         getFocusable()[0]?.focus();
 
         const handleKey = (e: KeyboardEvent) => {
-            if (e.key === "Escape") { onClose(); return; }
+            if (e.key === "Escape") { onCloseRef.current(); return; }
             if (e.key !== "Tab") return;
             const els = getFocusable();
             if (!els.length) return;
@@ -67,7 +73,7 @@ export function Modal({
             document.body.style.overflow = "";
             prev?.focus();
         };
-    }, [open, onClose]);
+    }, [open]);
 
     if (!open) return null;
 
