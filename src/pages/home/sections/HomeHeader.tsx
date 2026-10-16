@@ -1,6 +1,6 @@
 import { ArrowUpRight, Menu, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { usePricing } from "@/hooks/usePricing";
 import { useAuthStore } from "@/stores/auth.store";
 import { API_DOCS_URL, trialCtaLabel } from "../landingCopy";
@@ -78,15 +78,12 @@ export function HomeHeader() {
                             {n.label}
                         </button>
                     ))}
-                    <a
-                        href={API_DOCS_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link to={API_DOCS_URL}
                         className="inline-flex items-center gap-1 py-2 text-sm font-medium text-app-text-secondary transition-colors hover:text-app-accent"
                     >
                         Tài liệu API
                         <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
-                    </a>
+                    </Link>
                 </nav>
 
                 <div className="hidden items-center gap-2 sm:flex">
@@ -127,9 +124,9 @@ export function HomeHeader() {
                                 {n.label}
                             </button>
                         ))}
-                        <a href={API_DOCS_URL} target="_blank" rel="noopener noreferrer" className="rounded-lg px-4 py-3 text-left text-sm text-app-text-secondary transition hover:bg-app-surface-soft hover:text-app-text">
-                            Tài liệu API ↗
-                        </a>
+                        <Link to={API_DOCS_URL} className="rounded-lg px-4 py-3 text-left text-sm text-app-text-secondary transition hover:bg-app-surface-soft hover:text-app-text">
+                            Tài liệu API
+                        </Link>
                         <div className="my-3 h-px bg-app-border" />
                         {user ? (
                             <button type="button" onClick={() => go("/dashboard")} className="rounded-lg bg-app-accent px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-app-accent-hover">

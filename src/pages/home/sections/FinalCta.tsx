@@ -1,5 +1,5 @@
 import { ArrowRight, Code2, Sparkles } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { usePricing } from "@/hooks/usePricing";
 import { useAuthStore } from "@/stores/auth.store";
 import { useReveal } from "../useReveal";
@@ -40,9 +40,9 @@ export function FinalCta() {
                             <button type="button" onClick={() => navigate("/register")} className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-app-accent px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-app-accent/25 transition-all hover:-translate-y-0.5 hover:bg-app-accent-hover">
                                 {trialCtaLabel(grant)} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
                             </button>
-                            <a href={API_DOCS_URL} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-7 py-3.5 text-sm font-medium text-white/85 transition hover:bg-white/[0.08]">
+                            <Link to={API_DOCS_URL} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-7 py-3.5 text-sm font-medium text-white/85 transition hover:bg-white/[0.08]">
                                 <Code2 className="h-4 w-4" aria-hidden /> Thử API
-                            </a>
+                            </Link>
                         </>
                     )}
                 </div>

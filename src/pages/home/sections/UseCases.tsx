@@ -1,6 +1,7 @@
 import { ArrowUpRight, Cpu, GraduationCap, Megaphone, ShoppingBag, Smartphone } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { usePricing } from "@/hooks/usePricing";
+import { Link } from "react-router-dom";
 import { useReveal } from "../useReveal";
 import { API_DOCS_URL } from "../landingCopy";
 
@@ -59,9 +60,9 @@ export function UseCases() {
                                 </p>
                             </div>
                         </div>
-                        <a href={API_DOCS_URL} target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-xl border border-app-border bg-app-bg px-4 py-2.5 text-sm font-semibold text-app-text transition hover:border-app-accent/30 hover:text-app-accent lg:self-center">
+                        <Link to={API_DOCS_URL} className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-xl border border-app-border bg-app-bg px-4 py-2.5 text-sm font-semibold text-app-text transition hover:border-app-accent/30 hover:text-app-accent lg:self-center">
                             Xem tài liệu API <ArrowUpRight className="h-4 w-4" aria-hidden />
-                        </a>
+                        </Link>
                     </article>
                 </div>
             </div>

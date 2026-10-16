@@ -1,6 +1,6 @@
 import { ArrowRight, BookOpen, Check, Sparkles } from "lucide-react";
 import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { nextTabIndex } from "@/components/runs/rovingTabs";
 import { usePricing } from "@/hooks/usePricing";
 import { useAuthStore } from "@/stores/auth.store";
@@ -109,10 +109,10 @@ export function HeroSection() {
                                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
                             </button>
                         )}
-                        <a href={API_DOCS_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-7 py-4 text-sm font-medium text-white/85 transition-all hover:border-white/25 hover:bg-white/[0.08]">
+                        <Link to={API_DOCS_URL} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-7 py-4 text-sm font-medium text-white/85 transition-all hover:border-white/25 hover:bg-white/[0.08]">
                             <BookOpen className="h-4 w-4" aria-hidden />
                             Xem tài liệu API
-                        </a>
+                        </Link>
                     </div>
                     <ul className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-xs text-white/55" aria-label="Cam kết">
                         {["Không cần thẻ tín dụng", "Thanh toán chuyển khoản, cộng credit tự động", "Task lỗi được hoàn credit"].map((t) => (

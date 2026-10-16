@@ -81,9 +81,9 @@ export function ApiSection() {
                         ))}
                     </ul>
                     <div className="mt-8 flex flex-wrap gap-3">
-                        <a href={API_DOCS_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-app-accent px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-app-accent/20 transition hover:bg-app-accent-hover">
+                        <Link to={API_DOCS_URL} className="inline-flex items-center gap-2 rounded-xl bg-app-accent px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-app-accent/20 transition hover:bg-app-accent-hover">
                             Xem tài liệu API <ArrowUpRight className="h-4 w-4" aria-hidden />
-                        </a>
+                        </Link>
                         <Link to={loggedIn ? "/settings/api-keys" : "/register"} className="inline-flex items-center gap-2 rounded-xl border border-app-border bg-app-surface px-5 py-3 text-sm font-semibold text-app-text transition hover:border-app-accent/40 hover:text-app-accent">
                             <KeyRound className="h-4 w-4" aria-hidden />
                             {loggedIn ? "Quản lý API key" : "Lấy API key"}
