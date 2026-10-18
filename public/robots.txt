@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Disallow: /admin-ui
+Disallow: /admin/
+Disallow: /docs
+Disallow: /portal/
+Disallow: /v1/
+Disallow: /webhooks/
+Disallow: /dashboard
+Disallow: /runs
+Disallow: /tasks
+Disallow: /library
+Disallow: /billing
+Disallow: /my-plan
+Disallow: /settings
+
+Sitemap: https://aiveo3.org/sitemap.xml

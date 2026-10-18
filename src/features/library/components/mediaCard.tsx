@@ -1,4 +1,5 @@
 import { Check, Download, Play, Trash2 } from "lucide-react";
+import { LazyImage, LazyVideo } from "@/components/media";
 
 import type { MediaItem } from "../library.types";
 import { formatDate } from "../library.utils";
@@ -39,18 +40,17 @@ export default function MediaCard({
                 }
             >
                 {item.kind === "image" ? (
-                    <img
+                    <LazyImage
                         src={item.url}
                         alt={item.title}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                        className="object-cover transition duration-300 group-hover:scale-105"
                     />
                 ) : (
                     <>
-                        <video
+                        <LazyVideo
                             src={item.url}
-                            preload="metadata"
-                            className="h-full w-full object-cover"
+                            muted
+                            className="object-cover"
                         />
                         <span className="absolute inset-0 flex items-center justify-center bg-black/20 text-white">
                             <Play size={34} fill="currentColor" />

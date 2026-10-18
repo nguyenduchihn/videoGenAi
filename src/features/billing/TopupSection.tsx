@@ -55,17 +55,9 @@ export function TopupSection({ onSwitchTab }: TopupSectionProps) {
 
     if (error) return <ErrorPanel message={getErrorMessage(error)} onRetry={() => { void refetch(); }} />;
 
-    if (data && !data.enabled) return (
-        <div className="flex flex-wrap items-start gap-3 rounded-xl border border-[var(--app-warning)]/30 bg-[var(--app-warning-soft)] px-4 py-3">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--app-warning)]" aria-hidden />
-            <p className="flex-1 text-sm text-[var(--app-warning)]">
-                Nạp credits tạm thời chưa khả dụng. Vui lòng liên hệ hỗ trợ.
-            </p>
-            <Button variant="outline" size="sm" onClick={() => navigate("/support")}>Liên hệ hỗ trợ</Button>
-        </div>
-    );
+    const disabled = !!data && !data.enabled;
 
-    if (pkgs.length === 0) return <EmptyState icon={CreditCard} title="Chưa có gói nạp" />;
+    if (pkgs.length === 0) return <EmptyState icon={CreditCard} title="Chưa có gói nạp" description="Admin chưa cấu hình gói nạp. Vui lòng liên hệ hỗ trợ." />;
 
     if (state !== "idle" && state !== "creating") return (
         <div className="space-y-4">
@@ -80,11 +72,22 @@ export function TopupSection({ onSwitchTab }: TopupSectionProps) {
 
     return (
         <div className="space-y-6">
+            {disabled && (
+                <div className="flex flex-wrap items-start gap-3 rounded-xl border border-[var(--app-warning)]/30 bg-[var(--app-warning-soft)] px-4 py-3" role="status">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--app-warning)]" aria-hidden />
+                    <p className="flex-1 text-sm text-[var(--app-warning)]">
+                        Nạp credits tạm thời chưa khả dụng. Bạn vẫn xem được các gói bên dưới; cần nạp gấp vui lòng liên hệ hỗ trợ.
+                    </p>
+                    <Button variant="outline" size="sm" onClick={() => navigate("/support")}>Liên hệ hỗ trợ</Button>
+                </div>
+            )}
             <div
                 role="radiogroup"
                 aria-label="Chọn gói nạp"
+                aria-disabled={disabled || undefined}
                 className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
                 onKeyDown={(e) => {
+                    if (disabled) return;
                     const idx = pkgs.findIndex((p) => p.id === selectedId);
                     if (e.key === "ArrowRight" || e.key === "ArrowDown") {
                         e.preventDefault();
@@ -96,10 +99,10 @@ export function TopupSection({ onSwitchTab }: TopupSectionProps) {
                 }}
             >
                 {pkgs.map((pkg, i) => (
-                    <PackageCard key={pkg.id} pkg={pkg} selected={selectedId === pkg.id} popular={i === mid} onSelect={() => setSelectedId(pkg.id)} />
+                    <PackageCard key={pkg.id} pkg={pkg} selected={!disabled && selectedId === pkg.id} popular={i === mid} disabled={disabled} onSelect={() => { if (!disabled) setSelectedId(pkg.id); }} />
                 ))}
             </div>
-            {selectedId && (
+            {selectedId && !disabled && (
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] px-4 py-3">
                     <span className="text-sm text-[var(--app-text-secondary)]">
                         {pkgs.find((p) => p.id === selectedId)?.label}
@@ -113,22 +116,25 @@ export function TopupSection({ onSwitchTab }: TopupSectionProps) {
     );
 }
 
-function PackageCard({ pkg, selected, popular, onSelect }: {
-    pkg: PaymentPackage; selected: boolean; popular: boolean; onSelect: () => void;
+function PackageCard({ pkg, selected, popular, disabled = false, onSelect }: {
+    pkg: PaymentPackage; selected: boolean; popular: boolean; disabled?: boolean; onSelect: () => void;
 }) {
     const perCredit = pkg.credits > 0 ? (pkg.amountVnd / pkg.credits).toFixed(1) : "—";
     return (
         <div
             role="radio"
             aria-checked={selected}
-            tabIndex={0}
+            aria-disabled={disabled || undefined}
+            tabIndex={disabled ? -1 : 0}
             onClick={onSelect}
             onKeyDown={(e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); onSelect(); } }}
             className={cn(
-                "relative cursor-pointer rounded-xl border p-4 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/40",
-                selected
-                    ? "border-[var(--app-accent)] bg-[var(--app-accent-soft)]"
-                    : "border-[var(--app-border)] bg-[var(--app-surface)] hover:border-[var(--app-accent)]/50",
+                "relative rounded-xl border p-4 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-accent)]/40",
+                disabled
+                    ? "cursor-not-allowed border-[var(--app-border)] bg-[var(--app-surface)] opacity-70"
+                    : selected
+                        ? "cursor-pointer border-[var(--app-accent)] bg-[var(--app-accent-soft)]"
+                        : "cursor-pointer border-[var(--app-border)] bg-[var(--app-surface)] hover:border-[var(--app-accent)]/50",
             )}
         >
             {popular && (

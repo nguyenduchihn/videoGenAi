@@ -3,8 +3,10 @@ import type {
     PaymentBankInfo,
     PaymentIntent,
     PaymentIntentListResponse,
+    PaymentPackage,
     PaymentPackagesResponse,
 } from "@/types/api";
+import { activateMockPlan, mockPlansForSale } from "./plans.mock";
 
 const mockBankInfo: PaymentBankInfo = {
     bank: "Vietcombank",
@@ -82,6 +84,19 @@ export function createMockPaymentIntent(
     if (!selectedPackage) {
         throw new Error("PACKAGE_NOT_FOUND");
     }
+    return newMockIntent("topup", selectedPackage, null);
+}
+
+/** Mua / gia hạn gói dịch vụ (subscription): package = gói dịch vụ, credits = credit cấp ngay. */
+export function createMockPlanIntent(planId: string): PaymentIntent {
+    const existing = Array.from(mockIntents.values()).find((i) => i.kind === "plan_purchase" && i.planId === planId && i.status === "pending" && !i.expired);
+    if (existing) return { ...existing, isExisting: true };
+    const plan = mockPlansForSale.find((p) => p.id === planId && p.priceVnd > 0);
+    if (!plan) throw new Error("PLAN_NOT_FOR_SALE");
+    return newMockIntent("plan_purchase", { id: plan.id, label: plan.name, amountVnd: plan.priceVnd, credits: plan.monthlyCredits }, plan.periodDays);
+}
+
+function newMockIntent(kind: PaymentIntent["kind"], selectedPackage: PaymentPackage, periodDays: number | null): PaymentIntent {
 
     const intentId =
         `mock_intent_${Date.now()}_${Math.random()
@@ -109,6 +124,10 @@ export function createMockPaymentIntent(
         ),
 
         isExisting: false,
+
+        kind,
+        planId: kind === "plan_purchase" ? selectedPackage.id : null,
+        periodDays,
 
         status: "pending",
 
@@ -171,6 +190,8 @@ export function getMockPaymentStatus(
             intentId,
             paidIntent
         );
+        // Lệnh mua gói paid ⇒ /portal/auth/me phản ánh gói + hạn mới (như máy chủ thật)
+        if (paidIntent.kind === "plan_purchase" && paidIntent.planId) activateMockPlan(paidIntent.planId, paidIntent.periodDays ?? 30, null);
 
         return paidIntent;
     }

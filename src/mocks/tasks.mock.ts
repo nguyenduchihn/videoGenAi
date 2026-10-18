@@ -307,6 +307,11 @@ export function takenRunIndices(runId: string): number[] {
     return mockTasksOfRun(runId).map((t) => t.runIndex).filter((i): i is number => i !== null);
 }
 
+/** Mọi task của các lô/lượt mock đã tạo trong phiên (kể cả lượt run_mock_big) ⇒ lịch sử + thư viện mock có dữ liệu. */
+export function allMockBatchTasks(): MockTask[] {
+    return [...mockBatches.values()].flatMap((b) => b.tasks);
+}
+
 export function mockTasksOfRun(runId: string): MockTask[] {
     return [...mockBatches.values()].flatMap((b) => b.tasks).filter((t) => t.runId === runId);
 }

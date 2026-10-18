@@ -1,4 +1,6 @@
-import { ChevronDown, CreditCard, HelpCircle, History, Home, Image, Layers, PanelLeftClose, PanelLeftOpen, Settings, Sparkles, X } from "lucide-react";
+import { BookOpen, ChevronDown, CreditCard, HelpCircle, History, Home, Image, Layers, PanelLeftClose, PanelLeftOpen, Settings, Sparkles, X } from "lucide-react";
+import { expiryText, planChargesCredits, planExpiry } from "@/features/plan/planCopy";
+import { useCommercialMode } from "@/hooks/useCommercialMode";
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
@@ -11,19 +13,25 @@ interface SidebarProps {
     onClose: () => void;
 }
 
-const mainMenu = [
+const MAIN_MENU_BASE = [
     { label: "Trang chủ", path: "/dashboard", icon: Home },
     { label: "Lượt tạo", path: "/runs", icon: Layers }, // thay "Dự án" (/projects chuyển hướng về đây)
     { label: "Thư viện", path: "/library", icon: Image },
     { label: "Lịch sử tác vụ", path: "/tasks", icon: History },
-    { label: "Nạp credits", path: "/billing", icon: CreditCard },
 ];
+/** Mục cuối theo mô hình bán hàng: nạp credit (payg) hay gói của tôi (subscription). */
+const billingItem = (subscription: boolean) => (subscription ? { label: "Gói của tôi", path: "/my-plan", icon: Layers } : { label: "Nạp credits", path: "/billing", icon: CreditCard });
 
 const otherMenu = [
     {
         label: "Cài đặt",
         path: "/settings/appearance",
         icon: Settings,
+    },
+    {
+        label: "Tài liệu API",
+        path: "/api-docs",
+        icon: BookOpen,
     },
     {
         label: "Hỗ trợ",
@@ -49,6 +57,13 @@ export default function Sidebar({
         me?.user.name?.trim() || me?.user.email || "Tài khoản";
 
     const planName = me?.plan?.name ?? "Miễn phí";
+    const subscription = useCommercialMode() === "subscription";
+    const mainMenu = [...MAIN_MENU_BASE, billingItem(subscription)];
+    const expiry = planExpiry(me?.user.planExpiresAt);
+    const showBalance = !subscription || planChargesCredits(me?.plan);
+    const billingPath = subscription ? "/my-plan" : "/billing";
+    const billingCta = subscription ? (!me?.plan || expiry.state === "expired" ? "Mua gói" : "Gia hạn") : "Nạp credits";
+    const BillingIcon = subscription ? Layers : CreditCard;
 
     const initial = displayName.charAt(0).toUpperCase();
     const handleNavClick = () => {
@@ -254,9 +269,16 @@ export default function Sidebar({
                                     <p className="text-xs font-semibold text-[var(--app-text)]">
                                         {planName}
                                     </p>
-                                    <p className="mt-0.5 text-[10px] leading-4 text-[var(--app-text-secondary)]">
-                                        {me?.balance.display ?? "—"}
-                                    </p>
+                                    {subscription && expiry.state !== "none" && (
+                                        <p className={`mt-0.5 text-[10px] leading-4 ${expiry.state === "active" ? "text-[var(--app-text-secondary)]" : "font-medium text-[var(--app-warning)]"}`} aria-label={`Gói ${planName}, ${expiryText(expiry)}`}>
+                                            {expiry.state === "expired" ? "⚠ " : ""}{expiryText(expiry)}
+                                        </p>
+                                    )}
+                                    {showBalance && (
+                                        <p className="mt-0.5 text-[10px] leading-4 text-[var(--app-text-secondary)]">
+                                            {me?.balance.display ?? "—"}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
@@ -264,12 +286,12 @@ export default function Sidebar({
                                 type="button"
                                 onClick={() => {
                                     onClose();
-                                    navigate("/billing");
+                                    navigate(billingPath);
                                 }}
                                 className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--app-surface)] px-3 py-2.5 text-xs font-medium text-[var(--app-text-secondary)] ring-1 ring-[var(--app-border)] transition hover:bg-[var(--app-accent-soft)] hover:text-[var(--app-accent)]"
                             >
-                                <CreditCard className="h-4 w-4 text-[var(--app-accent)]" />
-                                <span>Nạp credits</span>
+                                <BillingIcon className="h-4 w-4 text-[var(--app-accent)]" />
+                                <span>{billingCta}</span>
                             </button>
                         </div>
                     </div>
@@ -277,12 +299,12 @@ export default function Sidebar({
                     {compactSidebar && (
                         <button
                             type="button"
-                            onClick={() => navigate("/billing")}
-                            title="Nạp credits"
-                            aria-label="Nạp credits"
+                            onClick={() => navigate(billingPath)}
+                            title={billingCta}
+                            aria-label={billingCta}
                             className="hidden h-10 w-full items-center justify-center rounded-lg bg-[var(--app-accent-soft)] transition hover:opacity-80 lg:flex"
                         >
-                            <CreditCard className="h-4 w-4 text-[var(--app-accent)]" />
+                            <BillingIcon className="h-4 w-4 text-[var(--app-accent)]" />
                         </button>
                     )}
 

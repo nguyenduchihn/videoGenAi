@@ -1,59 +1,45 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Film, Image as ImageIcon, LoaderCircle } from "lucide-react";
+import { useInView } from "@/components/media";
 import type { MediaKind, MediaSource, MediaItem } from "./library.types";
 import { useLibraryMedia } from "./hooks/useLibraryMedia";
 import { useMediaSelection } from "./hooks/useMediaSelection";
 import { useMediaDownload } from "./hooks/useMediaDownload";
 import LibraryGrid from "./components/libraryGrid";
-import LibraryPagination from "./components/libraryPagination";
 import MediaPreviewModal from "./components/mediaPreviewModal";
 import LibraryToolbar from "./components/libraryToolbar";
 import { useMediaDelete } from "./hooks/useMediaDelete";
 
-const PAGE_SIZE = 12;
+/** Dưới ngưỡng này mà API còn trang ⇒ tự lấy thêm (vd lọc "video" nhưng 50 task đầu toàn ảnh). */
+const MIN_VISIBLE = 12;
 
 export default function LibraryPage() {
-    const { media, loading, error, loadTasks } = useLibraryMedia();
-    const [page, setPage] = useState(1);
+    const { media, loading, error, loadTasks, hasMore, loadingMore, loadMore } = useLibraryMedia();
     const [kind, setKind] = useState<MediaKind>("image");
     const [source, setSource] = useState<MediaSource>("all");
     const [selected, setSelected] = useState<MediaItem | null>(null);
     const { selectedIds, isSelectionMode, toggleMediaSelection, toggleSelectCurrentPage, clearSelection, startSelection } = useMediaSelection();
     const { downloading, downloadMedia, downloadSelectedMedia } = useMediaDownload();
+    // Mốc cuối lưới: cuộn tới (trước 600 px) ⇒ lấy trang kế; media trong thẻ vẫn chỉ tải khi từng thẻ vào khung nhìn.
+    const [sentinelRef, sentinelInView] = useInView<HTMLDivElement>({ rootMargin: "600px 0px", once: false });
     const { deleteMedia, deletingId, error: deleteError, setError: setDeleteError } = useMediaDelete();
     const [deletingSelected, setDeletingSelected] = useState(false);
 
+    const filtered = media.filter((item) => item.kind === kind && (source === "all" || item.source === source));
 
-    const filtered = media.filter((item) => {
-        return item.kind === kind &&
-            (source === "all" || item.source === source);
-    });
-
-    const totalPages = Math.max(
-        1,
-        Math.ceil(filtered.length / PAGE_SIZE)
-    );
-    const currentPage = Math.min(page, totalPages);
-    const visibleItems = filtered.slice(
-        (currentPage - 1) * PAGE_SIZE,
-        currentPage * PAGE_SIZE,
-    );
+    useEffect(() => {
+        if (!loading && hasMore && !loadingMore && (sentinelInView || filtered.length < MIN_VISIBLE)) loadMore();
+    }, [loading, hasMore, loadingMore, sentinelInView, filtered.length, loadMore]);
 
     function changeKind(value: MediaKind) {
         setKind(value);
-        setPage(1);
         setSource("all");
         clearSelection();
     }
 
     function changeSource(value: MediaSource) {
         setSource(value);
-        setPage(1);
         clearSelection();
-    }
-
-    function goToPage(value: number) {
-        setPage(Math.max(1, Math.min(value, totalPages)));
     }
 
     async function handleDelete(item: MediaItem) {
@@ -182,7 +168,7 @@ export default function LibraryPage() {
                 downloading={downloading}
                 onKindChange={changeKind}
                 onSourceChange={changeSource}
-                onRefresh={() => void loadTasks()}
+                onRefresh={loadTasks}
                 onToggleSelection={() => {
                     if (isSelectionMode) {
                         clearSelection();
@@ -190,7 +176,7 @@ export default function LibraryPage() {
                         startSelection();
                     }
                 }}
-                onSelectCurrentPage={() => toggleSelectCurrentPage(visibleItems)}
+                onSelectCurrentPage={() => toggleSelectCurrentPage(filtered)}
                 onClearSelection={clearSelection}
                 onDownloadSelected={() =>
                     void downloadSelectedMedia(filtered, selectedIds)
@@ -198,8 +184,8 @@ export default function LibraryPage() {
                 onDeleteSelected={() => void handleDeleteSelected()}
                 deleting={deletingId !== null || deletingSelected}
             />
-            <div className="mt-3 text-right text-sm text-[var(--app-text-secondary)]">
-                {filtered.length} Tệp
+            <div className="mt-3 text-right text-sm text-[var(--app-text-secondary)]" aria-live="polite">
+                {filtered.length} tệp{hasMore ? " · cuộn xuống để tải thêm" : ""}
             </div>
 
 
@@ -220,13 +206,13 @@ export default function LibraryPage() {
                     <p className="text-sm text-red-500">{error}</p>
                     <button
                         type="button"
-                        onClick={() => void loadTasks()}
+                        onClick={loadTasks}
                         className="rounded-lg bg-[var(--app-accent)] px-4 py-2 text-sm text-white"
                     >
                         Thử lại
                     </button>
                 </div>
-            ) : visibleItems.length === 0 ? (
+            ) : filtered.length === 0 && !hasMore ? (
                 <div className="flex min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[var(--app-border)] text-center">
                     {kind === "image" ? (
                         <ImageIcon size={32} className="text-[var(--app-text-muted)]" />
@@ -242,7 +228,7 @@ export default function LibraryPage() {
                 </div>
             ) : (
                 <LibraryGrid
-                    items={visibleItems}
+                    items={filtered}
                     isSelectionMode={isSelectionMode}
                     selectedIds={selectedIds}
                     onOpen={(item) => {
@@ -258,11 +244,15 @@ export default function LibraryPage() {
                 />
             )}
 
-            <LibraryPagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={goToPage}
-            />
+            <div ref={sentinelRef} className="flex min-h-10 items-center justify-center text-sm text-[var(--app-text-secondary)]" aria-busy={loadingMore}>
+                {loadingMore ? (
+                    <span className="inline-flex items-center gap-2"><LoaderCircle className="animate-spin" size={16} aria-hidden="true" />Đang tải thêm...</span>
+                ) : hasMore ? (
+                    <button type="button" onClick={loadMore} className="rounded-lg border border-[var(--app-border)] px-4 py-2 text-sm text-[var(--app-text)] hover:bg-[var(--app-surface-soft)]">
+                        Tải thêm
+                    </button>
+                ) : null}
+            </div>
 
             <MediaPreviewModal
                 item={selected}

@@ -1,10 +1,12 @@
-import { AlertTriangle, Check, Copy, KeyRound, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, Copy, KeyRound, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { Badge, Button, Card, EmptyState, ErrorPanel, Field, Input, Modal, Skeleton } from "@/components/ui";
 import { useFeedback } from "@/hooks/useFeedback";
 import { getErrorMessage } from "@/lib/errors";
 import { formatDate } from "@/lib/format";
+import { WebhookSecretPanel } from "@/features/api-docs/components/WebhookSecretPanel";
 import { apiKeyService } from "@/services/apiKey.service";
 import type { ApiKey, CreateApiKeyResponse } from "@/types/api";
 
@@ -103,6 +105,9 @@ export default function ApiKeys() {
                 <div>
                     <h2 className="text-xl font-semibold text-[var(--app-text)]">API Keys</h2>
                     <p className="mt-1 text-sm text-[var(--app-text-secondary)]">Dành cho ứng dụng tích hợp API bên ngoài (gửi header X-API-Key). Tạo video trên web dùng phiên đăng nhập, không cần key.</p>
+                    <Link to="/api-docs" className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-[var(--app-accent)] hover:underline">
+                        Xem hướng dẫn tích hợp <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                    </Link>
                 </div>
             </div>
 
@@ -182,6 +187,8 @@ export default function ApiKeys() {
                     </ul>
                 )}
             </Card>
+
+            <WebhookSecretPanel />
 
             <NewKeyModal key={newKey?.id ?? "none"} issued={newKey} onClose={() => setNewKey(null)} />
         </div>

@@ -36,6 +36,7 @@ export default function DefaultGenerator(props: GeneratorLayoutProps) {
                     jobCount={jobs.length}
                     estimatedCredits={props.estimatedCredits}
                     balance={props.balance}
+                    fairUse={props.fairUse}
                     validation={props.validation}
                     showValidation={props.showValidation}
                     submitError={props.submitError}

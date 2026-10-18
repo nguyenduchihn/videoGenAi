@@ -299,12 +299,30 @@ export default function GeneratorPanel() {
 
     return (
         <>
+
             <div className="grid grid-cols-1 items-start gap-4 2xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-                {/* Bên trái  */}
+                {/* Bên trái */}
                 <div className="flex min-w-0 flex-col gap-3">
-                    {draft.pending && draft.pending.prompt !== form.prompt && <DraftRestoreBanner draft={draft.pending} onRestore={draft.restore} onDismiss={draft.dismiss} />}
-                    <ResumeBanner pending={submitter.pendingResume} isSubmitting={submitter.isSubmitting} onResume={(id) => { setActiveRunId(id); void submitter.resume(id); }} onDiscard={(id) => void submitter.discard(id)} />
+                    {draft.pending && draft.pending.prompt !== form.prompt && (
+                        <DraftRestoreBanner
+                            draft={draft.pending}
+                            onRestore={draft.restore}
+                            onDismiss={draft.dismiss}
+                        />
+                    )}
+
+                    <ResumeBanner
+                        pending={submitter.pendingResume}
+                        isSubmitting={submitter.isSubmitting}
+                        onResume={(id) => {
+                            setActiveRunId(id);
+                            void submitter.resume(id);
+                        }}
+                        onDiscard={(id) => void submitter.discard(id)}
+                    />
+
                     <RunBanner excludeRunId={activeRunId} />
+
                     <DefaultGenerator
                         mode={form.mode}
                         spec={form.spec}
@@ -327,13 +345,22 @@ export default function GeneratorPanel() {
                         submitError={submitError ?? submitter.progress?.error ?? null}
                         estimatedCredits={form.estimatedCredits}
                         balance={form.balance}
+                        fairUse={form.fairUse}
                         isGenerating={isPreparing || submitter.isSubmitting}
                         uploadProgress={uploadProgress}
-                        sendProgress={submitter.isSubmitting && submitter.progress ? { sent: submitter.progress.sent, total: submitter.progress.total } : null}
+                        sendProgress={
+                            submitter.isSubmitting && submitter.progress
+                                ? {
+                                    sent: submitter.progress.sent,
+                                    total: submitter.progress.total,
+                                }
+                                : null
+                        }
                         handleGenerate={handleGenerate}
                     />
                 </div>
-                {/* Bên phải  */}
+
+                {/* Bên phải: kết quả tạo ảnh/video */}
                 <div className="min-w-0">
                     {activeRunId ? (
                         <ActiveRunSection
@@ -349,7 +376,6 @@ export default function GeneratorPanel() {
                     )}
                 </div>
             </div>
-
             <ConfirmGenerateDialog
                 open={confirmOpen}
                 jobCount={form.jobs.length}

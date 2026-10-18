@@ -1,5 +1,7 @@
 import { Check, Download, Pencil, RefreshCw, X, XCircle } from "lucide-react";
 import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { useCommercialMode } from "@/hooks/useCommercialMode";
 import type { FormEvent } from "react";
 import { doneCount, formatEta, runDisplayName, runPercent, runStateLabel } from "@/features/runs/runCopy";
 import type { RunSummary } from "@/types/api";
@@ -63,6 +65,7 @@ function RenameForm({ name, onSubmit, onCancel }: { name: string | null; onSubmi
 
 /** Tiêu đề lượt: tên (đổi được), thanh tiến độ, đếm theo trạng thái, ước tính còn, hành động hàng loạt. */
 export default function RunProgressHeader({ run, remainingLocal = 0, sticky = false, compact = false, onRename, onCancelRemaining, onRetryFailed, onDownloadAll, isBusy = false }: RunProgressHeaderProps) {
+    const mode = useCommercialMode();
     const [editing, setEditing] = useState(false);
     const renameButtonRef = useRef<HTMLButtonElement>(null);
     const closeRename = () => {
@@ -113,7 +116,12 @@ export default function RunProgressHeader({ run, remainingLocal = 0, sticky = fa
                             </div>
                         )}
                         {run.pausedReason === "INSUFFICIENT_CREDITS" && (
-                            <p role="alert" className="mt-2 text-xs font-medium text-[var(--app-warning)]">Tạm dừng: không đủ credit. Nạp thêm để máy chủ tự tiếp tục.</p>
+                            <p role="alert" className="mt-2 text-xs font-medium text-[var(--app-warning)]">
+                                {mode === "subscription" ? "Tạm dừng: hết credit theo gói. " : "Tạm dừng: không đủ credit. "}
+                                <Link to={mode === "subscription" ? "/my-plan?tab=buy" : "/billing"} className="underline">
+                                    {mode === "subscription" ? "Gia hạn gói để nhận credit mới" : "Nạp thêm để máy chủ tự tiếp tục"}
+                                </Link>
+                            </p>
                         )}
                     </div>
 

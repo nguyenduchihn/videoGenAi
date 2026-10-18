@@ -59,6 +59,9 @@ export interface UseGeneratorFormReturn {
     estimatedCredits: number;
     /** Số dư credit hiện tại (null khi chưa tải xong hồ sơ). */
     balance: number | null;
+    /** Gói không trừ credit ⇒ chi phí 0, hiện lượt tạo hôm nay thay số dư. */
+    chargesCredits: boolean;
+    fairUse: { today: number; limit: number | null } | null;
     validation: ValidationResult;
     showValidation: boolean;
     setShowValidation: (value: boolean) => void;
@@ -72,7 +75,11 @@ export interface UseGeneratorFormReturn {
 export function useGeneratorForm({ variant = "advanced" }: { variant?: "quick" | "advanced" } = {}): UseGeneratorFormReturn {
     const catalog = useModelCatalog();
     const pricing = usePricing().data;
-    const balance = useAuthStore((state) => state.user?.balance.raw ?? state.user?.user.credits ?? null);
+    const me = useAuthStore((state) => state.user);
+    const chargesCredits = me?.plan?.chargesCredits ?? true;
+    const balance = chargesCredits ? (me?.balance.raw ?? me?.user.credits ?? null) : null;
+    /** Gói không trừ credit: số video trả phí hôm nay / giới hạn (null = không giới hạn). */
+    const fairUse = !chargesCredits && me ? { today: me.usage.fairUseToday, limit: me.user.fairUsePerDayOverride ?? me.plan?.fairUsePerDay ?? null } : null;
     const [showValidation, setShowValidation] = useState(false);
     const [mode, setMode] = useState<GeneratorMode>(DEFAULT_MODE);
     const [aspectRatio, setAspectRatio] = useState(defaultRatio("video"));
@@ -120,7 +127,7 @@ export function useGeneratorForm({ variant = "advanced" }: { variant?: "quick" |
     const spec = modeSpec(mode);
     const modelOptions = useMemo(() => getModelOptions(catalog, mode), [catalog, mode]);
     const upscaleCredits = settings.upscale === "none" ? 0 : (pricing?.workers[UPSCALE_PRICE_KEY[spec.kind]]?.credits ?? 0);
-    const creditPerJob = getCreditCost(catalog, settings.model) + upscaleCredits;
+    const creditPerJob = chargesCredits ? getCreditCost(catalog, settings.model) + upscaleCredits : 0;
     const estimatedCredits = jobs.length * creditPerJob;
     const validation = useMemo(
         () => validateGenerator({ mode, jobs, settings, attachments }),
@@ -161,7 +168,7 @@ export function useGeneratorForm({ variant = "advanced" }: { variant?: "quick" |
         catalog, mode, spec, modelOptions, aspectRatio, setAspectRatio,
         prompt, setPrompt, attachments, updateAttachments, uploadCache,
         promptSplitMode, setPromptSplitMode, settingsOpen, setSettingsOpen, settings, setSettings,
-        jobs, creditPerJob, estimatedCredits, balance, validation,
+        jobs, creditPerJob, estimatedCredits, balance, chargesCredits, fairUse, validation,
         showValidation, setShowValidation, handleModeChange, startExtendFrom, applyDraft,
     };
 }

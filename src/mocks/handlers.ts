@@ -5,14 +5,16 @@ import type { CreateTasksRequest } from "@/types/api";
 import { mockMeResponse } from "./auth.mock";
 import {
     createMockPaymentIntent,
+    createMockPlanIntent,
     getMockPaymentHistory,
     getMockPaymentStatus,
     mockPaymentPackages,
 } from "./payment.mock";
 import { mockPricingResponse } from "./pricing.mock";
+import { mockPlanActivation, mockPlansForSale } from "./plans.mock";
 import { mockUploadedImage } from "./images.mock";
 import { cancelMockRun, enqueueMockItems, getMockRunSummary, listMockRuns, mockRunTasksPage, renameMockRun, retryMockFailed, seedMockBigRun, upsertMockRun } from "./runs.mock";
-import { cancelMockTask, createMockBatch, getMockBatch, mockTasksResponse, takenRunIndices, validateMockTask } from "./tasks.mock";
+import { allMockBatchTasks, cancelMockTask, createMockBatch, getMockBatch, mockTasksResponse, takenRunIndices, validateMockTask } from "./tasks.mock";
 import type { RunStatus, TaskStatus } from "@/types/api";
 
 /** e2e: localStorage `videogen:mock-big-run` = N ⇒ /v1/runs có sẵn lượt `run_mock_big` với N task đã xong. */
@@ -28,7 +30,49 @@ function seedBigRunIfRequested(): void {
 const error = (status: number, code: string, message: string, metadata?: Record<string, unknown>, headers?: Record<string, string>) =>
     HttpResponse.json({ error: { code, message, requestId: `mock-${Date.now()}`, ...(metadata ? { metadata } : {}) } }, { status, headers });
 
+/** e2e: localStorage `videogen:mock-topup-disabled` = "1" ⇒ admin tạm tắt nạp tiền (packages.enabled / pricing.topupEnabled = false). */
+function isMockTopupDisabled(): boolean {
+    try {
+        return typeof localStorage !== "undefined" && localStorage.getItem("videogen:mock-topup-disabled") === "1";
+    } catch {
+        return false;
+    }
+}
+
 /** e2e: đặt localStorage `videogen:mock-unauth` = "1" để giả lập chưa đăng nhập (handler chạy trong page). */
+/** e2e: localStorage `videogen:mock-mode` = "subscription" ⇒ hệ thống bán gói dịch vụ (nạp credit tắt, /pricing hiện gói); mặc định payg. */
+function mockMode(): "payg" | "subscription" {
+    try {
+        return localStorage.getItem("videogen:mock-mode") === "subscription" ? "subscription" : "payg";
+    } catch {
+        return "payg";
+    }
+}
+/** e2e: localStorage `videogen:mock-plan-expired` = "1" ⇒ khách đang có gói hết hạn (banner gia hạn). */
+function isMockPlanExpired(): boolean {
+    try {
+        return localStorage.getItem("videogen:mock-plan-expired") === "1";
+    } catch {
+        return false;
+    }
+}
+/** /portal/auth/me theo chế độ + gói vừa mua (mock) + trạng thái hết hạn giả lập. */
+function mockMe() {
+    const activation = mockPlanActivation();
+    const plan = activation ? (mockPlansForSale.find((p) => p.id === activation.planId) ?? null) : null;
+    const expired = isMockPlanExpired() && !activation;
+    return {
+        ...mockMeResponse,
+        commercialMode: mockMode(),
+        user: {
+            ...mockMeResponse.user,
+            planId: activation?.planId ?? mockMeResponse.user.planId,
+            planExpiresAt: activation?.planExpiresAt ?? (expired ? "2026-10-01T00:00:00.000Z" : mockMeResponse.user.planExpiresAt),
+        },
+        plan: plan ? { ...plan, active: true, sortOrder: 0 } : mockMeResponse.plan,
+    };
+}
+
 function isMockUnauthenticated(): boolean {
     try {
         return typeof localStorage !== "undefined" && localStorage.getItem("videogen:mock-unauth") === "1";
@@ -78,7 +122,7 @@ const requireApiKey = (request: Request): Response | null => {
 export const handlers = [
     // ── Portal auth ──
     http.get("/portal/auth/me", () =>
-        isMockUnauthenticated() ? error(401, "SESSION_REQUIRED", "login required") : HttpResponse.json(mockMeResponse),
+        isMockUnauthenticated() ? error(401, "SESSION_REQUIRED", "login required") : HttpResponse.json(mockMe()),
     ),
     http.post("/portal/auth/login", () => HttpResponse.json({ ok: true })),
     http.post("/portal/auth/logout", () => new HttpResponse(null, { status: 204 })),
@@ -122,7 +166,10 @@ export const handlers = [
         const status = q.get("status");
         const limit = Math.min(50, Math.max(1, Number(q.get("limit")) || 20));
         const offset = Math.max(0, Number(q.get("cursor")) || 0);
-        const all = status ? mockTasksResponse.tasks.filter((task) => task.status === status) : mockTasksResponse.tasks;
+        seedBigRunIfRequested();
+        // Task mẫu đứng trước (e2e lịch sử dựa vào thứ tự này), sau đó là task của các lô/lượt mock đã tạo trong phiên.
+        const pool = [...mockTasksResponse.tasks, ...allMockBatchTasks()];
+        const all = status ? pool.filter((task) => task.status === status) : pool;
         const tasks = all.slice(offset, offset + limit);
         return HttpResponse.json({ tasks, nextCursor: offset + limit < all.length ? String(offset + limit) : null });
     }),
@@ -147,11 +194,27 @@ export const handlers = [
             balance: mockMeResponse.balance.raw,
         }),
     ),
-    http.get("/portal/pricing", () => HttpResponse.json(mockPricingResponse)),
+    http.get("/portal/pricing", () =>
+        mockMode() === "subscription"
+            ? HttpResponse.json({ ...mockPricingResponse, topupEnabled: false, packages: [], commercialMode: "subscription", plans: mockPlansForSale, trialDays: 14 })
+            : HttpResponse.json({ ...mockPricingResponse, topupEnabled: !isMockTopupDisabled() }),
+    ),
 
     // ── Nạp tiền ──
-    http.get("/portal/payments/packages", () => HttpResponse.json(mockPaymentPackages)),
+    http.get("/portal/payments/packages", () =>
+        mockMode() === "subscription" ? HttpResponse.json({ ...mockPaymentPackages, enabled: false, packages: [] }) : HttpResponse.json({ ...mockPaymentPackages, enabled: !isMockTopupDisabled() }),
+    ),
+    http.post("/portal/payments/seapay/create-plan-intent", async ({ request }) => {
+        if (mockMode() !== "subscription") return error(409, "MODE_MISMATCH", "Hệ thống đang bán credit theo lượt, không bán gói dịch vụ");
+        const body = (await request.json()) as { planId: string };
+        try {
+            return HttpResponse.json(createMockPlanIntent(body.planId), { status: 201 });
+        } catch {
+            return error(404, "PLAN_NOT_FOR_SALE", "plan not for sale");
+        }
+    }),
     http.post("/portal/payments/seapay/create-intent", async ({ request }) => {
+        if (mockMode() === "subscription") return error(409, "MODE_MISMATCH", "Hệ thống đang bán gói dịch vụ, không nhận nạp credit");
         const body = (await request.json()) as { packageId: string };
         try {
             return HttpResponse.json(createMockPaymentIntent(body), { status: 201 });
@@ -174,6 +237,7 @@ export const handlers = [
             status: "active",
             emailVerified: true,
             planExpiresAt: null,
+            commercialMode: mockMode(),
             plan: { id: "pro", name: "Pro", maxConcurrent: 4, maxPending: 50, chargesCredits: true },
         }),
     ),

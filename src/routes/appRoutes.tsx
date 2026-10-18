@@ -10,6 +10,7 @@ import Register from "@/pages/auth/register";
 import ResetPassword from "@/pages/auth/reset-password";
 import VerifyEmail from "@/pages/auth/verify-email";
 import NotFound from "@/pages/notFound";
+import { ModeGate } from "@/features/plan/ModeGate";
 
 // Trang nặng tách chunk riêng; Suspense + popup tải đặt ở RootLayout.
 const Home = lazy(() => import("@/pages/home/home"));
@@ -19,8 +20,10 @@ const RunDetailPage = lazy(() => import("@/pages/runs/RunDetailPage"));
 const ProfilePage = lazy(() => import("@/features/profile/ProfilePage"));
 const LibraryPage = lazy(() => import("@/features/library/LibraryPage"));
 const BillingPage = lazy(() => import("@/features/billing/BillingPage"));
+const MyPlanPage = lazy(() => import("@/features/plan/MyPlanPage"));
 const TasksPage = lazy(() => import("@/features/tasks/TasksPage"));
 const Pricing = lazy(() => import("@/pages/pricing/pricing"));
+const ApiDocsPage = lazy(() => import("@/features/api-docs/ApiDocsPage"));
 const Support = lazy(() => import("@/pages/support/support"));
 const Settings = lazy(() => import("@/pages/settings/settings"));
 const Appearance = lazy(() => import("@/pages/settings/appearance"));
@@ -35,6 +38,8 @@ const router = createBrowserRouter([
         errorElement: <RouteErrorPage />,
         children: [
             { path: "/", element: <Home /> },
+            { path: "/pricing", element: <Pricing /> }, // công khai: landing dẫn tới, chưa đăng nhập vẫn xem được giá + gói nạp
+            { path: "/api-docs", element: <ApiDocsPage /> }, // công khai; đăng nhập ⇒ cá nhân hoá (key, giới hạn, khoá webhook)
             { path: "/welcome", element: <Navigate to="/dashboard" replace /> },
             {
                 element: <AuthLayout />,
@@ -54,10 +59,10 @@ const router = createBrowserRouter([
                     { path: "/runs/:runId", element: <RunDetailPage /> },
                     { path: "/projects", element: <Navigate to="/runs" replace /> },
                     { path: "/profile", element: <ProfilePage /> },
-                    { path: "/my-plan", element: <Navigate to="/billing" replace /> },
-                    { path: "/pricing", element: <Pricing /> },
+                    // Chế độ bán gói ⇒ /my-plan; chế độ nạp credit ⇒ /billing (ModeGate chuyển hướng chéo)
+                    { path: "/my-plan", element: <ModeGate require="subscription" to="/billing"><MyPlanPage /></ModeGate> },
                     { path: "/library", element: <LibraryPage /> },
-                    { path: "/billing", element: <BillingPage /> },
+                    { path: "/billing", element: <ModeGate require="payg" to="/my-plan"><BillingPage /></ModeGate> },
                     { path: "/tasks", element: <TasksPage /> },
                     { path: "/support", element: <Support /> },
                     {

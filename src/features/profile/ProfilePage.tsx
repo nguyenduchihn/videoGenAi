@@ -1,6 +1,7 @@
 import { CalendarDays, Key, Mail, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Badge, Button, Card, ErrorPanel, PageHeader, Skeleton, StatCard } from '@/components/ui';
+import { expiryText, planChargesCredits, planExpiry } from '@/features/plan/planCopy';
 import { useMe } from '@/hooks/useMe';
 import { formatDate } from '@/lib/format';
 import { getErrorMessage } from '@/lib/errors';
@@ -19,6 +20,9 @@ export default function ProfilePage() {
     );
     const { user, plan, balance, keys } = me;
     const name = user.name?.trim() || user.email;
+    const subscription = me.commercialMode === 'subscription';
+    const expiry = planExpiry(user.planExpiresAt);
+    const showBalance = !subscription || planChargesCredits(plan);
     const activeKeys = keys.filter((k) => !k.revokedAt).length;
     return (
         <div className="min-h-full bg-[var(--app-bg)]">
@@ -54,10 +58,15 @@ export default function ProfilePage() {
                     </div>
                 </Card>
                 <Card>
-                    <div className="border-b border-[var(--app-border)] px-5 py-4"><h3 className="text-sm font-semibold text-[var(--app-text)]">Gói & credits</h3></div>
+                    <div className="border-b border-[var(--app-border)] px-5 py-4"><h3 className="text-sm font-semibold text-[var(--app-text)]">{subscription ? 'Gói dịch vụ' : 'Gói & credits'}</h3></div>
                     <div className="grid gap-4 p-5 sm:grid-cols-3">
-                        <StatCard label="Gói" value={plan?.name ?? 'Miễn phí'} description={plan ? `${plan.monthlyCredits} credits/tháng` : undefined} />
-                        <StatCard label="Số dư" value={balance.display} description={<Button variant="link" size="sm" onClick={() => navigate('/billing')}>Nạp credits</Button>} />
+                        <StatCard
+                            label="Gói"
+                            value={plan?.name ?? 'Miễn phí'}
+                            description={subscription ? <Button variant="link" size="sm" onClick={() => navigate('/my-plan')}>Xem gói →</Button> : plan ? `${plan.monthlyCredits} credits/tháng` : undefined}
+                        />
+                        {subscription && <StatCard label="Hạn gói" value={expiry.state === 'none' ? 'Không thời hạn' : expiryText(expiry)} description={expiry.state !== 'none' ? formatDate(expiry.at) : undefined} />}
+                        {showBalance && <StatCard label="Số dư" value={balance.display} description={subscription ? undefined : <Button variant="link" size="sm" onClick={() => navigate('/billing')}>Nạp credits</Button>} />}
                         <StatCard label="Task đồng thời" value={String(plan?.maxConcurrent ?? '—')} />
                     </div>
                 </Card>

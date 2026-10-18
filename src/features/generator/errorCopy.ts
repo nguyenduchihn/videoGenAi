@@ -1,5 +1,9 @@
 import { toApiError } from "@/lib/errors";
 import { toLabel } from "./modelCatalog";
+import { useAuthStore } from "@/stores/auth.store";
+
+/** Mô hình bán hàng hiện tại (đọc store, không cần hook) để copy lỗi gợi đúng hành động: nạp credit hay gia hạn gói. */
+const commercialMode = () => useAuthStore.getState().user?.commercialMode ?? "payg";
 
 type Metadata = Record<string, unknown>;
 
@@ -74,12 +78,21 @@ export function describeTaskError(code?: string, message?: string, metadata: Met
         case "INSUFFICIENT_CREDITS": {
             const need = num(metadata, "required");
             const have = num(metadata, "balance");
-            return need !== undefined && have !== undefined
-                ? `Không đủ credit (cần ${need}, còn ${have}). Nạp thêm để tiếp tục.`
-                : "Không đủ credit để thực hiện tác vụ. Nạp thêm để tiếp tục.";
+            const detail = need !== undefined && have !== undefined ? ` (cần ${need}, còn ${have})` : "";
+            return commercialMode() === "subscription"
+                ? `Credit theo gói đã hết${detail}. Gia hạn gói để nhận credit mới.`
+                : `Không đủ credit${detail}. Nạp thêm để tiếp tục.`;
         }
         case "PLAN_EXPIRED":
-            return "Gói sử dụng của bạn đã hết hạn.";
+            return commercialMode() === "subscription"
+                ? "Gói dịch vụ của bạn đã hết hạn. Gia hạn trong mục Gói của tôi để tiếp tục tạo."
+                : "Tài khoản của bạn đang bị giới hạn. Vui lòng liên hệ hỗ trợ.";
+        case "FAIR_USE": {
+            const limit = num(metadata, "limit");
+            return `Bạn đã dùng hết lượt tạo video hôm nay${limit !== undefined ? ` (${limit.toLocaleString("vi-VN")} video/ngày của gói)` : ""}. Tiếp tục vào ngày mai hoặc nâng cấp gói.`;
+        }
+        case "MODE_MISMATCH":
+            return "Hệ thống vừa đổi mô hình bán hàng. Tải lại trang để tiếp tục.";
         case "VALIDATION_FAILED":
             return message ?? "Dữ liệu tạo không hợp lệ.";
         case "UNUSUAL_ACTIVITY":

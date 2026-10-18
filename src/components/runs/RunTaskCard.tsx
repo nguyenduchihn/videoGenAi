@@ -1,6 +1,7 @@
 import { Download, FastForward, Image as ImageIcon, Loader2, Maximize2, RefreshCw, Video, X, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getRatioPreviewClass } from "@/components/generator/ratioPreview";
+import { LazyImage, LazyVideo } from "@/components/media";
 import type { PortalTask } from "@/types/api";
 import { ICON_BUTTON, ICON_BUTTON_PRIMARY, isActiveTask, isVideoTask, STATUS_CLASS, STATUS_LABEL, taskAlt, taskErrorText, taskNumber, type RunTaskActions } from "./runTaskView";
 
@@ -111,13 +112,12 @@ function Preview({
                 aria-label={`Phóng to ${taskAlt(task)}`}
                 title="Nhấn để xem video lớn"
             >
-                <video
+                <LazyVideo
                     src={url}
-                    preload="metadata"
                     muted
-                    playsInline
                     aria-label={taskAlt(task)}
                     onError={() => setExpired(true)}
+                    wrapperClassName="bg-black"
                     className="h-full w-full object-contain"
                 />
                 <span className="absolute inset-0 flex items-center justify-center bg-black/0 text-white opacity-0 transition group-hover:bg-black/30 group-hover:opacity-100">
@@ -135,11 +135,9 @@ function Preview({
             aria-label={`Phóng to ${taskAlt(task)}`}
             title="Nhấn để xem ảnh lớn"
         >
-            <img
+            <LazyImage
                 src={url}
                 alt={taskAlt(task)}
-                loading="lazy"
-                decoding="async"
                 onError={() => setExpired(true)}
                 className="h-full w-full object-contain"
             />

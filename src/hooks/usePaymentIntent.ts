@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { createIntent, intentStatus } from "@/api/billing.api";
+import { createIntent, createPlanIntent, intentStatus } from "@/api/billing.api";
 import { getErrorMessage, toApiError } from "@/lib/errors";
 import { qk } from "@/lib/queryClient";
 import type { PaymentIntent } from "@/types/api";
@@ -18,7 +18,8 @@ export function usePaymentIntent(opts?: { onPaid?: (intent: PaymentIntent) => vo
     const intentRef = useRef<PaymentIntent | null>(null);
     const pauseRef = useRef<number | null>(null);
     const errRef = useRef(0);
-    const lastPkgRef = useRef("");
+    /** Cách tạo lệnh gần nhất (gói nạp hay gói dịch vụ) để "Tạo lệnh mới" lặp lại đúng loại. */
+    const lastCreateRef = useRef<(() => Promise<PaymentIntent>) | null>(null);
     const onPaidRef = useRef(opts?.onPaid);
     const qc = useQueryClient();
 
@@ -98,10 +99,10 @@ export function usePaymentIntent(opts?: { onPaid?: (intent: PaymentIntent) => vo
         setPollEpoch((n) => n + 1);
     }, []);
 
-    const _startCreate = useCallback(async (packageId: string) => {
-        lastPkgRef.current = packageId;
+    const _startCreate = useCallback(async (make: () => Promise<PaymentIntent>) => {
+        lastCreateRef.current = make;
         setState("creating"); setPollError(null); setPausedUntil(null); errRef.current = 0;
-        const i = await createIntent(packageId);
+        const i = await make();
         setIntent(i);
         setRemainingMs(Math.max(0, new Date(i.expiresAt).getTime() - Date.now()));
         setState("showing");
@@ -109,7 +110,13 @@ export function usePaymentIntent(opts?: { onPaid?: (intent: PaymentIntent) => vo
 
     const create = useCallback(async (packageId: string) => {
         if (state === "creating" || state === "showing") return;
-        try { await _startCreate(packageId); } catch (err) { setState("idle"); throw err; }
+        try { await _startCreate(() => createIntent(packageId)); } catch (err) { setState("idle"); throw err; }
+    }, [state, _startCreate]);
+
+    /** Mua / gia hạn gói dịch vụ (subscription): cùng vòng đời QR → poll → paid như nạp credit. */
+    const createPlan = useCallback(async (planId: string) => {
+        if (state === "creating" || state === "showing") return;
+        try { await _startCreate(() => createPlanIntent(planId)); } catch (err) { setState("idle"); throw err; }
     }, [state, _startCreate]);
 
     const reset = useCallback(() => {
@@ -118,11 +125,11 @@ export function usePaymentIntent(opts?: { onPaid?: (intent: PaymentIntent) => vo
     }, []);
 
     const createAnother = useCallback(async (packageId?: string) => {
-        const pkg = packageId ?? lastPkgRef.current;
-        if (!pkg) return;
+        const make = packageId ? () => createIntent(packageId) : lastCreateRef.current;
+        if (!make) return;
         reset();
-        try { await _startCreate(pkg); } catch (err) { setState("idle"); throw err; }
+        try { await _startCreate(make); } catch (err) { setState("idle"); throw err; }
     }, [reset, _startCreate]);
 
-    return { state, intent, remainingMs, pollError, pausedUntil, create, reset, createAnother, resumePolling };
+    return { state, intent, remainingMs, pollError, pausedUntil, create, createPlan, reset, createAnother, resumePolling };
 }
