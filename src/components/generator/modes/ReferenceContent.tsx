@@ -18,7 +18,6 @@ export default function ReferenceContent({ attachments, model, onChange }: Refer
                 <SectionTitle title="Ảnh tham chiếu" description="Giữ nhân vật, đồ vật hoặc phong cách trong video. Đặt @tên để nhắc tới ảnh trong prompt." />
                 <ImageSlot
                     role="references"
-                    label="Ảnh tham chiếu"
                     hint={hint}
                     badge={`Tối đa ${max} ảnh`}
                     required

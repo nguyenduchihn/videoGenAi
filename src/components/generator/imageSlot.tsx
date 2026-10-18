@@ -8,7 +8,7 @@ import type { AttachedImage } from "./types";
 
 export interface ImageSlotProps {
     role: ImageRole;
-    label: string;
+    label?: string;
     hint?: string;
     items: AttachedImage[];
     max: number;
@@ -83,7 +83,7 @@ export default function ImageSlot({
         onChange(items.map((item) => (item.localId === localId ? { ...item, handle } : item)));
     };
 
-    const dropzoneLabel = `${label}${required ? " (bắt buộc)" : ""}: chọn hoặc kéo thả ảnh`;
+    const dropzoneLabel = `${label ? `${label}${required ? " (bắt buộc)" : ""}` : "Ảnh"}: chọn hoặc kéo thả ảnh`;
     const activeClass = isDragging
         ? "border-[var(--app-accent)] bg-[var(--app-accent-soft)]"
         : "border-[var(--app-border)] bg-[var(--app-surface-soft)] hover:border-[var(--app-accent)]/60 hover:bg-[var(--app-accent-soft)]/50";
@@ -92,10 +92,16 @@ export default function ImageSlot({
         <section aria-labelledby={titleId} className="space-y-3">
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                    <h4 id={titleId} className="text-sm font-semibold text-[var(--app-text)]">
-                        {label}
-                        {required && <span className="ml-1 text-xs font-normal text-[var(--app-text-muted)]">(bắt buộc)</span>}
-                    </h4>
+                    {label && (
+                        <h4 id={titleId} className="text-sm font-semibold text-[var(--app-text)]">
+                            {label}
+                            {required && (
+                                <span className="ml-1 text-xs font-normal text-[var(--app-text-muted)]">
+                                    (bắt buộc)
+                                </span>
+                            )}
+                        </h4>
+                    )}
                     {hint && <p className="mt-0.5 text-xs leading-5 text-[var(--app-text-muted)]">{hint}</p>}
                 </div>
                 {badge && (
@@ -132,9 +138,8 @@ export default function ImageSlot({
                     onClick={() => inputRef.current?.click()}
                     aria-label={dropzoneLabel}
                     {...dragProps}
-                    className={`group flex w-full flex-col items-center justify-center rounded-2xl border border-dashed text-center transition ${
-                        items.length === 0 ? "min-h-[150px] px-5 py-6" : "gap-2 px-4 py-3"
-                    } ${activeClass}`}
+                    className={`group flex w-full flex-col items-center justify-center rounded-2xl border border-dashed text-center transition ${items.length === 0 ? "min-h-[150px] px-5 py-6" : "gap-2 px-4 py-3"
+                        } ${activeClass}`}
                 >
                     {items.length === 0 ? (
                         <>

@@ -110,7 +110,7 @@ export default function AspectRatioSelector({ mode, value, onChange }: AspectRat
     };
 
     return (
-        <div ref={containerRef} className="relative min-w-0 md:w-44">
+        <div ref={containerRef} className="relative w-full min-w-0">
             <span id={`${listId}-label`} className="mb-1.5 block text-[11px] font-medium uppercase tracking-wide text-[var(--app-text-secondary)]">
                 Tỷ lệ
             </span>
@@ -124,9 +124,8 @@ export default function AspectRatioSelector({ mode, value, onChange }: AspectRat
                 aria-expanded={open}
                 aria-controls={open ? listId : undefined}
                 aria-labelledby={`${listId}-label ${listId}-value`}
-                className={`flex h-11 w-full items-center justify-between rounded-xl border bg-[var(--app-surface)] px-3 text-left transition ${
-                    open ? "border-[var(--app-accent)] ring-1 ring-[var(--app-accent)]/20" : "border-[var(--app-border)] hover:border-[var(--app-accent)]/50"
-                }`}
+                className={`flex h-11 w-full items-center justify-between rounded-xl border bg-[var(--app-surface)] px-3 text-left transition ${open ? "border-[var(--app-accent)] ring-1 ring-[var(--app-accent)]/20" : "border-[var(--app-border)] hover:border-[var(--app-accent)]/50"
+                    }`}
             >
                 <span className="flex min-w-0 items-center gap-2.5">
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--app-surface-soft)]">
@@ -159,9 +158,8 @@ export default function AspectRatioSelector({ mode, value, onChange }: AspectRat
                                 aria-selected={isSelected}
                                 onClick={() => select(option.value)}
                                 onMouseEnter={() => setActive(option.value)}
-                                className={`flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition ${
-                                    isSelected ? "bg-[var(--app-accent-soft)]" : isActive ? "bg-[var(--app-surface-soft)]" : ""
-                                }`}
+                                className={`flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition ${isSelected ? "bg-[var(--app-accent-soft)]" : isActive ? "bg-[var(--app-surface-soft)]" : ""
+                                    }`}
                             >
                                 <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${isSelected ? "bg-[var(--app-accent)]/15" : "bg-[var(--app-surface-soft)]"}`}>
                                     <RatioIcon option={option} accent={isSelected} />

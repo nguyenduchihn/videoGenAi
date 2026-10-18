@@ -26,7 +26,7 @@ export default function ActiveRunBlock({ runId, remainingLocal, ratio, actions, 
     if (!run) return null;
     const preview: PortalTask[] = (tasks.data?.pages.flatMap((p) => p.tasks) ?? []).slice(0, PREVIEW_LIMIT);
     return (
-        <section className="mt-6 overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)]" aria-labelledby="active-run-title">
+        <section className="mt-0 overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)]" aria-labelledby="active-run-title">
             <h2 id="active-run-title" className="sr-only">Lượt đang chạy</h2>
             <RunProgressHeader run={run} remainingLocal={remainingLocal} compact onCancelRemaining={onCancelRemaining} onRetryFailed={onRetryFailed} />
             <div role="region" aria-label="Kết quả" className="p-4 sm:p-5">
