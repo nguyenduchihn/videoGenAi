@@ -56,10 +56,10 @@ describe("uploadAttachments", () => {
         const cache: UploadCache = new Map([[item.file, "id1"]]);
         const upload = vi.fn();
 
-        const resolved = await uploadAttachments(attachments({ references: [item], voice: "  giọng nữ ", sourceMediaId: "m1" }), cache, { upload });
+        const resolved = await uploadAttachments(attachments({ references: [item], voice: "kore", sourceMediaId: "m1" }), cache, { upload });
 
         expect(upload).not.toHaveBeenCalled();
-        expect(resolved).toEqual({ start: undefined, end: undefined, references: ["id1"], sources: [], voice: "giọng nữ", sourceMediaId: "m1" });
+        expect(resolved).toEqual({ start: undefined, end: undefined, references: ["id1"], sources: [], voice: "kore", sourceMediaId: "m1" });
     });
 
     it("throws UPLOAD_INCOMPLETE when the server omits a part", async () => {

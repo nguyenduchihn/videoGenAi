@@ -147,6 +147,7 @@ export const SECTIONS: DocSection[] = [
         blocks: [
             { kind: "live", widget: "models", fallback: "Bảng giá hiện hành: `GET /v1/models` (cần key) hoặc trang [Bảng giá](/pricing)." },
             { kind: "endpoint", method: "GET", path: "/v1/models", summary: "Danh sách model dùng được trong `params.model`, kèm credit và model mặc định." },
+            { kind: "endpoint", method: "GET", path: "/v1/voices", summary: "Danh sách giọng cho `params.audio` của `reference-images-to-video`: `id`, `gender`, `style`, `pitch`, `sampleUrl` (file .wav nghe thử). Ít thay đổi, cache được 24h." },
             { kind: "callout", tone: "info", text: "`Veo_3.1-Lite [Lower Priority]` là video miễn phí theo gói, xếp hàng chậm hơn. Gói không trừ credit vẫn bị giới hạn số job video mỗi ngày (xem mục Giới hạn)." },
         ],
     },

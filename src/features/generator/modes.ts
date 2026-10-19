@@ -46,7 +46,6 @@ export const OMNI_MODEL = "Veo_3.1-Omni";
 export const MAX_SOURCES = 10;
 export const MAX_TASKS_PER_REQUEST = 20;
 export const MAX_PROMPT_LENGTH = 4000;
-export const MAX_VOICE_LENGTH = 200;
 export const SEED_MIN = 10_000;
 export const SEED_MAX = 99_999;
 export const MAX_FILE_BYTES = 20 * 1024 * 1024;

@@ -5,7 +5,6 @@ import {
     IMAGE_HANDLE_RE,
     MAX_PROMPT_LENGTH,
     MAX_SOURCES,
-    MAX_VOICE_LENGTH,
     maxReferences,
     modeSpec,
     OMNI_MODEL,
@@ -63,8 +62,8 @@ export function validateGenerator({ mode, jobs, settings, attachments }: Validat
     );
     if (handleError) return handleError;
 
-    if (spec.roles.voice && attachments.voice.trim().length > MAX_VOICE_LENGTH) {
-        return fail(`Giọng nói tối đa ${MAX_VOICE_LENGTH} ký tự.`, "voice");
+    if (spec.roles.voice && attachments.voice && !settings.audioEnabled) {
+        return fail("Đã chọn giọng nói nhưng audio đang tắt — bật audio hoặc bỏ chọn giọng.", "voice");
     }
     if (spec.settings.seed && settings.seed !== null && (settings.seed < SEED_MIN || settings.seed > SEED_MAX)) {
         return fail(`Seed phải từ ${SEED_MIN} đến ${SEED_MAX}.`, "seed");

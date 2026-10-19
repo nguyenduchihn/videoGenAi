@@ -1,7 +1,8 @@
-import { Download, FastForward, Image as ImageIcon, Loader2, Play, RefreshCw, Video, XCircle } from "lucide-react";
+import { Download, FastForward, Image as ImageIcon, Loader2, Mic, Play, RefreshCw, Video, XCircle } from "lucide-react";
 import { useState } from "react";
 import { getRatioPreviewClass } from "@/components/generator/ratioPreview";
 import { LazyImage, LazyVideo } from "@/components/media";
+import { voiceName } from "@/features/generator/voiceLabels";
 import type { PortalTask } from "@/types/api";
 import { ICON_BUTTON, ICON_BUTTON_PRIMARY, isActiveTask, isVideoTask, STATUS_CLASS, STATUS_LABEL, taskAlt, taskErrorText, taskNumber, type RunTaskActions } from "./runTaskView";
 
@@ -71,6 +72,12 @@ export default function RunTaskCard({ task, ratio, actions }: { task: PortalTask
                     <div className="min-w-0">
                         <p className="text-sm font-semibold text-[var(--app-text)]">Job #{n}</p>
                         <p className="mt-0.5 line-clamp-2 text-xs text-[var(--app-text-muted)]" title={task.prompt ?? undefined}>{task.prompt ?? "—"}</p>
+                        {task.voice && (
+                            <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-[var(--app-text-secondary)]">
+                                <Mic className="h-3 w-3" aria-hidden="true" />
+                                <span><span className="sr-only">Giọng: </span>{voiceName(task.voice)}</span>
+                            </p>
+                        )}
                     </div>
                     <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${STATUS_CLASS[task.status]}`}>
                         {isActiveTask(task) && <Loader2 className="h-3 w-3 motion-safe:animate-spin" aria-hidden="true" />}

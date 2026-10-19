@@ -12,6 +12,7 @@ export const qk = {
     pricing: ["pricing"] as const,
     packages: ["packages"] as const,
     models: ["models"] as const,
+    voices: ["voices"] as const,
     ledger: (cursor?: string) => ["ledger", cursor ?? null] as const,
     tasks: (params?: GetTasksParams) => ["tasks", params ?? {}] as const,
     /** Thư viện media: các trang task succeeded, tải dần khi cuộn. */

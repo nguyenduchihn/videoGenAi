@@ -116,14 +116,16 @@ describe("validateGenerator", () => {
         expect(email.valid).toBe(true);
     });
 
-    it("voice is capped at 200 characters and seed must be within 10000–99999 for text-to-image", () => {
-        const voice = validateGenerator({
+    it("a chosen voice needs audio on (backend rejects voice + audioEnabled:false) and seed must be within 10000–99999 for text-to-image", () => {
+        const withVoice = (audioEnabled: boolean, voice = "achernar") => validateGenerator({
             mode: "reference-images-to-video",
             jobs: ["p"],
-            settings,
-            attachments: attachments({ references: [image()], voice: "v".repeat(201) }),
+            settings: { ...settings, audioEnabled },
+            attachments: attachments({ references: [image()], voice }),
         });
-        expect(voice.message).toBe("Giọng nói tối đa 200 ký tự.");
+        expect(withVoice(false)).toMatchObject({ valid: false, field: "voice", message: "Đã chọn giọng nói nhưng audio đang tắt — bật audio hoặc bỏ chọn giọng." });
+        expect(withVoice(true).valid).toBe(true);
+        expect(withVoice(false, "").valid).toBe(true);
         const seed = validateGenerator({ mode: "text-to-image", jobs: ["p"], settings: { ...settings, seed: 5 }, attachments: EMPTY_ATTACHMENTS });
         expect(seed.message).toBe("Seed phải từ 10000 đến 99999.");
         const seedIgnoredForVideo = validateGenerator({ mode: "text-to-video", jobs: ["p"], settings: { ...settings, seed: 5 }, attachments: EMPTY_ATTACHMENTS });

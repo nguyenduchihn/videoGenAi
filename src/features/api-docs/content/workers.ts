@@ -57,11 +57,18 @@ export const WORKERS: WorkerDoc[] = [
             "`images.references`: 1–3 ảnh (tới 7 với `Veo_3.1-Omni`).",
             "Phần tử dạng `{ \"imageId\": \"…\", \"handle\": \"girl\" }` ⇒ nhắc `@girl` trong prompt.",
         ],
-        params: [...videoParams, { name: "audio", type: "string", description: "Mô tả giọng nói / âm thanh, tối đa 200 ký tự." }],
+        params: [
+            ...videoParams,
+            {
+                name: "audio",
+                type: "string",
+                description: "Id giọng từ `GET /v1/voices`, vd `achernar` (không phân biệt hoa thường; alias `voice`). Dùng cùng một id cho mọi task để các video đồng bộ giọng. Bỏ trống hoặc `none` ⇒ Google tự chọn. Id lạ, mô tả tự do, hoặc chọn giọng khi `audioEnabled: false` ⇒ 400 ngay lúc tạo, không trừ credit. Lời thoại vẫn viết trong `prompt`.",
+            },
+        ],
         example: {
             method: "POST",
             path: "/v1/tasks",
-            body: { tasks: [{ worker: "reference-images-to-video", params: { prompt: "@girl đi dạo trong công viên", audio: "giọng nữ trầm, nhẹ nhàng" }, images: { references: [{ imageId: "img_01HZXGIRL000", handle: "girl" }] } }] },
+            body: { tasks: [{ worker: "reference-images-to-video", params: { prompt: "@girl đi dạo trong công viên và nói: \"Chào buổi sáng!\"", audio: "achernar" }, images: { references: [{ imageId: "img_01HZXGIRL000", handle: "girl" }] } }] },
         },
     },
     {

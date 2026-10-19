@@ -231,6 +231,8 @@ export interface PortalTask {
     runIndex: number | null;
     /** params.prompt cắt 500 ký tự — để hiển thị. */
     prompt: string | null;
+    /** reference-images-to-video: id giọng (GET /v1/voices); null/không có = không chọn. */
+    voice?: string | null;
 }
 
 export interface PortalTasksResponse {
@@ -597,4 +599,24 @@ export interface V1ModelEntry {
 export interface V1Models {
     video: V1ModelEntry[];
     image: V1ModelEntry[];
+}
+
+export type VoiceGender = "female" | "male" | "neutral";
+
+/** GET /v1/voices — giọng cho params.audio của reference-images-to-video. */
+export interface VoicePreset {
+    id: string;
+    name: string;
+    gender: VoiceGender;
+    /** high | mid-high | mid | mid-low | low | lower | younger */
+    pitch: string;
+    /** Chất giọng theo Google: soft, friendly, firm… */
+    style: string;
+    /** Mô tả gốc của Google. */
+    description: string;
+    sampleUrl: string;
+}
+
+export interface V1Voices {
+    voices: VoicePreset[];
 }

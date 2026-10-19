@@ -55,29 +55,67 @@ test("Khung đầu + cuối → Video: thiếu khung cuối bị chặn tại ch
     expect(request?.tasks[0]).toMatchObject({ worker: "start-end-image-to-video", images: { start: expect.any(String), end: expect.any(String) } });
 });
 
-test("Ảnh tham chiếu → Video: tối đa 3 ảnh, @tên trong prompt, giọng nói; mention không gắn ảnh bị chặn", async ({ page }) => {
+test("Ảnh tham chiếu → Video: tối đa 3 ảnh, @tên trong prompt, 3 prompt cùng một giọng; mention không gắn ảnh bị chặn", async ({ page }) => {
     await chooseMode(page, /Ảnh tham chiếu → Video/);
     const region = page.getByRole("region", { name: /^Ảnh tham chiếu/ });
     await expect(region.getByText("Tối đa 3 ảnh", { exact: true })).toBeVisible();
     await slotInput(page, /^Ảnh tham chiếu/).setInputFiles([fixture("a.png"), fixture("b.png"), fixture("c.png"), fixture("d.png")]);
     await expect(region.getByRole("alert")).toContainText("Chỉ chọn tối đa 3 ảnh.");
     await expect(region.getByRole("img")).toHaveCount(3);
-
     await region.getByLabel("Tên ảnh để nhắc trong prompt").first().fill("girl");
-    await page.getByLabel(/Giọng nói/).fill("giọng nữ trung, nhẹ nhàng");
+
+    // Chọn giọng: lọc Nữ + tìm "kore" ⇒ chọn radio Kore
+    await page.getByRole("button", { name: /Mở danh sách giọng/ }).click();
+    await page.getByRole("button", { name: "Nữ", exact: true }).click();
+    await expect(page.getByRole("radio", { name: /^Puck/ })).toHaveCount(0);
+    await page.getByRole("searchbox", { name: "Tìm giọng" }).fill("kore");
+    await page.getByRole("radio", { name: /^Kore/ }).check();
+    await expect(page.getByRole("button", { name: /Thu gọn danh sách giọng/ })).toContainText("Kore");
+    await expect(page.getByRole("button", { name: "Nghe thử giọng Kore" }).first()).toBeVisible();
+
     await page.getByPlaceholder(/Nhập prompt/).fill("@girl và @boy đi dạo trong công viên");
     await page.getByRole("button", { name: /^Tạo video$/ }).click();
     await expect(page.getByRole("alert").last()).toContainText("nhắc @boy nhưng chưa có ảnh nào đặt tên @boy");
 
-    await page.getByPlaceholder(/Nhập prompt/).fill("@girl đi dạo trong công viên");
+    await page.getByPlaceholder(/Nhập prompt/).fill('@girl nói: "Xin chào"\n@girl nói: "Hôm nay trời đẹp"\n@girl nói: "Hẹn gặp lại"');
+    await page.getByRole("button", { name: /^Tạo 3 job$/ }).click();
+    // Video tải lười (mobile chỉ render video đang thấy) ⇒ đếm thẻ job đã xong.
+    const results = page.getByRole("region", { name: "Kết quả" });
+    await expect(results.getByRole("article", { name: /^Job #/ })).toHaveCount(3, { timeout: 30_000 });
+    await expect(results.getByText("Hoàn thành", { exact: true })).toHaveCount(3, { timeout: 30_000 });
+    const tasks = (await sentRequests(page)).flatMap((r) => r.tasks);
+    expect(tasks).toHaveLength(3);
+    for (const task of tasks) {
+        expect(task).toMatchObject({
+            worker: "reference-images-to-video",
+            params: { audio: "kore", audioEnabled: true },
+            images: { references: [{ imageId: expect.any(String), handle: "girl" }, expect.any(String), expect.any(String)] },
+        });
+    }
+    await expect(page.getByRole("region", { name: "Kết quả" }).getByText("Kore").first()).toBeVisible();
+});
+
+test("Giọng nói: chọn bằng bàn phím; tắt audio ⇒ cảnh báo + chặn tạo, Bật audio gỡ chặn; giọng được nhớ khi quay lại chế độ", async ({ page }) => {
+    await chooseMode(page, /Ảnh tham chiếu → Video/);
+    await page.getByRole("button", { name: /Mở danh sách giọng/ }).click();
+    await page.getByRole("radio", { name: /^Không chọn/ }).focus();
+    await page.keyboard.press("ArrowDown"); // radio gốc: mũi tên vừa chuyển vừa chọn
+    await expect(page.getByRole("radio", { name: /^Achernar/ })).toBeChecked();
+
+    await page.getByRole("button", { name: "Cài đặt nâng cao" }).click();
+    await page.getByRole("switch", { name: /Tạo audio cho video/ }).click();
+    await page.getByRole("button", { name: "Đóng cài đặt" }).click();
+    await expect(page.getByText("Audio đang tắt nên giọng không có tác dụng.")).toBeVisible();
+    await slotInput(page, /^Ảnh tham chiếu/).setInputFiles([fixture("a.png")]);
+    await page.getByPlaceholder(/Nhập prompt/).fill("cô gái vẫy tay");
     await page.getByRole("button", { name: /^Tạo video$/ }).click();
-    await expect(resultVideos(page).first()).toBeVisible({ timeout: 30_000 });
-    const [request] = await sentRequests(page);
-    expect(request?.tasks[0]).toMatchObject({
-        worker: "reference-images-to-video",
-        params: { audio: "giọng nữ trung, nhẹ nhàng" },
-        images: { references: [{ imageId: expect.any(String), handle: "girl" }, expect.any(String), expect.any(String)] },
-    });
+    await expect(page.getByRole("alert").last()).toContainText("audio đang tắt");
+    await page.getByRole("button", { name: "Bật audio" }).click();
+    await expect(page.getByText("Audio đang tắt nên giọng không có tác dụng.")).toHaveCount(0);
+
+    await chooseMode(page, /Văn bản → Video/);
+    await chooseMode(page, /Ảnh tham chiếu → Video/);
+    await expect(page.getByRole("button", { name: /Mở danh sách giọng/ })).toContainText("Achernar");
 });
 
 test("Ảnh tham chiếu → Ảnh: 2 ảnh nguồn gửi image-to-image với images.sources và nhận ảnh", async ({ page }) => {
