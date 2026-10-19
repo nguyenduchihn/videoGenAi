@@ -20,6 +20,27 @@ const image = (handle = ""): AttachedImage => ({
 });
 const attachments = (patch: Partial<GeneratorAttachments>): GeneratorAttachments => ({ ...EMPTY_ATTACHMENTS, ...patch });
 
+describe("validateGenerator — nhiều ảnh khung", () => {
+    it("khung đầu và cuối đều nhiều ảnh nhưng lệch số lượng ⇒ lỗi ở Khung cuối", () => {
+        const r = validateGenerator({ mode: "start-end-image-to-video", jobs: ["p"], settings, attachments: attachments({ start: [image(), image()], end: [image(), image(), image()] }) });
+        expect(r).toMatchObject({ valid: false, field: "end" });
+    });
+
+    it("số prompt khác 1 và khác số ảnh ⇒ lỗi prompt nêu đúng số ảnh", () => {
+        const r = validateGenerator({
+            mode: "image-to-video", jobs: ["a", "b"], settings, attachments: attachments({ start: [image(), image(), image()] }),
+            framePlan: { frames: 3, jobs: ["a", "b"], promptMismatch: true },
+        });
+        expect(r).toMatchObject({ valid: false, field: "prompt" });
+        expect(r.message).toContain("3 ảnh");
+    });
+
+    it("3 khung đầu + 1 khung cuối dùng chung ⇒ hợp lệ", () => {
+        const r = validateGenerator({ mode: "start-end-image-to-video", jobs: ["p", "p", "p"], settings, attachments: attachments({ start: [image(), image(), image()], end: [image()] }) });
+        expect(r.valid).toBe(true);
+    });
+});
+
 describe("validateGenerator", () => {
     it("rejects empty prompt list first", () => {
         const result = validateGenerator({ mode: "text-to-video", jobs: [], settings, attachments: EMPTY_ATTACHMENTS });

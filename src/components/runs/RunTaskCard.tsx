@@ -211,7 +211,7 @@ export default function RunTaskCard({
             <div className="flex flex-1 flex-col p-3">
                 <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                        <p className="text-sm font-semibold text-[var(--app-text)]">
+                        <p className="whitespace-nowrap text-sm font-semibold text-[var(--app-text)]">
                             Job #{n}
                         </p>
                         <p
@@ -235,7 +235,7 @@ export default function RunTaskCard({
                     </span>
                 </div>
 
-                <div className="mt-auto flex items-center justify-end gap-1.5 pt-3">
+                <div className="mt-auto flex flex-wrap items-center justify-end gap-1.5 pt-3">
                     {isActiveTask(task) && actions.onCancel && (
                         <button
                             type="button"

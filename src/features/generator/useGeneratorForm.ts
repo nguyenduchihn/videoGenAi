@@ -23,6 +23,7 @@ import {
 import { defaultRatio, modeSpec, upscaleOptions, type ImageRole, type ModeSpec } from "./modes";
 import type { UploadCache } from "./uploadAttachments";
 import { validateGenerator, type ValidationResult } from "./validation";
+import { planFrameJobs } from "./frameJobs";
 
 const DEFAULT_MODE: GeneratorMode = "text-to-video";
 const ATTACHMENT_ROLES: readonly ImageRole[] = ["start", "end", "references", "sources"];
@@ -103,7 +104,7 @@ export function useGeneratorForm({ variant = "advanced" }: { variant?: "quick" |
     useEffect(() => () => { releaseAttachments(attachmentsRef.current); }, []);
 
 
-    const jobs = useMemo(() => {
+    const prompts = useMemo(() => {
         const input = prompt.trim();
         if (!input) return [];
         if (variant === "quick") return [input];
@@ -124,14 +125,21 @@ export function useGeneratorForm({ variant = "advanced" }: { variant?: "quick" |
         }
     }, [prompt, promptSplitMode, settings.customSeparator, variant]);
 
+    // Nhiều ảnh khung đầu/cuối ⇒ mỗi ảnh một job (prompt chung hoặc ghép theo thứ tự); giá ước tính theo số job này.
+    const framePlan = useMemo(
+        () => planFrameJobs(mode, prompts, attachments.start.length, attachments.end.length),
+        [mode, prompts, attachments.start.length, attachments.end.length],
+    );
+    const jobs = framePlan.jobs;
+
     const spec = modeSpec(mode);
     const modelOptions = useMemo(() => getModelOptions(catalog, mode), [catalog, mode]);
     const upscaleCredits = settings.upscale === "none" ? 0 : (pricing?.workers[UPSCALE_PRICE_KEY[spec.kind]]?.credits ?? 0);
     const creditPerJob = chargesCredits ? getCreditCost(catalog, settings.model) + upscaleCredits : 0;
     const estimatedCredits = jobs.length * creditPerJob;
     const validation = useMemo(
-        () => validateGenerator({ mode, jobs, settings, attachments }),
-        [mode, jobs, settings, attachments],
+        () => validateGenerator({ mode, jobs, settings, attachments, framePlan }),
+        [mode, jobs, settings, attachments, framePlan],
     );
 
     const updateAttachments = useCallback((patch: Partial<GeneratorAttachments>) => {

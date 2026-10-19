@@ -82,7 +82,7 @@ describe("sendChunks", () => {
     });
 
     it("IMAGE_NOT_FOUND re-uploads once via onImageNotFound and resends with rebuilt tasks", async () => {
-        const rebuilt = [{ worker: "image-to-video" as const, params: { prompt: "p0" }, images: { start: ["new"] } }];
+        const rebuilt = [{ worker: "image-to-video" as const, params: { prompt: "p0" }, images: { start: "new" } }];
         const d = deps({
             createTasks: vi.fn()
                 .mockRejectedValueOnce(new ApiError(400, "IMAGE_NOT_FOUND", "gone", "r", { metadata: { imageId: "old" } }))

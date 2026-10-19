@@ -1,6 +1,6 @@
 
 import { Check, ChevronDown } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { upscaleOptions, type ModeKind } from "@/features/generator/modes";
 import type { UpscaleChoice } from "../types";
 
@@ -17,6 +17,7 @@ export default function UpscaleSelect({
 }: UpscaleSelectProps) {
     const [open, setOpen] = useState(false);
     const rootRef = useRef<HTMLDivElement>(null);
+    const labelId = useId();
 
     const options: { value: UpscaleChoice; label: string }[] = [
         { value: "none", label: "Không" },
@@ -55,14 +56,15 @@ export default function UpscaleSelect({
 
     return (
         <div ref={rootRef} className="relative w-full min-w-0">
-            <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wide text-[var(--app-text-secondary)]">
+            <span id={labelId} className="mb-1.5 block text-[11px] font-medium uppercase tracking-wide text-[var(--app-text-secondary)]">
                 Upscale
-            </label>
+            </span>
 
             <button
                 type="button"
                 aria-haspopup="listbox"
                 aria-expanded={open}
+                aria-label={`Upscale: ${selected?.label ?? "Không"}`}
                 onClick={() => setOpen((current) => !current)}
                 className={`flex h-10 w-full min-w-0 items-center justify-between gap-2 rounded-xl border bg-[var(--app-surface)] px-3 text-sm text-[var(--app-text)] outline-none transition ${open
                         ? "border-[var(--app-accent)] ring-2 ring-[var(--app-accent)]/15"

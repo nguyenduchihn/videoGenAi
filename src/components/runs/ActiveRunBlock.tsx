@@ -33,7 +33,7 @@ export default function ActiveRunBlock({ runId, remainingLocal, ratio, actions, 
                 {preview.length === 0 ? (
                     <p className="text-sm text-[var(--app-text-muted)]">Đang gửi job lên máy chủ…</p>
                 ) : (
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,13rem),1fr))]">
                         {preview.map((task) => <RunTaskCard key={task.id} task={task} ratio={ratio} actions={actions} />)}
                     </div>
                 )}

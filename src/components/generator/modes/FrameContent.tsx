@@ -1,4 +1,5 @@
 import { AlertTriangle } from "lucide-react";
+import { MAX_FRAMES } from "@/features/generator/frameJobs";
 import { OMNI_MODEL } from "@/features/generator/modes";
 import ImageSlot from "../imageSlot";
 import type { GeneratorAttachments } from "../types";
@@ -24,8 +25,8 @@ export default function FrameContent({
                 title={withEnd ? "Khung đầu + cuối" : "Khung đầu"}
                 description={
                     withEnd
-                        ? "Chọn ảnh khung đầu và khung cuối tương ứng."
-                        : "Chọn ảnh khung đầu; prompt mô tả chuyển động."
+                        ? `Mỗi cặp ảnh cùng số thứ tự là một video (tối đa ${MAX_FRAMES}). Một khung chỉ có 1 ảnh ⇒ dùng chung cho mọi cặp.`
+                        : `Mỗi ảnh là một video (tối đa ${MAX_FRAMES}). Nhập 1 prompt dùng chung hoặc mỗi ảnh một prompt theo thứ tự.`
                 }
             />
 
@@ -50,7 +51,8 @@ export default function FrameContent({
                         label="Khung đầu"
                         required
                         items={attachments.start}
-                        max={10}
+                        max={MAX_FRAMES}
+                        reorder
                         onChange={(start) => onChange({ start })}
                     />
                 </div>
@@ -61,7 +63,8 @@ export default function FrameContent({
                             label="Khung cuối"
                             required
                             items={attachments.end}
-                            max={10}
+                            max={MAX_FRAMES}
+                        reorder
                             onChange={(end) => onChange({ end })}
                         />
                     </div>

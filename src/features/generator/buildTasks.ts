@@ -1,6 +1,7 @@
 import type { GeneratorSettingsState } from "@/components/generator/types";
 import type { CreateTaskItem, CreateTaskUpscale, ImageRef } from "@/types/api";
 import { GeneratorError } from "./errors";
+import { frameAt } from "./frameJobs";
 import type { GeneratorMode } from "./modes";
 
 /** Ảnh đã upload (imageId) + tham số đính kèm, đủ để dựng `images`/`sourceMediaId`. */
@@ -20,15 +21,16 @@ export const EMPTY_RESOLVED: ResolvedAttachments = {
     sources: [],
 };
 
-function needImages(images: ImageRef[], role: string): ImageRef[] {
-    if (images.length === 0) {
+/** API /v1/tasks nhận MỘT ảnh cho images.start / images.end ⇒ job thứ `index` lấy ảnh cùng số thứ tự (1 ảnh ⇒ dùng chung). */
+function needImage(images: ImageRef[], index: number, role: string): ImageRef {
+    const first = frameAt(images, index);
+    if (first === undefined) {
         throw new GeneratorError(
             "ATTACHMENT_MISSING",
             `Thiếu ảnh cho vai trò "${role}".`,
         );
     }
-
-    return images;
+    return first;
 }
 
 function need<T>(value: T | undefined, role: string): T {
@@ -53,7 +55,7 @@ export function buildTasks(
     const upscale = upscaleOf(settings);
     const video = { model: settings.model, ratio, duration: settings.duration, audioEnabled: settings.audioEnabled };
     const image = { model: settings.model, ratio };
-    return jobs.map((prompt): CreateTaskItem => {
+    return jobs.map((prompt, index): CreateTaskItem => {
         switch (mode) {
             case "text-to-video":
                 return { worker: mode, params: { prompt, ...video }, ...upscale };
@@ -62,7 +64,7 @@ export function buildTasks(
                     worker: mode,
                     params: { prompt, ...video },
                     images: {
-                        start: needImages(resolved.start, "start"),
+                        start: needImage(resolved.start, index, "start"),
                     },
                     ...upscale,
                 };
@@ -72,8 +74,8 @@ export function buildTasks(
                     worker: mode,
                     params: { prompt, ...video },
                     images: {
-                        start: needImages(resolved.start, "start"),
-                        end: needImages(resolved.end, "end"),
+                        start: needImage(resolved.start, index, "start"),
+                        end: needImage(resolved.end, index, "end"),
                     },
                     ...upscale,
                 };

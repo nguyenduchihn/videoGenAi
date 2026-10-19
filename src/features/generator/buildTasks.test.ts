@@ -29,7 +29,7 @@ describe("buildTasks", () => {
         expect(task).toEqual({
             worker: "image-to-video",
             params: { prompt: "p", model: "Veo_3.1-Lite", ratio: "9:16", duration: 6, audioEnabled: true },
-            images: { start: ["img_s"] },
+            images: { start: "img_s" },
         });
     });
 
@@ -37,6 +37,13 @@ describe("buildTasks", () => {
         const [task] = buildTasks("start-end-image-to-video", ["p"], settings, "16:9", { ...EMPTY_RESOLVED, start: ["s"], end: ["e"] });
         expect(task).toMatchObject({ worker: "start-end-image-to-video", images: { start: "s", end: "e" } });
         expect(() => buildTasks("start-end-image-to-video", ["p"], settings, "16:9", { ...EMPTY_RESOLVED, start: ["s"] })).toThrow(/sourceMediaId|end/);
+    });
+
+    it("nhiều khung: job thứ i dùng ảnh thứ i; một khung chỉ 1 ảnh ⇒ dùng chung; luôn gửi MỘT ảnh mỗi task", () => {
+        const tasks = buildTasks("start-end-image-to-video", ["p1", "p2", "p3"], settings, "16:9", { ...EMPTY_RESOLVED, start: ["s1", "s2", "s3"], end: ["e"] });
+        expect(tasks.map((t) => t.images)).toEqual([{ start: "s1", end: "e" }, { start: "s2", end: "e" }, { start: "s3", end: "e" }]);
+        const one = buildTasks("image-to-video", ["a", "b"], settings, "16:9", { ...EMPTY_RESOLVED, start: ["only"] });
+        expect(one.map((t) => t.images)).toEqual([{ start: "only" }, { start: "only" }]);
     });
 
     it("reference-images-to-video: references with handles, voice only when given", () => {

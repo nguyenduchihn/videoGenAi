@@ -93,13 +93,14 @@ export default function ImageSlot({
 
     return (
         <section aria-labelledby={titleId} className="w-full min-w-0 space-y-3">
-            {!hideLabel && (
+            {(!hideLabel || hint || badge || label) && (
                 <div className="flex min-w-0 items-center justify-between gap-2">
                     <div className="min-w-0">
+                        {/* Tiêu đề luôn có (sr-only khi hideLabel) để section là vùng có tên cho trình đọc màn hình */}
                         {label && (
                             <h3
                                 id={titleId}
-                                className="text-sm font-medium text-[var(--app-text)]"
+                                className={hideLabel ? "sr-only" : "text-sm font-medium text-[var(--app-text)]"}
                             >
                                 {label}
                                 {required && (
