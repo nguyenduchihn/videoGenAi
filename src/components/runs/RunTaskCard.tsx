@@ -336,10 +336,13 @@ export default function RunTaskCard({
                     >
                         {isVideoTask(task) ? (
                             <video
+                                key={url}
                                 src={url}
                                 controls
                                 autoPlay
+                                muted
                                 playsInline
+                                onClick={(event) => event.stopPropagation()}
                                 className="max-h-[85vh] max-w-[95vw] object-contain"
                                 aria-label={taskAlt(task)}
                             />

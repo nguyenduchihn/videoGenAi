@@ -17,6 +17,7 @@ export default function ExtendContent({ attachments, videos, onChange }: ExtendC
                 label={attachments.sourceLabel}
                 videos={videos}
                 onSelect={(sourceMediaId, sourceLabel) => onChange({ sourceMediaId, sourceLabel })}
+                showManualInput
             />
         </div>
     );

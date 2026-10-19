@@ -43,28 +43,28 @@ export default function FrameContent({
                 </p>
             )}
 
-            <div
-                className={`grid grid-cols-1 gap-4 ${withEnd ? "sm:grid-cols-2" : ""
-                    }`}
-            >
-                <ImageSlot
-                    role="start"
-                    label="Khung đầu"
-                    required
-                    items={attachments.start}
-                    max={10}
-                    onChange={(start) => onChange({ start })}
-                />
-
-                {withEnd && (
+            <div className="flex flex-col gap-6 w-full">
+                <div className="w-full min-w-0">
                     <ImageSlot
-                        role="end"
-                        label="Khung cuối"
+                        role="start"
+                        label="Khung đầu"
                         required
-                        items={attachments.end}
+                        items={attachments.start}
                         max={10}
-                        onChange={(end) => onChange({ end })}
+                        onChange={(start) => onChange({ start })}
                     />
+                </div>
+                {withEnd && (
+                    <div className="w-full min-w-0">
+                        <ImageSlot
+                            role="end"
+                            label="Khung cuối"
+                            required
+                            items={attachments.end}
+                            max={10}
+                            onChange={(end) => onChange({ end })}
+                        />
+                    </div>
                 )}
             </div>
         </div>

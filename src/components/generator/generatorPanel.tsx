@@ -360,7 +360,7 @@ export default function GeneratorPanel() {
                     />
                 </div>
 
-                {/* Bên phải: kết quả tạo ảnh/video */}
+                {/* Bên phải là kết quả*/}
                 <div className="min-w-0">
                     {activeRunId ? (
                         <ActiveRunSection

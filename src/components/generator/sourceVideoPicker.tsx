@@ -1,5 +1,5 @@
 import { Check, Film } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { KeyboardEvent } from "react";
 
 export interface SessionVideo {
@@ -15,6 +15,7 @@ interface SourceVideoPickerProps {
     label: string | null;
     videos: SessionVideo[];
     onSelect: (mediaId: string, label: string) => void;
+    showManualInput?: boolean;
 }
 
 const formatDate = (iso?: string): string | null => {
@@ -32,9 +33,8 @@ function VideoCard({ video, selected, onSelect }: { video: SessionVideo; selecte
             aria-checked={selected}
             tabIndex={selected ? 0 : -1}
             onClick={onSelect}
-            className={`group relative overflow-hidden rounded-xl border text-left transition ${
-                selected ? "border-[var(--app-accent)] ring-1 ring-[var(--app-accent)]/30" : "border-[var(--app-border)] hover:border-[var(--app-accent)]/60"
-            }`}
+            className={`group relative overflow-hidden rounded-xl border text-left transition ${selected ? "border-[var(--app-accent)] ring-1 ring-[var(--app-accent)]/30" : "border-[var(--app-border)] hover:border-[var(--app-accent)]/60"
+                }`}
         >
             <div className="aspect-video bg-black">
                 {video.url ? (
@@ -71,11 +71,11 @@ function VideoGroup({ title, videos, value, onSelect }: { title: string; videos:
         <div>
             <p className="mb-2 text-xs font-semibold text-[var(--app-text-secondary)]">{title}</p>
             <div role="radiogroup" aria-label={title} onKeyDown={handleKeyDown} className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:grid-cols-3">
-                {videos.map((video, index) => (
+                {videos.map((video) => (
                     <VideoCard
                         key={`${video.source}-${video.mediaId}`}
                         video={video}
-                        selected={video.mediaId === value || (selectedIndex < 0 && index === 0)}
+                        selected={video.mediaId === value}
                         onSelect={() => onSelect(video.mediaId, video.label)}
                     />
                 ))}
@@ -84,11 +84,12 @@ function VideoGroup({ title, videos, value, onSelect }: { title: string; videos:
     );
 }
 
-export default function SourceVideoPicker({ value, label, videos, onSelect }: SourceVideoPickerProps) {
+export default function SourceVideoPicker({ value, label, videos, onSelect, showManualInput = false, }: SourceVideoPickerProps) {
     const [manual, setManual] = useState("");
     const session = videos.filter((video) => video.source === "session");
     const history = videos.filter((video) => video.source === "history");
     const manualId = manual.trim();
+    const inputId = useId();
 
     const applyManual = () => {
         if (!manualId) return;
@@ -100,41 +101,61 @@ export default function SourceVideoPicker({ value, label, videos, onSelect }: So
         <div className="space-y-4">
             {videos.length === 0 && (
                 <p className="rounded-xl border border-dashed border-[var(--app-border)] bg-[var(--app-surface-soft)] px-4 py-5 text-center text-xs text-[var(--app-text-muted)]">
-                    Chưa có video hoàn thành nào trong phiên này. Tạo video trước hoặc nhập mediaId bên dưới.
+                    {showManualInput
+                        ? "Chưa có video hoàn thành nào trong phiên này. Tạo video trước hoặc nhập mediaId."
+                        : "Chưa có video hoàn thành nào trong phiên này."}
                 </p>
             )}
             <VideoGroup title="Từ kết quả phiên này" videos={session} value={value} onSelect={onSelect} />
             <VideoGroup title="Video gần đây" videos={history} value={value} onSelect={onSelect} />
 
-            <div>
-                <label htmlFor="source-media-id" className="mb-1.5 block text-xs font-semibold text-[var(--app-text-secondary)]">Nhập mediaId</label>
-                <div className="flex gap-2">
-                    <input
-                        id="source-media-id"
-                        value={manual}
-                        onChange={(event) => setManual(event.target.value)}
-                        onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); applyManual(); } }}
-                        placeholder="mediaId của video đã tạo"
-                        autoComplete="off"
-                        spellCheck={false}
-                        className="h-10 min-w-0 flex-1 rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] px-3 text-sm text-[var(--app-text)] outline-none placeholder:text-[var(--app-text-muted)] focus:border-[var(--app-accent)]"
-                    />
-                    <button
-                        type="button"
-                        onClick={applyManual}
-                        disabled={!manualId}
-                        className="h-10 shrink-0 rounded-xl border border-[var(--app-border)] px-4 text-xs font-medium text-[var(--app-text-secondary)] transition hover:bg-[var(--app-surface-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+            {showManualInput && (
+                <div>
+                    <label
+                        htmlFor={inputId}
+                        className="mb-1.5 block text-xs font-semibold text-[var(--app-text-secondary)]"
                     >
-                        Dùng
-                    </button>
+                        Nhập mediaId
+                    </label>
+
+                    <div className="flex gap-2">
+                        <input
+                            id={inputId}
+                            value={manual}
+                            onChange={(event) => setManual(event.target.value)}
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                    event.preventDefault();
+                                    applyManual();
+                                }
+                            }}
+                            placeholder="mediaId của video đã tạo"
+                            autoComplete="off"
+                            spellCheck={false}
+                            className="h-10 min-w-0 flex-1 rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] px-3 text-sm text-[var(--app-text)] outline-none placeholder:text-[var(--app-text-muted)] focus:border-[var(--app-accent)]"
+                        />
+
+                        <button
+                            type="button"
+                            onClick={applyManual}
+                            disabled={!manualId}
+                            className="h-10 shrink-0 rounded-xl border border-[var(--app-border)] px-4 text-xs font-medium text-[var(--app-text-secondary)] transition hover:bg-[var(--app-surface-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            Dùng
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
 
             <div className="space-y-1 text-xs">
                 <p className="text-[var(--app-text)]" aria-live="polite">
                     {value ? <>Đã chọn: <span className="font-medium">{label ?? value}</span></> : null}
                 </p>
-                <p className="text-[var(--app-text-muted)]">Video sẽ được nối dài trên đúng tài khoản đã tạo nó.</p>
+                {showManualInput && (
+                    <p className="text-xs text-[var(--app-text-muted)]">
+                        Video sẽ được nối dài trên đúng tài khoản đã tạo nó.
+                    </p>
+                )}
             </div>
         </div>
     );

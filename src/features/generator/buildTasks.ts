@@ -5,15 +5,31 @@ import type { GeneratorMode } from "./modes";
 
 /** Ảnh đã upload (imageId) + tham số đính kèm, đủ để dựng `images`/`sourceMediaId`. */
 export interface ResolvedAttachments {
-    start?: ImageRef;
-    end?: ImageRef;
+    start: ImageRef[];
+    end: ImageRef[];
     references: ImageRef[];
     sources: ImageRef[];
     voice?: string;
     sourceMediaId?: string;
 }
 
-export const EMPTY_RESOLVED: ResolvedAttachments = { references: [], sources: [] };
+export const EMPTY_RESOLVED: ResolvedAttachments = {
+    start: [],
+    end: [],
+    references: [],
+    sources: [],
+};
+
+function needImages(images: ImageRef[], role: string): ImageRef[] {
+    if (images.length === 0) {
+        throw new GeneratorError(
+            "ATTACHMENT_MISSING",
+            `Thiếu ảnh cho vai trò "${role}".`,
+        );
+    }
+
+    return images;
+}
 
 function need<T>(value: T | undefined, role: string): T {
     if (value === undefined || value === null || value === "") {
@@ -42,12 +58,23 @@ export function buildTasks(
             case "text-to-video":
                 return { worker: mode, params: { prompt, ...video }, ...upscale };
             case "image-to-video":
-                return { worker: mode, params: { prompt, ...video }, images: { start: need(resolved.start, "start") }, ...upscale };
+                return {
+                    worker: mode,
+                    params: { prompt, ...video },
+                    images: {
+                        start: needImages(resolved.start, "start"),
+                    },
+                    ...upscale,
+                };
+
             case "start-end-image-to-video":
                 return {
                     worker: mode,
                     params: { prompt, ...video },
-                    images: { start: need(resolved.start, "start"), end: need(resolved.end, "end") },
+                    images: {
+                        start: needImages(resolved.start, "start"),
+                        end: needImages(resolved.end, "end"),
+                    },
                     ...upscale,
                 };
             case "reference-images-to-video":

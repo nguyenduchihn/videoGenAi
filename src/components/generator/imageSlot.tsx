@@ -15,6 +15,7 @@ export interface ImageSlotProps {
     required?: boolean;
     withHandles?: boolean;
     reorder?: boolean;
+    hideLabel?: boolean;
     /** Huy hiệu bên phải tiêu đề, vd "Tối đa 3 ảnh". */
     badge?: string;
     onChange: (items: AttachedImage[]) => void;
@@ -29,6 +30,7 @@ export default function ImageSlot({
     required = false,
     withHandles = false,
     reorder = false,
+    hideLabel = false,
     badge,
     onChange,
 }: ImageSlotProps) {
@@ -88,81 +90,107 @@ export default function ImageSlot({
         ? "border-[var(--app-accent)] bg-[var(--app-accent-soft)]"
         : "border-[var(--app-border)] bg-[var(--app-surface-soft)] hover:border-[var(--app-accent)]/60 hover:bg-[var(--app-accent-soft)]/50";
 
+
     return (
-        <section aria-labelledby={titleId} className="space-y-3">
-            <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                    {label && (
-                        <h4 id={titleId} className="text-sm font-semibold text-[var(--app-text)]">
-                            {label}
-                            {required && (
-                                <span className="ml-1 text-xs font-normal text-[var(--app-text-muted)]">
-                                    (bắt buộc)
-                                </span>
-                            )}
-                        </h4>
-                    )}
-                    {hint && <p className="mt-0.5 text-xs leading-5 text-[var(--app-text-muted)]">{hint}</p>}
-                </div>
-                {badge && (
-                    <span className="shrink-0 rounded-full bg-[var(--app-surface-soft)] px-2.5 py-1 text-[11px] font-medium text-[var(--app-text-secondary)] ring-1 ring-[var(--app-border)]">
-                        {badge}
-                    </span>
-                )}
-            </div>
+        <section aria-labelledby={titleId} className="w-full min-w-0 space-y-3">
+            {!hideLabel && (
+                <div className="flex min-w-0 items-center justify-between gap-2">
+                    <div className="min-w-0">
+                        {label && (
+                            <h3
+                                id={titleId}
+                                className="text-sm font-medium text-[var(--app-text)]"
+                            >
+                                {label}
+                                {required && (
+                                    <span className="ml-1 text-[var(--app-danger)]">*</span>
+                                )}
+                            </h3>
+                        )}
+                        {hint && (
+                            <p className="mt-1 text-xs text-[var(--app-text-muted)]">
+                                {hint}
+                            </p>
+                        )}
+                    </div>
 
-            <input ref={inputRef} type="file" accept={ACCEPT_ATTR} multiple={multiple} onChange={handleInputChange} className="hidden" tabIndex={-1} />
-
-            {items.length > 0 && (
-                <ul className={`grid gap-3 ${multiple ? "grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-3" : "grid-cols-1"}`}>
-                    {items.map((item, index) => (
-                        <ImageSlotItem
-                            key={item.localId}
-                            item={item}
-                            index={index}
-                            count={items.length}
-                            showIndex={reorder}
-                            withHandle={withHandles}
-                            onRemove={() => handleRemove(item.localId)}
-                            onHandleChange={(handle) => handleHandleChange(item.localId, handle)}
-                            onMoveUp={reorder && index > 0 ? () => onChange(moveItem(items, index, index - 1)) : undefined}
-                            onMoveDown={reorder && index < items.length - 1 ? () => onChange(moveItem(items, index, index + 1)) : undefined}
-                        />
-                    ))}
-                </ul>
-            )}
-
-            {canAddMore && (
-                <button
-                    type="button"
-                    onClick={() => inputRef.current?.click()}
-                    aria-label={dropzoneLabel}
-                    {...dragProps}
-                    className={`group flex w-full flex-col items-center justify-center rounded-2xl border border-dashed text-center transition ${items.length === 0 ? "min-h-[150px] px-5 py-6" : "gap-2 px-4 py-3"
-                        } ${activeClass}`}
-                >
-                    {items.length === 0 ? (
-                        <>
-                            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--app-surface)] text-[var(--app-text-muted)] shadow-sm ring-1 ring-[var(--app-border)] transition group-hover:bg-[var(--app-accent-soft)] group-hover:text-[var(--app-accent)]">
-                                <Upload className="h-5 w-5" aria-hidden="true" />
-                            </span>
-                            <span className="mt-3 text-sm font-medium text-[var(--app-text)]">Kéo thả hoặc chọn ảnh</span>
-                            <span className="mt-2 text-[11px] text-[var(--app-text-muted)]">
-                                PNG, JPG, WEBP · tối đa 20 MB{multiple && ` · tối đa ${max} ảnh`}
-                            </span>
-                        </>
-                    ) : (
-                        <span className="inline-flex items-center gap-2 text-xs font-medium text-[var(--app-text-secondary)] group-hover:text-[var(--app-accent)]">
-                            <Upload className="h-3.5 w-3.5" aria-hidden="true" />
-                            Thêm ảnh ({items.length}/{max})
+                    {badge && (
+                        <span className="shrink-0 rounded-full border border-[var(--app-border)] px-2 py-1 text-xs text-[var(--app-text-muted)]">
+                            {badge}
                         </span>
                     )}
-                </button>
+                </div>
             )}
+            <input
+                ref={inputRef}
+                type="file"
+                accept={ACCEPT_ATTR}
+                multiple={multiple}
+                onChange={handleInputChange}
+                className="hidden"
+                tabIndex={-1}
+            />
+            <div className="w-full min-w-0 overflow-x-auto overflow-y-hidden pb-2">
+                <ul className="flex w-max min-w-full items-start gap-2">
+                    {canAddMore && (
+                        <li className="w-20 shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const input = inputRef.current;
+                                    if (input) {
+                                        input.click();
+                                    } else {
+                                        console.error("Không tìm thấy input chọn ảnh");
+                                    }
+                                }}
+                                aria-label={dropzoneLabel}
+                                {...dragProps}
+                                className={`group flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-xl border border-dashed p-2 text-center transition ${activeClass}`}
+                            >
+                                <Upload className="h-4 w-4" aria-hidden="true" />
+                                <span className="text-xs font-medium">Thêm ảnh</span>
+                                <span className="text-[10px] text-[var(--app-text-muted)]">
+                                    {items.length}/{max}
+                                </span>
+                            </button>
+                        </li>
+
+                    )}
+
+                    {items.map((item, index) => (
+                        <li key={item.localId} className="w-20 shrink-0">
+                            <ImageSlotItem
+                                item={item}
+                                index={index}
+                                count={items.length}
+                                showIndex={reorder}
+                                withHandle={withHandles}
+                                onRemove={() => handleRemove(item.localId)}
+                                onHandleChange={(handle) =>
+                                    handleHandleChange(item.localId, handle)
+                                }
+                                onMoveUp={
+                                    reorder && index > 0
+                                        ? () => onChange(moveItem(items, index, index - 1))
+                                        : undefined
+                                }
+                                onMoveDown={
+                                    reorder && index < items.length - 1
+                                        ? () => onChange(moveItem(items, index, index + 1))
+                                        : undefined
+                                }
+                            />
+                        </li>
+                    ))}
+                </ul>
+            </div>
 
             {errors.length > 0 && (
                 <ul role="alert" className="space-y-1 text-xs text-[var(--app-danger)]">
-                    {errors.map((message) => <li key={message}>{message}</li>)}
+                    {errors.map((message) => (
+                        <li key={message}>{message}</li>
+                    ))}
                 </ul>
             )}
         </section>

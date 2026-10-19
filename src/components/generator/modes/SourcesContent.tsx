@@ -22,6 +22,7 @@ export default function SourcesContent({
 
             <ImageSlot
                 role="sources"
+                hideLabel
                 badge={`Tối đa ${MAX_SOURCES} ảnh`}
                 required
                 withHandles

@@ -25,18 +25,18 @@ describe("buildTasks", () => {
     });
 
     it("image-to-video: images.start from the resolved start id", () => {
-        const [task] = buildTasks("image-to-video", ["p"], settings, "9:16", { ...EMPTY_RESOLVED, start: "img_s" });
+        const [task] = buildTasks("image-to-video", ["p"], settings, "9:16", { ...EMPTY_RESOLVED, start: ["img_s"] });
         expect(task).toEqual({
             worker: "image-to-video",
             params: { prompt: "p", model: "Veo_3.1-Lite", ratio: "9:16", duration: 6, audioEnabled: true },
-            images: { start: "img_s" },
+            images: { start: ["img_s"] },
         });
     });
 
     it("start-end-image-to-video: both frames, throws ATTACHMENT_MISSING when end is absent", () => {
-        const [task] = buildTasks("start-end-image-to-video", ["p"], settings, "16:9", { ...EMPTY_RESOLVED, start: "s", end: "e" });
+        const [task] = buildTasks("start-end-image-to-video", ["p"], settings, "16:9", { ...EMPTY_RESOLVED, start: ["s"], end: ["e"] });
         expect(task).toMatchObject({ worker: "start-end-image-to-video", images: { start: "s", end: "e" } });
-        expect(() => buildTasks("start-end-image-to-video", ["p"], settings, "16:9", { ...EMPTY_RESOLVED, start: "s" })).toThrow(/sourceMediaId|end/);
+        expect(() => buildTasks("start-end-image-to-video", ["p"], settings, "16:9", { ...EMPTY_RESOLVED, start: ["s"] })).toThrow(/sourceMediaId|end/);
     });
 
     it("reference-images-to-video: references with handles, voice only when given", () => {
