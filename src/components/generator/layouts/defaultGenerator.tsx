@@ -35,7 +35,6 @@ export default function DefaultGenerator(props: GeneratorLayoutProps) {
                     attachments={attachments}
                     model={settings.model}
                     jobCount={jobs.length}
-                    sessionVideos={props.sessionVideos}
                     onChange={props.updateAttachments}
                     audioEnabled={settings.audioEnabled}
                     onEnableAudio={() =>

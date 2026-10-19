@@ -19,11 +19,7 @@ interface ModeContentProps {
 const imageCount = (attachments: GeneratorAttachments): number =>
     attachments.start.length + attachments.end.length + attachments.references.length + attachments.sources.length;
 
-<<<<<<< HEAD
-function ModeBody({ mode, attachments, model, onChange }: Omit<ModeContentProps, "jobCount">) {
-=======
-function ModeBody({ mode, attachments, model, sessionVideos, onChange, audioEnabled, onEnableAudio }: Omit<ModeContentProps, "jobCount">) {
->>>>>>> snailsoft/main
+function ModeBody({ mode, attachments, model, onChange, audioEnabled, onEnableAudio }: Omit<ModeContentProps, "jobCount">) {
     switch (mode) {
         case "text-to-video":
             return <TextOnlyContent kind="video" />;

@@ -1,10 +1,13 @@
+
 import { Download, Image as ImageIcon, Loader2, Maximize2, Mic, RefreshCw, Video, X, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getRatioPreviewClass } from "@/components/generator/ratioPreview";
 import { LazyImage, LazyVideo } from "@/components/media";
 import { voiceName } from "@/features/generator/voiceLabels";
+import { createPortal } from "react-dom";
 import type { PortalTask } from "@/types/api";
 import { ICON_BUTTON, ICON_BUTTON_PRIMARY, isActiveTask, isVideoTask, STATUS_CLASS, STATUS_LABEL, taskAlt, taskErrorText, taskNumber, type RunTaskActions } from "./runTaskView";
+
 
 /** Nút có chữ, cao 32 px như nút icon (huỷ / thử lại). */
 const TEXT_BUTTON = "inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition";
@@ -166,22 +169,6 @@ export default function RunTaskCard({
     useEffect(() => {
         if (!previewOpen) return;
 
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === "Escape") {
-                setPreviewOpen(false);
-            }
-        };
-
-        window.addEventListener("keydown", handleKeyDown);
-
-        return () => {
-            window.removeEventListener("keydown", handleKeyDown);
-        };
-    }, [previewOpen]);
-
-    useEffect(() => {
-        if (!previewOpen) return;
-
         const previousOverflow = document.body.style.overflow;
         document.body.style.overflow = "hidden";
 
@@ -189,6 +176,26 @@ export default function RunTaskCard({
             document.body.style.overflow = previousOverflow;
         };
     }, [previewOpen]);
+
+
+    useEffect(() => {
+        if (!previewOpen) return;
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                event.preventDefault();
+                event.stopPropagation();
+                setPreviewOpen(false);
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown, true);
+
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown, true);
+        };
+    }, [previewOpen]);
+
 
     return (
         <article
@@ -306,9 +313,10 @@ export default function RunTaskCard({
                 </div>
             </div>
 
-            {previewOpen && url && (
+
+            {previewOpen && url && createPortal(
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+                    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 p-4"
                     role="dialog"
                     aria-modal="true"
                     aria-label={`Xem lớn ${taskAlt(task)}`}
@@ -317,7 +325,7 @@ export default function RunTaskCard({
                     <button
                         type="button"
                         onClick={() => setPreviewOpen(false)}
-                        className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+                        className="fixed right-5 top-5 z-[10000] flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25"
                         aria-label="Đóng xem trước"
                         title="Đóng"
                     >
@@ -325,7 +333,7 @@ export default function RunTaskCard({
                     </button>
 
                     <div
-                        className="flex max-h-[90vh] max-w-[95vw] items-center justify-center"
+                        className="flex h-full w-full items-center justify-center"
                         onClick={(event) => event.stopPropagation()}
                     >
                         {isVideoTask(task) ? (
@@ -336,19 +344,19 @@ export default function RunTaskCard({
                                 autoPlay
                                 muted
                                 playsInline
-                                onClick={(event) => event.stopPropagation()}
-                                className="max-h-[85vh] max-w-[95vw] object-contain"
+                                className="block max-h-[90vh] max-w-[95vw] object-contain"
                                 aria-label={taskAlt(task)}
                             />
                         ) : (
                             <img
                                 src={url}
                                 alt={taskAlt(task)}
-                                className="max-h-[85vh] max-w-[95vw] object-contain"
+                                className="block max-h-[90vh] max-w-[95vw] object-contain"
                             />
                         )}
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </article>
     );
