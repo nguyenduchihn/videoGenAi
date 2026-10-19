@@ -13,6 +13,7 @@ import {
 import { mockPricingResponse } from "./pricing.mock";
 import { mockPlanActivation, mockPlansForSale } from "./plans.mock";
 import { mockUploadedImage } from "./images.mock";
+import { mockVoices } from "./voices.mock";
 import { cancelMockRun, enqueueMockItems, getMockRunSummary, listMockRuns, mockRunTasksPage, renameMockRun, retryMockFailed, seedMockBigRun, upsertMockRun } from "./runs.mock";
 import { allMockBatchTasks, cancelMockTask, createMockBatch, getMockBatch, mockTasksResponse, takenRunIndices, validateMockTask } from "./tasks.mock";
 import type { RunStatus, TaskStatus } from "@/types/api";
@@ -230,6 +231,7 @@ export const handlers = [
 
     // ── v1 (X-API-Key hoặc cookie phiên) ──
     http.get("/v1/models", ({ request }) => requireApiKey(request) ?? HttpResponse.json(mockModels)),
+    http.get("/v1/voices", ({ request }) => requireApiKey(request) ?? HttpResponse.json(mockVoices)),
     http.get("/v1/me", ({ request }) =>
         requireApiKey(request) ?? HttpResponse.json({
             userId: mockMeResponse.user.id,

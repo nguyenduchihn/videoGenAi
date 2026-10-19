@@ -322,6 +322,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/portal/webhook-secret": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Khoá ký webhook của tôi (tạo ở lần xem đầu)
+         * @description Kiểm chữ ký: `hex(HMAC_SHA256(secret, x-veo-timestamp + "." + rawBody)) == x-veo-signature`.
+         */
+        get: operations["PortalController_getWebhookSecret"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/portal/webhook-secret/rotate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Xoay khoá ký webhook
+         * @description Webhook gửi sau thời điểm này ký bằng khoá mới. Webhook đang được gửi dở (tối đa ~60 giây) có thể còn ký khoá cũ; bị từ chối thì hệ thống tự gửi lại bằng khoá mới.
+         */
+        post: operations["PortalController_rotateWebhookSecret"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portal/tasks": {
         parameters: {
             query?: never;
@@ -616,6 +656,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/voices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Danh sách giọng cho reference-images-to-video (params.audio)
+         * @description Gửi `id` trong `params.audio` (hoặc `params.voice`) của task `reference-images-to-video`. Dùng cùng một id cho mọi task của lượt để các video đồng bộ giọng. Giọng chỉ quyết định chất giọng — lời thoại vẫn viết trong prompt. `sampleUrl` là file .wav mẫu để nghe thử. Danh sách ít thay đổi ⇒ có thể cache 24h.
+         */
+        get: operations["TasksController_voices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/tasks": {
         parameters: {
             query?: never;
@@ -645,7 +705,7 @@ export interface paths {
          *
          *     | `start-end-image-to-video` (start + end frame) | `{ start, end }` — 2 ảnh | như text-to-video | như trên, **trừ Omni** (không hỗ trợ) | như trên |
          *
-         *     | `reference-images-to-video` (ảnh tham chiếu → video) | `{ references: [...] }` — 1–3 ảnh; `Veo_3.1-Omni` tới 7 | như text-to-video + `audio` (giọng) | như trên | như trên |
+         *     | `reference-images-to-video` (ảnh tham chiếu → video) | `{ references: [...] }` — 1–3 ảnh; `Veo_3.1-Omni` tới 7 | như text-to-video + `audio` (id giọng từ `GET /v1/voices`, vd `achernar`; alias `voice`) | như trên | như trên |
          *
          *     | `extend-video` | không; `sourceMediaId` = `result.mediaId` của video đã `succeeded` | `prompt`, `end_second` | — | chạy đúng tài khoản đã tạo video gốc |
          *
@@ -862,6 +922,46 @@ export interface paths {
          * @description Task pending/processing ⇒ huỷ + hoàn credit ngay; job xếp hàng trên máy chủ ⇒ bỏ; task đã xong giữ nguyên. Lượt chuyển `cancelled`.
          */
         post: operations["RunsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/runs/{id}/download/preflight": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Kiểm tra trước khi tải cả lượt dạng ZIP
+         * @description Số file (task succeeded có file) + tổng dung lượng so với giới hạn; `reason` EMPTY | TOO_MANY_FILES | TOO_LARGE | BUSY (đang có 1 ZIP khác của bạn chạy). Portal gọi trước khi điều hướng tới /download để không hiện trang lỗi JSON.
+         */
+        get: operations["RunsController_downloadPreflight"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/runs/{id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Tải mọi kết quả thành công của lượt thành 1 file ZIP
+         * @description Stream ZIP (không nén lại) gồm `job-0001-<id>.<ext>` theo thứ tự job + `manifest.csv` (job, file, worker, model, prompt). Dùng điều hướng trình duyệt (`<a href>`) để thấy tiến độ tải của trình duyệt. Giới hạn RUN_ZIP_MAX_FILES (500) / RUN_ZIP_MAX_BYTES (2 GiB) ⇒ 413; 1 ZIP / khách cùng lúc ⇒ 429; 0 file ⇒ 204.
+         */
+        get: operations["RunsController_download"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2478,6 +2578,172 @@ export interface operations {
             };
         };
     };
+    PortalController_getWebhookSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Khoá hiện tại */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description whsec_… — dùng làm khoá HMAC-SHA256 để kiểm header x-veo-signature */
+                        secret: string;
+                        /** @description ISO 8601 */
+                        createdAt: string;
+                    };
+                };
+            };
+            /** @description Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Vượt giới hạn tốc độ (`RATE_LIMITED`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    PortalController_rotateWebhookSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Khoá mới */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description whsec_… — dùng làm khoá HMAC-SHA256 để kiểm header x-veo-signature */
+                        secret: string;
+                        /** @description ISO 8601 */
+                        createdAt: string;
+                    };
+                };
+            };
+            /** @description Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /**
+             * @description Vượt giới hạn tốc độ (`RATE_LIMITED`)
+             *
+             *     Vượt giới hạn tốc độ (`RATE_LIMITED`)
+             */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+    };
     PortalController_tasks: {
         parameters: {
             query?: {
@@ -2519,16 +2785,20 @@ export interface operations {
                             priceCredits: number;
                             result: {
                                 mediaId: string;
-                                /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                                /** @description Link xem/nhúng (presigned, có hạn 1 giờ); null nếu chưa có */
                                 url: string | null;
+                                /** @description Link tải về đúng tên file (presigned, Content-Disposition: attachment, hạn 1 giờ) — dùng cho nút Tải; null nếu file không nằm ở kho của dịch vụ */
+                                downloadUrl: string | null;
                                 mock?: boolean;
                                 /** @description Có khi task có upscale */
                                 resolution?: string;
                                 /** @description Bản gốc trước upscale */
                                 base?: {
                                     mediaId: string;
-                                    /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                                    /** @description Link xem/nhúng (presigned, có hạn 1 giờ); null nếu chưa có */
                                     url: string | null;
+                                    /** @description Link tải về đúng tên file (presigned, Content-Disposition: attachment, hạn 1 giờ) — dùng cho nút Tải; null nếu file không nằm ở kho của dịch vụ */
+                                    downloadUrl: string | null;
                                 };
                                 upscale?: {
                                     /** @enum {string} */
@@ -2555,6 +2825,8 @@ export interface operations {
                             runIndex: number | null;
                             /** @description params.prompt cắt 500 ký tự — để hiển thị */
                             prompt: string | null;
+                            /** @description reference-images-to-video: id giọng đã chọn (GET /v1/voices); null = không chọn */
+                            voice: string | null;
                         }[];
                         nextCursor: string | null;
                     };
@@ -2656,16 +2928,20 @@ export interface operations {
                         priceCredits: number;
                         result: {
                             mediaId: string;
-                            /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                            /** @description Link xem/nhúng (presigned, có hạn 1 giờ); null nếu chưa có */
                             url: string | null;
+                            /** @description Link tải về đúng tên file (presigned, Content-Disposition: attachment, hạn 1 giờ) — dùng cho nút Tải; null nếu file không nằm ở kho của dịch vụ */
+                            downloadUrl: string | null;
                             mock?: boolean;
                             /** @description Có khi task có upscale */
                             resolution?: string;
                             /** @description Bản gốc trước upscale */
                             base?: {
                                 mediaId: string;
-                                /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                                /** @description Link xem/nhúng (presigned, có hạn 1 giờ); null nếu chưa có */
                                 url: string | null;
+                                /** @description Link tải về đúng tên file (presigned, Content-Disposition: attachment, hạn 1 giờ) — dùng cho nút Tải; null nếu file không nằm ở kho của dịch vụ */
+                                downloadUrl: string | null;
                             };
                             upscale?: {
                                 /** @enum {string} */
@@ -2692,6 +2968,8 @@ export interface operations {
                         runIndex: number | null;
                         /** @description params.prompt cắt 500 ký tự — để hiển thị */
                         prompt: string | null;
+                        /** @description reference-images-to-video: id giọng đã chọn (GET /v1/voices); null = không chọn */
+                        voice: string | null;
                     };
                 };
             };
@@ -2819,16 +3097,20 @@ export interface operations {
                         priceCredits: number;
                         result: {
                             mediaId: string;
-                            /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                            /** @description Link xem/nhúng (presigned, có hạn 1 giờ); null nếu chưa có */
                             url: string | null;
+                            /** @description Link tải về đúng tên file (presigned, Content-Disposition: attachment, hạn 1 giờ) — dùng cho nút Tải; null nếu file không nằm ở kho của dịch vụ */
+                            downloadUrl: string | null;
                             mock?: boolean;
                             /** @description Có khi task có upscale */
                             resolution?: string;
                             /** @description Bản gốc trước upscale */
                             base?: {
                                 mediaId: string;
-                                /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                                /** @description Link xem/nhúng (presigned, có hạn 1 giờ); null nếu chưa có */
                                 url: string | null;
+                                /** @description Link tải về đúng tên file (presigned, Content-Disposition: attachment, hạn 1 giờ) — dùng cho nút Tải; null nếu file không nằm ở kho của dịch vụ */
+                                downloadUrl: string | null;
                             };
                             upscale?: {
                                 /** @enum {string} */
@@ -2855,6 +3137,8 @@ export interface operations {
                         runIndex: number | null;
                         /** @description params.prompt cắt 500 ký tự — để hiển thị */
                         prompt: string | null;
+                        /** @description reference-images-to-video: id giọng đã chọn (GET /v1/voices); null = không chọn */
+                        voice: string | null;
                     };
                 };
             };
@@ -3121,6 +3405,16 @@ export interface operations {
                             fairUsePerDay: number | null;
                             allowRealMode: boolean;
                         }[];
+                        /** @description Credit tặng khi đăng ký (settings credits.signupGrant) — landing hiện "Tặng N credit" */
+                        signupGrant: number;
+                        /** @description subscription: số ngày dùng thử gói mặc định cho khách mới; 0 = không hạn */
+                        trialDays: number;
+                        /** @description Gói gán cho khách đăng ký mới: payg ⇒ settings commercial.paygPlanId; subscription ⇒ gói dùng thử commercial.trialPlanId */
+                        signupPlanId: string;
+                        /** @description Tên hiển thị của signupPlanId (thiếu gói ⇒ chính id) */
+                        signupPlanName: string;
+                        /** @description Số task tối đa trong một lần POST /v1/tasks */
+                        maxBatchTasks: number;
                     };
                 };
             };
@@ -4647,6 +4941,129 @@ export interface operations {
             };
         };
     };
+    TasksController_voices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Catalog giọng */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        voices: {
+                            /** @description Giá trị gửi trong params.audio (reference-images-to-video) */
+                            id: string;
+                            name: string;
+                            /** @enum {string} */
+                            gender: "female" | "male" | "neutral";
+                            /** @description high | mid-high | mid | mid-low | low | lower | younger */
+                            pitch: string;
+                            /** @description Chất giọng theo Google: soft, friendly, firm… */
+                            style: string;
+                            /** @description Mô tả gốc của Google */
+                            description: string;
+                            /**
+                             * Format: uri
+                             * @description File mẫu .wav để nghe thử
+                             */
+                            sampleUrl: string;
+                        }[];
+                    };
+                };
+            };
+            /** @description Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không có quyền / tài khoản bị khoá / gói hết hạn (`FORBIDDEN_ROLE`, `USER_SUSPENDED`, `PLAN_EXPIRED`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Vượt giới hạn tốc độ (`RATE_LIMITED`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+    };
     TasksController_list: {
         parameters: {
             query: {
@@ -4689,16 +5106,20 @@ export interface operations {
                             priceCredits: number;
                             result: {
                                 mediaId: string;
-                                /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                                /** @description Link xem/nhúng (presigned, có hạn 1 giờ); null nếu chưa có */
                                 url: string | null;
+                                /** @description Link tải về đúng tên file (presigned, Content-Disposition: attachment, hạn 1 giờ) — dùng cho nút Tải; null nếu file không nằm ở kho của dịch vụ */
+                                downloadUrl: string | null;
                                 mock?: boolean;
                                 /** @description Có khi task có upscale */
                                 resolution?: string;
                                 /** @description Bản gốc trước upscale */
                                 base?: {
                                     mediaId: string;
-                                    /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                                    /** @description Link xem/nhúng (presigned, có hạn 1 giờ); null nếu chưa có */
                                     url: string | null;
+                                    /** @description Link tải về đúng tên file (presigned, Content-Disposition: attachment, hạn 1 giờ) — dùng cho nút Tải; null nếu file không nằm ở kho của dịch vụ */
+                                    downloadUrl: string | null;
                                 };
                                 upscale?: {
                                     /** @enum {string} */
@@ -4725,6 +5146,8 @@ export interface operations {
                             runIndex: number | null;
                             /** @description params.prompt cắt 500 ký tự — để hiển thị */
                             prompt: string | null;
+                            /** @description reference-images-to-video: id giọng đã chọn (GET /v1/voices); null = không chọn */
+                            voice: string | null;
                         }[];
                         /** @description id không tồn tại hoặc không phải của bạn */
                         notFound: string[];
@@ -4837,7 +5260,7 @@ export interface operations {
                          * @enum {string}
                          */
                         worker: "text-to-video" | "image-to-video" | "reference-images-to-video" | "start-end-image-to-video" | "extend-video" | "text-to-image" | "image-to-image";
-                        /** @description Tham số theo worker. Video: prompt, model (Veo_3.1-Fast mặc định | Veo_3.1-Lite | Veo_3.1-Quality | Veo_3.1-Omni | "Veo_3.1-Lite [Lower Priority]"), ratio (16:9 | 9:16), duration (4|6|8|10), audioEnabled. Ảnh: prompt, model (Nano_Banana_Pro mặc định | Nano_Banana_2 | Nano_Banana_2_Lite), ratio (1:1 | 16:9 | 9:16 | 4:3 | 3:4), seed (10000–99999). */
+                        /** @description Tham số theo worker. Video: prompt, model (Veo_3.1-Lite mặc định; bỏ trống + duration ≠ 8 ⇒ Veo_3.1-Omni | Veo_3.1-Fast | Veo_3.1-Quality | "Veo_3.1-Lite [Lower Priority]"), ratio (16:9 | 9:16), duration (4|6|8|10), audioEnabled. reference-images-to-video thêm `audio` (alias `voice`): id giọng từ GET /v1/voices, vd "achernar" — giữ cùng id cho mọi task để video đồng bộ giọng; bỏ trống hoặc "none" ⇒ Google tự chọn. Lời thoại vẫn viết trong prompt. Ảnh: prompt, model (Nano_Banana_Pro mặc định | Nano_Banana_2 | Nano_Banana_2_Lite), ratio (1:1 | 16:9 | 9:16 | 4:3 | 3:4), seed (10000–99999). */
                         params: {
                             [key: string]: unknown;
                         };
@@ -4885,7 +5308,7 @@ export interface operations {
                     }[];
                     /**
                      * Format: uri
-                     * @description Server nhận thông báo khi task kết thúc (succeeded/failed/cancelled), ký HMAC bằng WEBHOOK_SECRET
+                     * @description Server nhận thông báo khi task kết thúc (succeeded/failed/cancelled), ký HMAC-SHA256 bằng khoá webhook riêng của bạn (whsec_…, xem ở trang API key)
                      */
                     webhookUrl?: string;
                     /**
@@ -4929,16 +5352,20 @@ export interface operations {
                             priceCredits: number;
                             result: {
                                 mediaId: string;
-                                /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                                /** @description Link xem/nhúng (presigned, có hạn 1 giờ); null nếu chưa có */
                                 url: string | null;
+                                /** @description Link tải về đúng tên file (presigned, Content-Disposition: attachment, hạn 1 giờ) — dùng cho nút Tải; null nếu file không nằm ở kho của dịch vụ */
+                                downloadUrl: string | null;
                                 mock?: boolean;
                                 /** @description Có khi task có upscale */
                                 resolution?: string;
                                 /** @description Bản gốc trước upscale */
                                 base?: {
                                     mediaId: string;
-                                    /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                                    /** @description Link xem/nhúng (presigned, có hạn 1 giờ); null nếu chưa có */
                                     url: string | null;
+                                    /** @description Link tải về đúng tên file (presigned, Content-Disposition: attachment, hạn 1 giờ) — dùng cho nút Tải; null nếu file không nằm ở kho của dịch vụ */
+                                    downloadUrl: string | null;
                                 };
                                 upscale?: {
                                     /** @enum {string} */
@@ -4965,6 +5392,8 @@ export interface operations {
                             runIndex: number | null;
                             /** @description params.prompt cắt 500 ký tự — để hiển thị */
                             prompt: string | null;
+                            /** @description reference-images-to-video: id giọng đã chọn (GET /v1/voices); null = không chọn */
+                            voice: string | null;
                         }[];
                     };
                 };
@@ -5234,16 +5663,20 @@ export interface operations {
                             priceCredits: number;
                             result: {
                                 mediaId: string;
-                                /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                                /** @description Link xem/nhúng (presigned, có hạn 1 giờ); null nếu chưa có */
                                 url: string | null;
+                                /** @description Link tải về đúng tên file (presigned, Content-Disposition: attachment, hạn 1 giờ) — dùng cho nút Tải; null nếu file không nằm ở kho của dịch vụ */
+                                downloadUrl: string | null;
                                 mock?: boolean;
                                 /** @description Có khi task có upscale */
                                 resolution?: string;
                                 /** @description Bản gốc trước upscale */
                                 base?: {
                                     mediaId: string;
-                                    /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                                    /** @description Link xem/nhúng (presigned, có hạn 1 giờ); null nếu chưa có */
                                     url: string | null;
+                                    /** @description Link tải về đúng tên file (presigned, Content-Disposition: attachment, hạn 1 giờ) — dùng cho nút Tải; null nếu file không nằm ở kho của dịch vụ */
+                                    downloadUrl: string | null;
                                 };
                                 upscale?: {
                                     /** @enum {string} */
@@ -5270,6 +5703,8 @@ export interface operations {
                             runIndex: number | null;
                             /** @description params.prompt cắt 500 ký tự — để hiển thị */
                             prompt: string | null;
+                            /** @description reference-images-to-video: id giọng đã chọn (GET /v1/voices); null = không chọn */
+                            voice: string | null;
                         }[];
                         /** @description id không tồn tại hoặc không phải của bạn */
                         notFound: string[];
@@ -5428,16 +5863,20 @@ export interface operations {
                         priceCredits: number;
                         result: {
                             mediaId: string;
-                            /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                            /** @description Link xem/nhúng (presigned, có hạn 1 giờ); null nếu chưa có */
                             url: string | null;
+                            /** @description Link tải về đúng tên file (presigned, Content-Disposition: attachment, hạn 1 giờ) — dùng cho nút Tải; null nếu file không nằm ở kho của dịch vụ */
+                            downloadUrl: string | null;
                             mock?: boolean;
                             /** @description Có khi task có upscale */
                             resolution?: string;
                             /** @description Bản gốc trước upscale */
                             base?: {
                                 mediaId: string;
-                                /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                                /** @description Link xem/nhúng (presigned, có hạn 1 giờ); null nếu chưa có */
                                 url: string | null;
+                                /** @description Link tải về đúng tên file (presigned, Content-Disposition: attachment, hạn 1 giờ) — dùng cho nút Tải; null nếu file không nằm ở kho của dịch vụ */
+                                downloadUrl: string | null;
                             };
                             upscale?: {
                                 /** @enum {string} */
@@ -5464,6 +5903,8 @@ export interface operations {
                         runIndex: number | null;
                         /** @description params.prompt cắt 500 ký tự — để hiển thị */
                         prompt: string | null;
+                        /** @description reference-images-to-video: id giọng đã chọn (GET /v1/voices); null = không chọn */
+                        voice: string | null;
                     };
                 };
             };
@@ -5619,16 +6060,20 @@ export interface operations {
                         priceCredits: number;
                         result: {
                             mediaId: string;
-                            /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                            /** @description Link xem/nhúng (presigned, có hạn 1 giờ); null nếu chưa có */
                             url: string | null;
+                            /** @description Link tải về đúng tên file (presigned, Content-Disposition: attachment, hạn 1 giờ) — dùng cho nút Tải; null nếu file không nằm ở kho của dịch vụ */
+                            downloadUrl: string | null;
                             mock?: boolean;
                             /** @description Có khi task có upscale */
                             resolution?: string;
                             /** @description Bản gốc trước upscale */
                             base?: {
                                 mediaId: string;
-                                /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                                /** @description Link xem/nhúng (presigned, có hạn 1 giờ); null nếu chưa có */
                                 url: string | null;
+                                /** @description Link tải về đúng tên file (presigned, Content-Disposition: attachment, hạn 1 giờ) — dùng cho nút Tải; null nếu file không nằm ở kho của dịch vụ */
+                                downloadUrl: string | null;
                             };
                             upscale?: {
                                 /** @enum {string} */
@@ -5655,6 +6100,8 @@ export interface operations {
                         runIndex: number | null;
                         /** @description params.prompt cắt 500 ký tự — để hiển thị */
                         prompt: string | null;
+                        /** @description reference-images-to-video: id giọng đã chọn (GET /v1/voices); null = không chọn */
+                        voice: string | null;
                     };
                 };
             };
@@ -5839,16 +6286,20 @@ export interface operations {
                             priceCredits: number;
                             result: {
                                 mediaId: string;
-                                /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                                /** @description Link xem/nhúng (presigned, có hạn 1 giờ); null nếu chưa có */
                                 url: string | null;
+                                /** @description Link tải về đúng tên file (presigned, Content-Disposition: attachment, hạn 1 giờ) — dùng cho nút Tải; null nếu file không nằm ở kho của dịch vụ */
+                                downloadUrl: string | null;
                                 mock?: boolean;
                                 /** @description Có khi task có upscale */
                                 resolution?: string;
                                 /** @description Bản gốc trước upscale */
                                 base?: {
                                     mediaId: string;
-                                    /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                                    /** @description Link xem/nhúng (presigned, có hạn 1 giờ); null nếu chưa có */
                                     url: string | null;
+                                    /** @description Link tải về đúng tên file (presigned, Content-Disposition: attachment, hạn 1 giờ) — dùng cho nút Tải; null nếu file không nằm ở kho của dịch vụ */
+                                    downloadUrl: string | null;
                                 };
                                 upscale?: {
                                     /** @enum {string} */
@@ -5875,6 +6326,8 @@ export interface operations {
                             runIndex: number | null;
                             /** @description params.prompt cắt 500 ký tự — để hiển thị */
                             prompt: string | null;
+                            /** @description reference-images-to-video: id giọng đã chọn (GET /v1/voices); null = không chọn */
+                            voice: string | null;
                         }[];
                         /** @description Task đã kết thúc, không huỷ được */
                         skipped: number;
@@ -6777,16 +7230,20 @@ export interface operations {
                             priceCredits: number;
                             result: {
                                 mediaId: string;
-                                /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                                /** @description Link xem/nhúng (presigned, có hạn 1 giờ); null nếu chưa có */
                                 url: string | null;
+                                /** @description Link tải về đúng tên file (presigned, Content-Disposition: attachment, hạn 1 giờ) — dùng cho nút Tải; null nếu file không nằm ở kho của dịch vụ */
+                                downloadUrl: string | null;
                                 mock?: boolean;
                                 /** @description Có khi task có upscale */
                                 resolution?: string;
                                 /** @description Bản gốc trước upscale */
                                 base?: {
                                     mediaId: string;
-                                    /** @description Link tải (presigned, có hạn); null nếu chưa có */
+                                    /** @description Link xem/nhúng (presigned, có hạn 1 giờ); null nếu chưa có */
                                     url: string | null;
+                                    /** @description Link tải về đúng tên file (presigned, Content-Disposition: attachment, hạn 1 giờ) — dùng cho nút Tải; null nếu file không nằm ở kho của dịch vụ */
+                                    downloadUrl: string | null;
                                 };
                                 upscale?: {
                                     /** @enum {string} */
@@ -6813,6 +7270,8 @@ export interface operations {
                             runIndex: number | null;
                             /** @description params.prompt cắt 500 ký tự — để hiển thị */
                             prompt: string | null;
+                            /** @description reference-images-to-video: id giọng đã chọn (GET /v1/voices); null = không chọn */
+                            voice: string | null;
                         }[];
                         /** @description runIndex cuối trang; truyền vào `cursor` */
                         nextCursor: string | null;
@@ -6952,7 +7411,7 @@ export interface operations {
                          * @enum {string}
                          */
                         worker: "text-to-video" | "image-to-video" | "reference-images-to-video" | "start-end-image-to-video" | "extend-video" | "text-to-image" | "image-to-image";
-                        /** @description Tham số theo worker. Video: prompt, model (Veo_3.1-Fast mặc định | Veo_3.1-Lite | Veo_3.1-Quality | Veo_3.1-Omni | "Veo_3.1-Lite [Lower Priority]"), ratio (16:9 | 9:16), duration (4|6|8|10), audioEnabled. Ảnh: prompt, model (Nano_Banana_Pro mặc định | Nano_Banana_2 | Nano_Banana_2_Lite), ratio (1:1 | 16:9 | 9:16 | 4:3 | 3:4), seed (10000–99999). */
+                        /** @description Tham số theo worker. Video: prompt, model (Veo_3.1-Lite mặc định; bỏ trống + duration ≠ 8 ⇒ Veo_3.1-Omni | Veo_3.1-Fast | Veo_3.1-Quality | "Veo_3.1-Lite [Lower Priority]"), ratio (16:9 | 9:16), duration (4|6|8|10), audioEnabled. reference-images-to-video thêm `audio` (alias `voice`): id giọng từ GET /v1/voices, vd "achernar" — giữ cùng id cho mọi task để video đồng bộ giọng; bỏ trống hoặc "none" ⇒ Google tự chọn. Lời thoại vẫn viết trong prompt. Ảnh: prompt, model (Nano_Banana_Pro mặc định | Nano_Banana_2 | Nano_Banana_2_Lite), ratio (1:1 | 16:9 | 9:16 | 4:3 | 3:4), seed (10000–99999). */
                         params: {
                             [key: string]: unknown;
                         };
@@ -7594,6 +8053,314 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    RunsController_downloadPreflight: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Kết quả kiểm tra */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description true ⇒ điều hướng tới GET /v1/runs/:id/download */
+                        ok: boolean;
+                        /**
+                         * @description Lý do không tải được; null khi ok
+                         * @enum {string|null}
+                         */
+                        reason: "EMPTY" | "TOO_MANY_FILES" | "TOO_LARGE" | "BUSY" | null;
+                        /** @description Số file sẽ có trong ZIP (task succeeded còn file) */
+                        files: number;
+                        /** @description Tổng dung lượng (0 khi vượt số file — không đo) */
+                        bytes: number;
+                        maxFiles: number;
+                        maxBytes: number;
+                    };
+                };
+            };
+            /** @description Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không có quyền / tài khoản bị khoá / gói hết hạn (`FORBIDDEN_ROLE`, `USER_SUSPENDED`, `PLAN_EXPIRED`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không tìm thấy (hoặc không thuộc về bạn) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Vượt giới hạn tốc độ (`RATE_LIMITED`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+    };
+    RunsController_download: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description application/zip (Content-Disposition: attachment) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Chưa xác thực / sai thông tin (`UNAUTHENTICATED`, `SESSION_REQUIRED`, `INVALID_CREDENTIALS`…) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không có quyền / tài khoản bị khoá / gói hết hạn (`FORBIDDEN_ROLE`, `USER_SUSPENDED`, `PLAN_EXPIRED`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Không tìm thấy (hoặc không thuộc về bạn) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/zip": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Lỗi */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/zip": {
+                        error: {
+                            /**
+                             * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn
+                             * @example VALIDATION_FAILED
+                             */
+                            code: string;
+                            /** @example invalid request */
+                            message: string;
+                            /**
+                             * @description Gửi kèm khi cần hỗ trợ: tra được toàn bộ log của request
+                             * @example 7f1c…
+                             */
+                            requestId: string;
+                            details?: {
+                                path?: string;
+                                message?: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Vượt giới hạn tốc độ (`RATE_LIMITED`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/zip": {
                         error: {
                             /**
                              * @description Mã lỗi ổn định, dùng để rẽ nhánh trong code của bạn

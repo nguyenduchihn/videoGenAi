@@ -338,6 +338,7 @@ export function createMockBatch(body: CreateTasksRequest, priceCredits = 5, runI
         runId: body.runId ?? null,
         runIndex: body.runId ? (runIndices?.[index] ?? (body.runOffset ?? 0) + index) : null,
         prompt: typeof item.params.prompt === "string" ? item.params.prompt.slice(0, 500) : null,
+        voice: item.worker === "reference-images-to-video" && typeof item.params.audio === "string" ? item.params.audio : null,
     }));
     mockBatches.set(batchId, { tasks, polls: 0 });
     persistMockTasks();
@@ -383,6 +384,7 @@ export function cancelMockTask(taskId: string): PortalTask | null {
 }
 
 // ── Kiểm tra ảnh/handle như backend (create-batch.use-case.ts) để UI thấy lỗi có metadata ──
+import { MOCK_VOICE_IDS } from "./voices.mock";
 import type { CreateTaskItem, ImageRef, TaskWorker } from "@/types/api";
 
 export interface MockTaskError {
@@ -447,6 +449,10 @@ export function validateMockTask(item: CreateTaskItem): MockTaskError | null {
         const max = model === OMNI ? 7 : 3;
         const count = refsOf(images.references).length;
         if (count > max) return bad(`reference-images-to-video: tối đa ${max} ảnh`, { field: "images.references", worker: item.worker, constraint: "maxCount", max, given: count, model, omniMax: 7 });
+        const audio = item.params.audio;
+        if (audio !== undefined && (typeof audio !== "string" || !MOCK_VOICE_IDS.has(audio))) {
+            return { status: 400, code: "VALIDATION_FAILED", message: "params.audio: must be a voice id from GET /v1/voices (e.g. achernar) or \"none\"" };
+        }
     }
     if (item.worker === "start-end-image-to-video" && model === OMNI) {
         return { status: 400, code: "VALIDATION_FAILED", message: "start-end-image-to-video: Veo_3.1-Omni không hỗ trợ" };

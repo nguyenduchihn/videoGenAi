@@ -48,10 +48,10 @@ describe("buildTasks", () => {
 
     it("reference-images-to-video: references with handles, voice only when given", () => {
         const refs = ["a", { imageId: "b", handle: "girl" }];
-        const [withVoice] = buildTasks("reference-images-to-video", ["p"], settings, "16:9", { ...EMPTY_RESOLVED, references: refs, voice: "giọng nữ" });
+        const [withVoice] = buildTasks("reference-images-to-video", ["p"], settings, "16:9", { ...EMPTY_RESOLVED, references: refs, voice: "achernar" });
         expect(withVoice).toEqual({
             worker: "reference-images-to-video",
-            params: { prompt: "p", model: "Veo_3.1-Lite", ratio: "16:9", duration: 6, audioEnabled: true, audio: "giọng nữ" },
+            params: { prompt: "p", model: "Veo_3.1-Lite", ratio: "16:9", duration: 6, audioEnabled: true, audio: "achernar" },
             images: { references: refs },
         });
         const [noVoice] = buildTasks("reference-images-to-video", ["p"], settings, "16:9", { ...EMPTY_RESOLVED, references: refs });

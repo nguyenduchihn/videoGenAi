@@ -17,6 +17,7 @@ import type {
     UploadImagesResponse,
     V1Me,
     V1Models,
+    V1Voices,
 } from "@/types/api";
 
 export async function createTasks(
@@ -78,6 +79,10 @@ export async function uploadImages(parts: UploadPart[], options: UploadOptions =
 
 export async function models(): Promise<V1Models> {
     return (await api.get<V1Models>("/v1/models")).data;
+}
+
+export async function voices(): Promise<V1Voices> {
+    return (await api.get<V1Voices>("/v1/voices")).data;
 }
 
 export async function v1Me(): Promise<V1Me> {

@@ -12,12 +12,18 @@ interface ModeContentProps {
     model: string;
     jobCount: number;
     onChange: (patch: Partial<GeneratorAttachments>) => void;
+    audioEnabled: boolean;
+    onEnableAudio: () => void;
 }
 
 const imageCount = (attachments: GeneratorAttachments): number =>
     attachments.start.length + attachments.end.length + attachments.references.length + attachments.sources.length;
 
+<<<<<<< HEAD
 function ModeBody({ mode, attachments, model, onChange }: Omit<ModeContentProps, "jobCount">) {
+=======
+function ModeBody({ mode, attachments, model, sessionVideos, onChange, audioEnabled, onEnableAudio }: Omit<ModeContentProps, "jobCount">) {
+>>>>>>> snailsoft/main
     switch (mode) {
         case "text-to-video":
             return <TextOnlyContent kind="video" />;
@@ -28,7 +34,7 @@ function ModeBody({ mode, attachments, model, onChange }: Omit<ModeContentProps,
         case "start-end-image-to-video":
             return <FrameContent attachments={attachments} model={model} withEnd onChange={onChange} />;
         case "reference-images-to-video":
-            return <ReferenceContent attachments={attachments} model={model} onChange={onChange} />;
+            return <ReferenceContent attachments={attachments} model={model} onChange={onChange} audioEnabled={audioEnabled} onEnableAudio={onEnableAudio} />;
         case "image-to-image":
             return <SourcesContent attachments={attachments} onChange={onChange} />;
     }

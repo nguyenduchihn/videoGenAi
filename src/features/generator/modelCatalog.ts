@@ -1,5 +1,5 @@
 import type { V1ModelEntry, V1Models } from "@/types/api";
-import { isModelAllowedFor, modeSpec, type GeneratorMode } from "./modes";
+import { isModelAllowedFor, LOW_PRIORITY_MODEL, modeSpec, type GeneratorMode } from "./modes";
 
 /** Danh mục model từ GET /v1/models; trước khi tải xong dùng STATIC_FALLBACK. */
 export type ModelCatalog = V1Models;
@@ -11,8 +11,14 @@ export interface ModelOption {
     credits: string;
 }
 
+/** Model mặc định của trình tạo cho MỌI chế độ video (lane miễn phí, xếp hàng chậm hơn); API giữ mặc định riêng của nó. */
+export const DEFAULT_VIDEO_MODEL = LOW_PRIORITY_MODEL;
+
 export const STATIC_FALLBACK: ModelCatalog = {
-    video: [{ model: "Veo_3.1-Lite", family: "veo", default: true, credits: 5 }],
+    video: [
+        { model: "Veo_3.1-Lite", family: "veo", default: false, credits: 5 },
+        { model: LOW_PRIORITY_MODEL, family: "veo", default: false, credits: null },
+    ],
     image: [{ model: "Nano_Banana_Pro", family: "nano-banana", default: true, credits: 1 }],
 };
 
@@ -45,8 +51,9 @@ export function getModelOptions(catalog: ModelCatalog, mode: GeneratorMode): Mod
 
 export function getDefaultModel(catalog: ModelCatalog, mode: GeneratorMode): string {
     const entries = entriesFor(catalog, mode).filter((entry) => isModelAllowedFor(mode, entry.model));
-    const chosen = entries.find((entry) => entry.default) ?? entries[0];
-    return chosen?.model ?? (modeSpec(mode).kind === "image" ? "Nano_Banana_Pro" : "Veo_3.1-Lite");
+    const isVideo = modeSpec(mode).kind === "video";
+    const chosen = (isVideo ? entries.find((entry) => entry.model === DEFAULT_VIDEO_MODEL) : undefined) ?? entries.find((entry) => entry.default) ?? entries[0];
+    return chosen?.model ?? (isVideo ? DEFAULT_VIDEO_MODEL : "Nano_Banana_Pro");
 }
 
 /** Model hiện tại còn dùng được cho chế độ mới không (đổi ảnh ⇄ video, hoặc Omni ⇄ Khung đầu + cuối). */

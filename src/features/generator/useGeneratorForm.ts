@@ -24,6 +24,7 @@ import { defaultRatio, modeSpec, upscaleOptions, type ImageRole, type ModeSpec }
 import type { UploadCache } from "./uploadAttachments";
 import { validateGenerator, type ValidationResult } from "./validation";
 import { planFrameJobs } from "./frameJobs";
+import { readRememberedVoice, rememberVoice } from "./voiceMemory";
 
 const DEFAULT_MODE: GeneratorMode = "text-to-video";
 const ATTACHMENT_ROLES: readonly ImageRole[] = ["start", "end", "references", "sources"];
@@ -75,6 +76,7 @@ export function useGeneratorForm({ variant = "advanced" }: { variant?: "quick" |
     const catalog = useModelCatalog();
     const pricing = usePricing().data;
     const me = useAuthStore((state) => state.user);
+    const userId = me?.user.id;
     const chargesCredits = me?.plan?.chargesCredits ?? true;
     const balance = chargesCredits ? (me?.balance.raw ?? me?.user.credits ?? null) : null;
     /** Gói không trừ credit: số video trả phí hôm nay / giới hạn (null = không giới hạn). */
@@ -141,8 +143,9 @@ export function useGeneratorForm({ variant = "advanced" }: { variant?: "quick" |
     );
 
     const updateAttachments = useCallback((patch: Partial<GeneratorAttachments>) => {
+        if (patch.voice !== undefined) rememberVoice(userId, patch.voice);
         setAttachments((current) => ({ ...current, ...patch }));
-    }, []);
+    }, [userId]);
 
     const handleModeChange = useCallback((nextMode: GeneratorMode) => {
         const nextSpec = modeSpec(nextMode);
@@ -155,8 +158,8 @@ export function useGeneratorForm({ variant = "advanced" }: { variant?: "quick" |
             upscale: (upscaleOptions(nextSpec.kind) as string[]).includes(current.upscale) ? current.upscale : "none",
         }));
         releaseAttachments(attachments);
-        setAttachments(EMPTY_ATTACHMENTS);
-    }, [attachments, catalog, spec.kind]);
+        setAttachments(nextSpec.roles.voice ? { ...EMPTY_ATTACHMENTS, voice: readRememberedVoice(userId) } : EMPTY_ATTACHMENTS);
+    }, [attachments, catalog, spec.kind, userId]);
 
     const applyDraft = useCallback((draft: { prompt: string; mode: GeneratorMode; ratio: string; settings: GeneratorSettingsState }) => {
         handleModeChange(draft.mode);

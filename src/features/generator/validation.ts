@@ -5,9 +5,10 @@ import {
     IMAGE_HANDLE_RE,
     MAX_PROMPT_LENGTH,
     MAX_SOURCES,
-    MAX_VOICE_LENGTH,
     maxReferences,
     modeSpec,
+    LOW_PRIORITY_DURATION,
+    LOW_PRIORITY_MODEL,
     OMNI_MODEL,
     SEED_MAX,
     SEED_MIN,
@@ -55,6 +56,9 @@ export function validateGenerator({ mode, jobs, settings, attachments, framePlan
     const roleError = validateRoles(spec, settings.model, attachments);
     if (roleError) return roleError;
 
+    if (spec.settings.duration && settings.model === LOW_PRIORITY_MODEL && settings.duration !== LOW_PRIORITY_DURATION) {
+        return fail(`Veo 3.1 Lite [Lower Priority] chỉ tạo video ${LOW_PRIORITY_DURATION} giây — chọn ${LOW_PRIORITY_DURATION}s hoặc đổi model.`, "model");
+    }
     const frameError = validateFrames(mode, attachments, framePlan);
     if (frameError) return frameError;
 
@@ -68,8 +72,8 @@ export function validateGenerator({ mode, jobs, settings, attachments, framePlan
     );
     if (handleError) return handleError;
 
-    if (spec.roles.voice && attachments.voice.trim().length > MAX_VOICE_LENGTH) {
-        return fail(`Giọng nói tối đa ${MAX_VOICE_LENGTH} ký tự.`, "voice");
+    if (spec.roles.voice && attachments.voice && !settings.audioEnabled) {
+        return fail("Đã chọn giọng nói nhưng audio đang tắt — bật audio hoặc bỏ chọn giọng.", "voice");
     }
     if (spec.settings.seed && settings.seed !== null && (settings.seed < SEED_MIN || settings.seed > SEED_MAX)) {
         return fail(`Seed phải từ ${SEED_MIN} đến ${SEED_MAX}.`, "seed");

@@ -147,6 +147,7 @@ export const SECTIONS: DocSection[] = [
         blocks: [
             { kind: "live", widget: "models", fallback: "Bảng giá hiện hành: `GET /v1/models` (cần key) hoặc trang [Bảng giá](/pricing)." },
             { kind: "endpoint", method: "GET", path: "/v1/models", summary: "Danh sách model dùng được trong `params.model`, kèm credit và model mặc định." },
+            { kind: "endpoint", method: "GET", path: "/v1/voices", summary: "Danh sách giọng cho `params.audio` của `reference-images-to-video`: `id`, `gender`, `style`, `pitch`, `sampleUrl` (file .wav nghe thử). Ít thay đổi, cache được 24h." },
             { kind: "callout", tone: "info", text: "`Veo_3.1-Lite [Lower Priority]` là video miễn phí theo gói, xếp hàng chậm hơn. Gói không trừ credit vẫn bị giới hạn số job video mỗi ngày (xem mục Giới hạn)." },
         ],
     },
@@ -390,6 +391,7 @@ export const SECTIONS: DocSection[] = [
                 kind: "table",
                 head: ["Ngày", "Thay đổi"],
                 rows: [
+                    ["2026-10-19", "`GET /v1/voices`. `reference-images-to-video`: `params.audio` (alias `voice`) chỉ nhận id giọng từ danh sách này, kiểm ngay lúc tạo; mô tả tự do bị từ chối 400 (trước đây task lỗi sau khi đã giữ credit). Task trả thêm `voice`."],
                     ["2026-10-16", "Chấp nhận `Authorization: Bearer`. Webhook ký bằng khoá riêng của từng khách (`whsec_…`). Có Postman collection và `llms.txt`."],
                     ["2026-10-15", "Upload ảnh trả `name`, `filename`, `duplicateOf`; `references` nhận `handle`."],
                 ],

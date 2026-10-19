@@ -1,7 +1,8 @@
-import { Download, Image as ImageIcon, Loader2, Maximize2, RefreshCw, Video, X, XCircle } from "lucide-react";
+import { Download, Image as ImageIcon, Loader2, Maximize2, Mic, RefreshCw, Video, X, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getRatioPreviewClass } from "@/components/generator/ratioPreview";
 import { LazyImage, LazyVideo } from "@/components/media";
+import { voiceName } from "@/features/generator/voiceLabels";
 import type { PortalTask } from "@/types/api";
 import { ICON_BUTTON, ICON_BUTTON_PRIMARY, isActiveTask, isVideoTask, STATUS_CLASS, STATUS_LABEL, taskAlt, taskErrorText, taskNumber, type RunTaskActions } from "./runTaskView";
 
@@ -214,6 +215,12 @@ export default function RunTaskCard({
                         >
                             {task.prompt ?? "—"}
                         </p>
+                        {task.voice && (
+                            <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-[var(--app-text-secondary)]">
+                                <Mic className="h-3 w-3" aria-hidden="true" />
+                                <span><span className="sr-only">Giọng: </span>{voiceName(task.voice)}</span>
+                            </p>
+                        )}
                     </div>
 
                     <span

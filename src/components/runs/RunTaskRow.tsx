@@ -1,5 +1,6 @@
 import { Download, Loader2, RefreshCw, XCircle } from "lucide-react";
 import { LazyImage, LazyVideo } from "@/components/media";
+import { voiceName } from "@/features/generator/voiceLabels";
 import type { PortalTask } from "@/types/api";
 import { ICON_BUTTON, isActiveTask, isVideoTask, STATUS_CLASS, STATUS_LABEL, taskAlt, taskErrorText, taskNumber, type RunTaskActions } from "./runTaskView";
 
@@ -19,6 +20,13 @@ export default function RunTaskRow({ task, actions, rowIndex }: { task: PortalTa
             <span className="w-14 shrink-0 text-xs font-semibold text-[var(--app-text)]">#{taskNumber(task)}</span>
             <p className="min-w-0 flex-1 truncate text-xs text-[var(--app-text-secondary)]" title={task.prompt ?? undefined}>
                 {task.prompt ?? "—"}
+                {task.voice && (
+                    <span className="ml-2 text-[11px] text-[var(--app-text-muted)]">
+                        <span aria-hidden="true">· giọng </span>
+                        <span className="sr-only">Giọng: </span>
+                        {voiceName(task.voice)}
+                    </span>
+                )}
                 {error && <span className="ml-2 text-[11px] text-[var(--app-danger)]">{error}</span>}
             </p>
             <span className={`hidden shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium sm:inline-flex ${STATUS_CLASS[task.status]}`}>{STATUS_LABEL[task.status]}</span>

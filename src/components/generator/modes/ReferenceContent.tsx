@@ -1,17 +1,21 @@
+import { useCallback } from "react";
 import { maxReferences, OMNI_MODEL } from "@/features/generator/modes";
 import ImageSlot from "../imageSlot";
 import type { GeneratorAttachments } from "../types";
+import VoicePicker from "../voice/VoicePicker";
 import SectionTitle from "./SectionTitle";
-import VoiceSelector from "./VoiceSelector";
 
 
 interface ReferenceContentProps {
     attachments: GeneratorAttachments;
     model: string;
     onChange: (patch: Partial<GeneratorAttachments>) => void;
+    audioEnabled: boolean;
+    onEnableAudio: () => void;
 }
 
-export default function ReferenceContent({ attachments, model, onChange }: ReferenceContentProps) {
+export default function ReferenceContent({ attachments, model, onChange, audioEnabled, onEnableAudio }: ReferenceContentProps) {
+    const onVoiceChange = useCallback((voice: string) => onChange({ voice }), [onChange]);
     const max = maxReferences(model);
     const hint = model === OMNI_MODEL ? "Đang dùng Veo 3.1 Omni: nhận tới 7 ảnh." : "Chọn model Veo 3.1 Omni trong Cài đặt để dùng tới 7 ảnh.";
 
@@ -34,35 +38,16 @@ export default function ReferenceContent({ attachments, model, onChange }: Refer
                 />
             </div>
             <div>
-                <label className="mb-2 block text-sm font-semibold text-[var(--app-text)]">
-                    Giọng nói{" "}
-                    <span className="text-xs font-normal text-[var(--app-text-muted)]">
-                        (tuỳ chọn)
-                    </span>
-                </label>
-
-                <VoiceSelector
-                    value={attachments.voice}
-                    onChange={(voice) => onChange({ voice })}
+                <SectionTitle
+                    title="Giọng nói"
+                    description="Tuỳ chọn. Chọn một giọng để mọi video trong lượt nói cùng một chất giọng."
                 />
-
-                <div className="mt-2 flex items-center justify-between gap-3">
-                    <p className="text-xs text-[var(--app-text-muted)]">
-                        {attachments.voice
-                            ? `ID gửi lên API: ${attachments.voice}`
-                            : "Sử dụng cấu hình giọng mặc định của model."}
-                    </p>
-
-                    {attachments.voice && (
-                        <button
-                            type="button"
-                            onClick={() => onChange({ voice: "" })}
-                            className="shrink-0 text-xs font-medium text-[var(--app-accent)] hover:underline"
-                        >
-                            Bỏ chọn
-                        </button>
-                    )}
-                </div>
+                <VoicePicker
+                    value={attachments.voice}
+                    onChange={onVoiceChange}
+                    audioEnabled={audioEnabled}
+                    onEnableAudio={onEnableAudio}
+                />
             </div>
         </div>
     );

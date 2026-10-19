@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import ActiveRunBlock from "@/components/runs/ActiveRunBlock";
 import ConfirmGenerateDialog from "@/components/runs/ConfirmGenerateDialog";
+import { voiceName } from "@/features/generator/voiceLabels";
 import DraftRestoreBanner from "@/components/runs/DraftRestoreBanner";
 import ResumeBanner from "@/components/runs/ResumeBanner";
 import RunBanner from "@/components/runs/RunBanner";
@@ -354,6 +355,7 @@ export default function GeneratorPanel() {
                 balance={form.balance}
                 queuedOnServer={maxPending !== null ? Math.max(0, form.jobs.length - maxPending) : 0}
                 defaultName={runAutoName(form.jobs[0] ?? "", form.jobs.length)}
+                voiceLabel={form.spec.roles.voice && form.attachments.voice ? voiceName(form.attachments.voice) : null}
                 onConfirm={(name) => void submitRun(name)}
                 onCancel={() => setConfirmOpen(false)}
             />

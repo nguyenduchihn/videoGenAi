@@ -6,6 +6,7 @@ import { portalApi } from "@/api/portal.api";
 import { useFeedback } from "@/hooks/useFeedback";
 import { getErrorMessage } from "@/lib/errors";
 import { formatCredits, formatDate } from "@/lib/format";
+import { voiceName } from "@/features/generator/voiceLabels";
 import { VIDEO_WORKERS, workerLabel } from "./workerLabels";
 
 interface Props {
@@ -71,6 +72,7 @@ export default function TaskDetailSheet({ id, onClose }: Props) {
                     <Row label="Trạng thái"><StatusBadge status={task.status} /></Row>
                     <Row label="Worker">{workerLabel(task.worker)}</Row>
                     {task.model && <Row label="Model">{task.model}</Row>}
+                    {task.voice && <Row label="Giọng nói"><span>{voiceName(task.voice)}</span> <span className="font-mono text-xs text-[var(--app-text-muted)]">({task.voice})</span></Row>}
                     <Row label="Giai đoạn">{task.stage}</Row>
                     <Row label="Credits">{formatCredits(task.priceCredits)}</Row>
                     {task.creditsRefunded > 0 && (

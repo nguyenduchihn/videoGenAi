@@ -42,10 +42,12 @@ export interface ModeSpec {
 
 // ⇐ giới hạn phía backend: libs/tasks/src/domain/workers.ts, create-batch.use-case.ts, images.controller.ts
 export const OMNI_MODEL = "Veo_3.1-Omni";
+/** Lane miễn phí theo gói: Google chỉ nhận 8 giây (backend: DURATION_NOT_SUPPORTED_FOR_MODEL). */
+export const LOW_PRIORITY_MODEL = "Veo_3.1-Lite [Lower Priority]";
+export const LOW_PRIORITY_DURATION = 8;
 export const MAX_SOURCES = 10;
 export const MAX_TASKS_PER_REQUEST = 20;
 export const MAX_PROMPT_LENGTH = 4000;
-export const MAX_VOICE_LENGTH = 200;
 export const SEED_MIN = 10_000;
 export const SEED_MAX = 99_999;
 export const MAX_FILE_BYTES = 20 * 1024 * 1024;
