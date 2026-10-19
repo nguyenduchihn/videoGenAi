@@ -64,14 +64,17 @@ test("Ảnh tham chiếu → Video: tối đa 3 ảnh, @tên trong prompt, 3 pro
     await expect(region.getByRole("img")).toHaveCount(3);
     await region.getByLabel("Tên ảnh để nhắc trong prompt").first().fill("girl");
 
-    // Chọn giọng: lọc Nữ + tìm "kore" ⇒ chọn radio Kore
-    await page.getByRole("button", { name: /Mở danh sách giọng/ }).click();
-    await page.getByRole("button", { name: "Nữ", exact: true }).click();
-    await expect(page.getByRole("radio", { name: /^Puck/ })).toHaveCount(0);
-    await page.getByRole("searchbox", { name: "Tìm giọng" }).fill("kore");
-    await page.getByRole("radio", { name: /^Kore/ }).check();
-    await expect(page.getByRole("button", { name: /Thu gọn danh sách giọng/ })).toContainText("Kore");
-    await expect(page.getByRole("button", { name: "Nghe thử giọng Kore" }).first()).toBeVisible();
+    // Chọn giọng trong popup: lọc Nữ + tìm "kore" ⇒ chọn Kore ⇒ "Chọn giọng Kore" đóng popup
+    await page.getByRole("button", { name: /^Chọn giọng nói/ }).click();
+    const dialog = page.getByRole("dialog", { name: "Chọn giọng nói" });
+    await dialog.getByRole("button", { name: "Nữ", exact: true }).click();
+    await expect(dialog.getByRole("radio", { name: /^Puck/ })).toHaveCount(0);
+    await dialog.getByRole("searchbox", { name: "Tìm giọng" }).fill("kore");
+    await dialog.getByRole("radio", { name: /^Kore/ }).check();
+    await dialog.getByRole("button", { name: "Chọn giọng Kore" }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /^Chọn giọng nói — đang dùng Kore/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Nghe thử giọng Kore" })).toBeVisible();
 
     await page.getByPlaceholder(/Nhập prompt/).fill("@girl và @boy đi dạo trong công viên");
     await page.getByRole("button", { name: /^Tạo video$/ }).click();
@@ -88,19 +91,32 @@ test("Ảnh tham chiếu → Video: tối đa 3 ảnh, @tên trong prompt, 3 pro
     for (const task of tasks) {
         expect(task).toMatchObject({
             worker: "reference-images-to-video",
-            params: { audio: "kore", audioEnabled: true },
+            params: { audio: "kore", audioEnabled: true, model: "Veo_3.1-Lite [Lower Priority]", duration: 8 },
             images: { references: [{ imageId: expect.any(String), handle: "girl" }, expect.any(String), expect.any(String)] },
         });
     }
     await expect(page.getByRole("region", { name: "Kết quả" }).getByText("Kore").first()).toBeVisible();
 });
 
-test("Giọng nói: chọn bằng bàn phím; tắt audio ⇒ cảnh báo + chặn tạo, Bật audio gỡ chặn; giọng được nhớ khi quay lại chế độ", async ({ page }) => {
+test("Giọng nói: popup chọn bằng bàn phím, Huỷ giữ giọng cũ; tắt audio ⇒ cảnh báo + chặn tạo, Bật audio gỡ chặn; giọng được nhớ khi quay lại chế độ", async ({ page }) => {
     await chooseMode(page, /Ảnh tham chiếu → Video/);
-    await page.getByRole("button", { name: /Mở danh sách giọng/ }).click();
-    await page.getByRole("radio", { name: /^Không chọn/ }).focus();
+    const dialog = page.getByRole("dialog", { name: "Chọn giọng nói" });
+    await page.getByRole("button", { name: /^Chọn giọng nói — chưa chọn/ }).click();
+    await dialog.getByRole("radio", { name: /^Không chọn/ }).focus();
     await page.keyboard.press("ArrowDown"); // radio gốc: mũi tên vừa chuyển vừa chọn
-    await expect(page.getByRole("radio", { name: /^Achernar/ })).toBeChecked();
+    await expect(dialog.getByRole("radio", { name: /^Achernar/ })).toBeChecked();
+    await dialog.getByRole("button", { name: "Chọn giọng Achernar" }).click();
+    await expect(page.getByRole("button", { name: /đang dùng Achernar/ })).toBeVisible();
+
+    // Huỷ / Esc không đổi giọng
+    await page.getByRole("button", { name: /^Chọn giọng nói/ }).click();
+    await dialog.getByRole("radio", { name: /^Puck/ }).check();
+    await dialog.getByRole("button", { name: "Huỷ", exact: true }).click();
+    await expect(page.getByRole("button", { name: /đang dùng Achernar/ })).toBeVisible();
+    await page.getByRole("button", { name: /^Chọn giọng nói/ }).click();
+    await expect(dialog.getByRole("radio", { name: /^Achernar/ })).toBeChecked();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
 
     await page.getByRole("button", { name: "Cài đặt nâng cao" }).click();
     await page.getByRole("switch", { name: /Tạo audio cho video/ }).click();
@@ -115,7 +131,7 @@ test("Giọng nói: chọn bằng bàn phím; tắt audio ⇒ cảnh báo + ch�
 
     await chooseMode(page, /Văn bản → Video/);
     await chooseMode(page, /Ảnh tham chiếu → Video/);
-    await expect(page.getByRole("button", { name: /Mở danh sách giọng/ })).toContainText("Achernar");
+    await expect(page.getByRole("button", { name: /đang dùng Achernar/ })).toBeVisible();
 });
 
 test("Ảnh tham chiếu → Ảnh: 2 ảnh nguồn gửi image-to-image với images.sources và nhận ảnh", async ({ page }) => {

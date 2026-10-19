@@ -116,6 +116,12 @@ describe("validateGenerator", () => {
         expect(email.valid).toBe(true);
     });
 
+    it("Lite [Lower Priority] chỉ nhận 8 giây (backend DURATION_NOT_SUPPORTED_FOR_MODEL)", () => {
+        const lp = (duration: GeneratorSettingsState["duration"]) => validateGenerator({ mode: "text-to-video", jobs: ["p"], settings: { ...settings, model: "Veo_3.1-Lite [Lower Priority]", duration }, attachments: EMPTY_ATTACHMENTS });
+        expect(lp(6)).toMatchObject({ valid: false, field: "model", message: "Veo 3.1 Lite [Lower Priority] chỉ tạo video 8 giây — chọn 8s hoặc đổi model." });
+        expect(lp(8).valid).toBe(true);
+    });
+
     it("a chosen voice needs audio on (backend rejects voice + audioEnabled:false) and seed must be within 10000–99999 for text-to-image", () => {
         const withVoice = (audioEnabled: boolean, voice = "achernar") => validateGenerator({
             mode: "reference-images-to-video",

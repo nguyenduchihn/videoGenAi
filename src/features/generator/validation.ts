@@ -7,6 +7,8 @@ import {
     MAX_SOURCES,
     maxReferences,
     modeSpec,
+    LOW_PRIORITY_DURATION,
+    LOW_PRIORITY_MODEL,
     OMNI_MODEL,
     SEED_MAX,
     SEED_MIN,
@@ -52,6 +54,9 @@ export function validateGenerator({ mode, jobs, settings, attachments }: Validat
     const roleError = validateRoles(spec, settings.model, attachments);
     if (roleError) return roleError;
 
+    if (spec.settings.duration && settings.model === LOW_PRIORITY_MODEL && settings.duration !== LOW_PRIORITY_DURATION) {
+        return fail(`Veo 3.1 Lite [Lower Priority] chỉ tạo video ${LOW_PRIORITY_DURATION} giây — chọn ${LOW_PRIORITY_DURATION}s hoặc đổi model.`, "model");
+    }
     if (mode === "start-end-image-to-video" && settings.model === OMNI_MODEL) {
         return fail("Veo 3.1 Omni không hỗ trợ Khung đầu + cuối. Chọn Lite, Fast hoặc Quality.", "model");
     }
