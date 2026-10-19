@@ -271,6 +271,7 @@ export type UpscaleResolution =
 /** Ảnh đính kèm: imageId trần hoặc kèm `handle` để nhắc `@handle` trong prompt. */
 export type ImageRef = string | { imageId: string; handle?: string };
 
+
 export interface CreateTaskImages {
     start?: ImageRef;
     end?: ImageRef;
@@ -278,6 +279,7 @@ export interface CreateTaskImages {
     source?: ImageRef;
     sources?: ImageRef[];
 }
+
 
 export interface CreateTaskUpscale {
     resolution: UpscaleResolution;

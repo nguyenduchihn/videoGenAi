@@ -26,14 +26,14 @@ export default function ActiveRunBlock({ runId, remainingLocal, ratio, actions, 
     if (!run) return null;
     const preview: PortalTask[] = (tasks.data?.pages.flatMap((p) => p.tasks) ?? []).slice(0, PREVIEW_LIMIT);
     return (
-        <section className="mt-6 overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)]" aria-labelledby="active-run-title">
+        <section className="mt-0 overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)]" aria-labelledby="active-run-title">
             <h2 id="active-run-title" className="sr-only">Lượt đang chạy</h2>
             <RunProgressHeader run={run} remainingLocal={remainingLocal} compact onCancelRemaining={onCancelRemaining} onRetryFailed={onRetryFailed} />
             <div role="region" aria-label="Kết quả" className="p-4 sm:p-5">
                 {preview.length === 0 ? (
                     <p className="text-sm text-[var(--app-text-muted)]">Đang gửi job lên máy chủ…</p>
                 ) : (
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,13rem),1fr))]">
                         {preview.map((task) => <RunTaskCard key={task.id} task={task} ratio={ratio} actions={actions} />)}
                     </div>
                 )}

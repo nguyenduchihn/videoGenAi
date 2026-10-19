@@ -15,6 +15,7 @@ import {
     type GeneratorMode,
     type ModeSpec,
 } from "./modes";
+import { MAX_FRAMES, type FramePlan } from "./frameJobs";
 
 export type ValidationField =
     | "prompt"
@@ -39,13 +40,15 @@ export interface ValidationInput {
     jobs: string[];
     settings: GeneratorSettingsState;
     attachments: GeneratorAttachments;
+    /** Kế hoạch ghép ảnh khung ↔ prompt (useGeneratorForm); thiếu ⇒ bỏ qua kiểm tra nhiều khung. */
+    framePlan?: FramePlan;
 }
 
 const OK: ValidationResult = { valid: true };
 const fail = (message: string, field: ValidationField): ValidationResult => ({ valid: false, message, field });
 
 /** Phản chiếu luật của backend (create-batch.use-case.ts) để khách thấy lỗi trước khi gửi. */
-export function validateGenerator({ mode, jobs, settings, attachments }: ValidationInput): ValidationResult {
+export function validateGenerator({ mode, jobs, settings, attachments, framePlan }: ValidationInput): ValidationResult {
     if (jobs.length === 0) return fail("Vui lòng nhập prompt.", "prompt");
     const longIndex = jobs.findIndex((job) => job.length > MAX_PROMPT_LENGTH);
     if (longIndex >= 0) return fail(`Prompt #${longIndex + 1} dài quá ${MAX_PROMPT_LENGTH} ký tự.`, "prompt");
@@ -57,6 +60,9 @@ export function validateGenerator({ mode, jobs, settings, attachments }: Validat
     if (spec.settings.duration && settings.model === LOW_PRIORITY_MODEL && settings.duration !== LOW_PRIORITY_DURATION) {
         return fail(`Veo 3.1 Lite [Lower Priority] chỉ tạo video ${LOW_PRIORITY_DURATION} giây — chọn ${LOW_PRIORITY_DURATION}s hoặc đổi model.`, "model");
     }
+    const frameError = validateFrames(mode, attachments, framePlan);
+    if (frameError) return frameError;
+
     if (mode === "start-end-image-to-video" && settings.model === OMNI_MODEL) {
         return fail("Veo 3.1 Omni không hỗ trợ Khung đầu + cuối. Chọn Lite, Fast hoặc Quality.", "model");
     }
@@ -91,6 +97,20 @@ function validateRoles(spec: ModeSpec, model: string, attachments: GeneratorAtta
         if (count > MAX_SOURCES) return fail(`Tối đa ${MAX_SOURCES} ảnh nguồn (đang chọn ${count}).`, "sources");
     }
     if (spec.roles.sourceVideo && !attachments.sourceMediaId) return fail("Vui lòng chọn video cần tiếp tục.", "sourceMediaId");
+    return null;
+}
+
+function validateFrames(mode: GeneratorMode, attachments: GeneratorAttachments, plan: FramePlan | undefined): ValidationResult | null {
+    const start = attachments.start.length;
+    const end = attachments.end.length;
+    if (start > MAX_FRAMES) return fail(`Tối đa ${MAX_FRAMES} ảnh Khung đầu (đang chọn ${start}).`, "start");
+    if (end > MAX_FRAMES) return fail(`Tối đa ${MAX_FRAMES} ảnh Khung cuối (đang chọn ${end}).`, "end");
+    if (mode === "start-end-image-to-video" && start > 1 && end > 1 && start !== end) {
+        return fail(`Số ảnh Khung đầu (${start}) và Khung cuối (${end}) phải bằng nhau, hoặc một bên chỉ 1 ảnh dùng chung.`, "end");
+    }
+    if (plan?.promptMismatch) {
+        return fail(`Có ${plan.frames} ảnh nên mỗi ảnh là một video: nhập 1 prompt dùng chung hoặc đúng ${plan.frames} prompt theo thứ tự ảnh (đang có ${plan.jobs.length}).`, "prompt");
+    }
     return null;
 }
 

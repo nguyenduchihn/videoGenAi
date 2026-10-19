@@ -24,6 +24,7 @@ export default function ReferenceContent({ attachments, model, onChange, audioEn
                 <ImageSlot
                     role="references"
                     label="Ảnh tham chiếu"
+                    hideLabel
                     hint={hint}
                     badge={`Tối đa ${max} ảnh`}
                     required

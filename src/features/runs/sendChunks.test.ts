@@ -45,18 +45,22 @@ describe("sendChunks", () => {
     it("skips chunks already sent and treats 409 RUN_INDEX_TAKEN as sent (resume after tab close)", async () => {
         const m = manifestOf(45);
         m.chunks[0]!.state = "sent";
-        const d = deps({ createTasks: vi.fn()
-            .mockRejectedValueOnce(new ApiError(409, "RUN_INDEX_TAKEN", "taken", "r", { metadata: { taken: [20, 21] } }))
-            .mockResolvedValueOnce(created(5)) });
+        const d = deps({
+            createTasks: vi.fn()
+                .mockRejectedValueOnce(new ApiError(409, "RUN_INDEX_TAKEN", "taken", "r", { metadata: { taken: [20, 21] } }))
+                .mockResolvedValueOnce(created(5))
+        });
         const result = await sendChunks(m, d);
         expect(vi.mocked(d.createTasks).mock.calls.map(([p]) => p.runOffset)).toEqual([20, 40]);
         expect(result.chunks.map((c) => c.state)).toEqual(["sent", "sent", "sent"]);
     });
 
     it("429 QUEUE_FULL ⇒ remaining chunks are queued on the server in one items request and marked queued", async () => {
-        const d = deps({ createTasks: vi.fn()
-            .mockResolvedValueOnce(created(20))
-            .mockRejectedValueOnce(new ApiError(429, "QUEUE_FULL", "full", "r", { retryAfterSec: 30 })) });
+        const d = deps({
+            createTasks: vi.fn()
+                .mockResolvedValueOnce(created(20))
+                .mockRejectedValueOnce(new ApiError(429, "QUEUE_FULL", "full", "r", { retryAfterSec: 30 }))
+        });
         const result = await sendChunks(manifestOf(45), d);
         expect(vi.mocked(d.enqueueRunItems).mock.calls).toHaveLength(1);
         expect(vi.mocked(d.enqueueRunItems).mock.calls[0]?.[1]).toMatchObject({ runOffset: 20 });
@@ -66,9 +70,11 @@ describe("sendChunks", () => {
     });
 
     it("429 RATE_LIMITED waits Retry-After and retries the same chunk", async () => {
-        const d = deps({ createTasks: vi.fn()
-            .mockRejectedValueOnce(new ApiError(429, "RATE_LIMITED", "slow", "r", { retryAfterSec: 2 }))
-            .mockResolvedValueOnce(created(5)) });
+        const d = deps({
+            createTasks: vi.fn()
+                .mockRejectedValueOnce(new ApiError(429, "RATE_LIMITED", "slow", "r", { retryAfterSec: 2 }))
+                .mockResolvedValueOnce(created(5))
+        });
         const result = await sendChunks(manifestOf(5), d);
         expect(d.sleep).toHaveBeenCalledWith(2_000);
         expect(vi.mocked(d.createTasks)).toHaveBeenCalledTimes(2);

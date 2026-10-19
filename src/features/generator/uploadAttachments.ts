@@ -57,21 +57,27 @@ const refOf = (cache: UploadCache, item: AttachedImage): ImageRef => {
     return handle ? { imageId, handle } : imageId;
 };
 
-const firstRef = (cache: UploadCache, items: AttachedImage[]): ImageRef | undefined => {
-    const first = items[0];
-    return first ? refOf(cache, first) : undefined;
-};
+const refsOf = (
+    cache: UploadCache,
+    items: AttachedImage[],
+): ImageRef[] => items.map((item) => refOf(cache, item));
 
 /** Ghép imageId từ cache vào vai trò; ném ATTACHMENT_MISSING nếu còn ảnh chưa có id. */
-export function resolveFromCache(attachments: GeneratorAttachments, cache: UploadCache): ResolvedAttachments {
+export function resolveFromCache(
+    attachments: GeneratorAttachments,
+    cache: UploadCache,
+): ResolvedAttachments {
     const voice = attachments.voice.trim();
+
     return {
-        start: firstRef(cache, attachments.start),
-        end: firstRef(cache, attachments.end),
-        references: attachments.references.map((item) => refOf(cache, item)),
-        sources: attachments.sources.map((item) => refOf(cache, item)),
+        start: refsOf(cache, attachments.start),
+        end: refsOf(cache, attachments.end),
+        references: refsOf(cache, attachments.references),
+        sources: refsOf(cache, attachments.sources),
         ...(voice ? { voice } : {}),
-        ...(attachments.sourceMediaId ? { sourceMediaId: attachments.sourceMediaId } : {}),
+        ...(attachments.sourceMediaId
+            ? { sourceMediaId: attachments.sourceMediaId }
+            : {}),
     };
 }
 

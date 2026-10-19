@@ -41,6 +41,28 @@ test("Khung đầu → Video: tải 1 ảnh, gửi đúng worker image-to-video 
     expect(request?.tasks[0]).toMatchObject({ worker: "image-to-video", images: { start: expect.stringMatching(/^img_mock_/) }, params: { audioEnabled: true, duration: 8 } });
 });
 
+test("Nhiều khung đầu: 3 ảnh + 1 prompt ⇒ 3 video, mỗi task MỘT ảnh theo thứ tự; 2 prompt lệch số ảnh bị chặn", async ({ page }) => {
+    await chooseMode(page, /Khung đầu → Video/);
+    await slotInput(page, /^Khung đầu/).setInputFiles([fixture("a.png"), fixture("b.png"), fixture("c.png")]);
+    await expect(page.getByRole("region", { name: /^Khung đầu/ }).getByRole("img")).toHaveCount(3);
+    await page.getByPlaceholder(/Nhập prompt/).fill("Một\nHai");
+    await page.getByRole("button", { name: /^Tạo (video|\d+ job)$/ }).click();
+    await expect(page.getByRole("alert")).toContainText("Có 3 ảnh");
+
+    await page.getByPlaceholder(/Nhập prompt/).fill("Camera lướt chậm");
+    await expect(page.getByRole("button", { name: "Tạo 3 job" })).toBeVisible(); // 1 prompt × 3 ảnh = 3 video, giá ước tính theo 3 job
+    await page.getByRole("button", { name: "Tạo 3 job" }).click();
+    // Đếm thẻ job (video ngoài khung nhìn được lazy load nên không đếm <video>)
+    const jobs = page.getByRole("region", { name: "Kết quả" }).getByRole("article", { name: /^Job #/ });
+    await expect(jobs).toHaveCount(3, { timeout: 30_000 });
+    await expect(resultVideos(page).first()).toBeVisible({ timeout: 30_000 });
+    const [request] = await sentRequests(page);
+    expect(request?.tasks).toHaveLength(3);
+    const starts = request!.tasks.map((t) => t.images?.start);
+    for (const s of starts) expect(s).toEqual(expect.stringMatching(/^img_mock_/));
+    expect(new Set(starts).size).toBe(3);
+});
+
 test("Khung đầu + cuối → Video: thiếu khung cuối bị chặn tại chỗ, đủ 2 ảnh gửi start-end-image-to-video", async ({ page }) => {
     await chooseMode(page, /Khung đầu \+ cuối → Video/);
     await page.getByPlaceholder(/Nhập prompt/).fill("Chuyển cảnh từ ngày sang đêm");
@@ -98,7 +120,7 @@ test("Ảnh tham chiếu → Video: tối đa 3 ảnh, @tên trong prompt, 3 pro
     await expect(page.getByRole("region", { name: "Kết quả" }).getByText("Kore").first()).toBeVisible();
 });
 
-test("Giọng nói: popup chọn bằng bàn phím, Huỷ giữ giọng cũ; tắt audio ⇒ cảnh báo + chặn tạo, Bật audio gỡ chặn; giọng được nhớ khi quay lại chế độ", async ({ page }) => {
+test("Giọng nói: popup chọn bằng bàn phím, Huỷ giữ giọng cũ; tắt audio ⇒ cảnh báo + chặn tạo, Bật audio gỡ chặn; giọng được nhớ khi quay lại chế độ", async ({ page }, testInfo) => {
     await chooseMode(page, /Ảnh tham chiếu → Video/);
     const dialog = page.getByRole("dialog", { name: "Chọn giọng nói" });
     await page.getByRole("button", { name: /^Chọn giọng nói — chưa chọn/ }).click();
@@ -118,16 +140,19 @@ test("Giọng nói: popup chọn bằng bàn phím, Huỷ giữ giọng cũ; t�
     await page.keyboard.press("Escape");
     await expect(dialog).toHaveCount(0);
 
-    await page.getByRole("button", { name: "Cài đặt nâng cao" }).click();
-    await page.getByRole("switch", { name: /Tạo audio cho video/ }).click();
-    await page.getByRole("button", { name: "Đóng cài đặt" }).click();
-    await expect(page.getByText("Audio đang tắt nên giọng không có tác dụng.")).toBeVisible();
-    await slotInput(page, /^Ảnh tham chiếu/).setInputFiles([fixture("a.png")]);
-    await page.getByPlaceholder(/Nhập prompt/).fill("cô gái vẫy tay");
-    await page.getByRole("button", { name: /^Tạo video$/ }).click();
-    await expect(page.getByRole("alert").last()).toContainText("audio đang tắt");
-    await page.getByRole("button", { name: "Bật audio" }).click();
-    await expect(page.getByText("Audio đang tắt nên giọng không có tác dụng.")).toHaveCount(0);
+    // Nút Cài đặt nâng cao chỉ hiện từ xl (toolbar dashboard mới) ⇒ phần tắt audio chỉ thử trên desktop
+    if (testInfo.project.name === "desktop") {
+        await page.getByRole("button", { name: "Cài đặt nâng cao" }).click();
+        await page.getByRole("switch", { name: /Tạo audio cho video/ }).click();
+        await page.getByRole("button", { name: "Đóng cài đặt" }).click();
+        await expect(page.getByText("Audio đang tắt nên giọng không có tác dụng.")).toBeVisible();
+        await slotInput(page, /^Ảnh tham chiếu/).setInputFiles([fixture("a.png")]);
+        await page.getByPlaceholder(/Nhập prompt/).fill("cô gái vẫy tay");
+        await page.getByRole("button", { name: /^Tạo video$/ }).click();
+        await expect(page.getByRole("alert").last()).toContainText("audio đang tắt");
+        await page.getByRole("button", { name: "Bật audio" }).click();
+        await expect(page.getByText("Audio đang tắt nên giọng không có tác dụng.")).toHaveCount(0);
+    }
 
     await chooseMode(page, /Văn bản → Video/);
     await chooseMode(page, /Ảnh tham chiếu → Video/);
@@ -147,7 +172,8 @@ test("Ảnh tham chiếu → Ảnh: 2 ảnh nguồn gửi image-to-image với i
 
 test("Văn bản → Ảnh với upscale 2K: gửi text-to-image + upscale.resolution", async ({ page }) => {
     await chooseMode(page, /Văn bản → Ảnh/);
-    await page.getByRole("radio", { name: "2K" }).click();
+    await page.getByRole("button", { name: /^Upscale:/ }).click();
+    await page.getByRole("option", { name: "2K" }).click();
     await page.getByPlaceholder(/Nhập prompt/).fill("Một chú mèo đeo kính");
     await page.getByRole("button", { name: /^Tạo ảnh$/ }).click();
 
@@ -163,7 +189,7 @@ test("Tiếp tục video từ thẻ kết quả: chuyển sang extend-video vớ
     await page.getByRole("button", { name: /^Tạo video$/ }).click();
     await expect(resultVideos(page).first()).toBeVisible({ timeout: 30_000 });
 
-    await page.getByRole("button", { name: "Tiếp tục video" }).first().click();
+    await page.getByRole("button", { name: /^Tiếp tục video/ }).first().click();
     await expect(page.getByRole("button", { name: /^Chế độ/ })).toContainText("Tiếp tục video");
     await expect(page.getByText(/Đã chọn: Job #1/)).toBeVisible();
     await page.getByPlaceholder(/Nhập prompt/).fill("Chú mèo lên bờ và vẫy đuôi");

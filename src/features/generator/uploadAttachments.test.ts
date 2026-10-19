@@ -31,12 +31,12 @@ describe("uploadAttachments", () => {
 
         expect(upload).toHaveBeenCalledTimes(1);
         expect(upload.mock.calls[0]?.[0].map((p) => p.name)).toEqual(["start_001", "references_001", "references_002"]);
-        expect(resolved.start).toMatch(/^id_start_001/);
+        expect(resolved.start[0]).toMatch(/^id_start_001/);
         expect(resolved.references).toEqual([
             { imageId: expect.stringMatching(/^id_references_001/), handle: "girl" },
             expect.stringMatching(/^id_references_002/),
         ]);
-        expect(resolved.end).toBeUndefined();
+        expect(resolved.end).toEqual([]);
     });
 
     it("skips files already in the cache and only uploads the new ones", async () => {
@@ -59,7 +59,7 @@ describe("uploadAttachments", () => {
         const resolved = await uploadAttachments(attachments({ references: [item], voice: "kore", sourceMediaId: "m1" }), cache, { upload });
 
         expect(upload).not.toHaveBeenCalled();
-        expect(resolved).toEqual({ start: undefined, end: undefined, references: ["id1"], sources: [], voice: "kore", sourceMediaId: "m1" });
+        expect(resolved).toEqual({ start: [], end: [], references: ["id1"], sources: [], voice: "kore", sourceMediaId: "m1" });
     });
 
     it("throws UPLOAD_INCOMPLETE when the server omits a part", async () => {

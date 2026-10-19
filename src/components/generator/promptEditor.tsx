@@ -338,15 +338,14 @@ export default function PromptEditor({
                     )}
                     spellCheck={false}
                     className="
-                        min-h-[180px] w-full resize-y
+                        min-h-[260px] w-full resize-y
                         border-0 bg-transparent
                         px-4 py-4
                         text-sm leading-6
                         text-[var(--app-text)]
                         outline-none
                         placeholder:text-[var(--app-text-muted)]
-                        focus:ring-0
-                    "
+                        focus:ring-0"
                 />
 
                 <div className="pointer-events-none absolute bottom-3 right-4 text-[11px] text-[var(--app-text-muted)]">
