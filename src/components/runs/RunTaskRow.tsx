@@ -1,4 +1,4 @@
-import { Download, FastForward, Loader2, RefreshCw, XCircle } from "lucide-react";
+import { Download, Loader2, RefreshCw, XCircle } from "lucide-react";
 import { LazyImage, LazyVideo } from "@/components/media";
 import type { PortalTask } from "@/types/api";
 import { ICON_BUTTON, isActiveTask, isVideoTask, STATUS_CLASS, STATUS_LABEL, taskAlt, taskErrorText, taskNumber, type RunTaskActions } from "./runTaskView";
@@ -26,11 +26,6 @@ export default function RunTaskRow({ task, actions, rowIndex }: { task: PortalTa
                 {task.status === "succeeded" && url && actions.onDownload && (
                     <button type="button" onClick={() => actions.onDownload?.(task)} className={ICON_BUTTON} aria-label={`Tải xuống ${taskAlt(task)}`}>
                         <Download className="h-3.5 w-3.5" aria-hidden="true" />
-                    </button>
-                )}
-                {task.status === "succeeded" && isVideoTask(task) && task.result?.mediaId && actions.onExtend && (
-                    <button type="button" onClick={() => actions.onExtend?.(task)} className={ICON_BUTTON} aria-label={`Tiếp tục video #${taskNumber(task)}`}>
-                        <FastForward className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
                 )}
                 {task.status === "failed" && actions.onRetry && (

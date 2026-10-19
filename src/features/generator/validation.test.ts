@@ -113,11 +113,6 @@ describe("validateGenerator", () => {
         expect(tooMany.message).toBe("Tối đa 10 ảnh nguồn (đang chọn 11).");
     });
 
-    it("extend-video requires a source video", () => {
-        const result = validateGenerator({ mode: "extend-video", jobs: ["p"], settings, attachments: EMPTY_ATTACHMENTS });
-        expect(result).toMatchObject({ field: "sourceMediaId", message: "Vui lòng chọn video cần tiếp tục." });
-    });
-
     it("rejects malformed and duplicate handles", () => {
         const bad = validateGenerator({ mode: "image-to-image", jobs: ["p"], settings, attachments: attachments({ sources: [image("Cô gái")] }) });
         expect(bad.field).toBe("handle");

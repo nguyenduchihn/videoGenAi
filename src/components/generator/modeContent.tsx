@@ -1,11 +1,9 @@
 import { Info } from "lucide-react";
 import { IMAGE_TTL_HOURS, modeSpec } from "@/features/generator/modes";
-import ExtendContent from "./modes/ExtendContent";
 import FrameContent from "./modes/FrameContent";
 import ReferenceContent from "./modes/ReferenceContent";
 import SourcesContent from "./modes/SourcesContent";
 import TextOnlyContent from "./modes/TextOnlyContent";
-import type { SessionVideo } from "./sourceVideoPicker";
 import type { GeneratorAttachments, GeneratorMode } from "./types";
 
 interface ModeContentProps {
@@ -13,14 +11,13 @@ interface ModeContentProps {
     attachments: GeneratorAttachments;
     model: string;
     jobCount: number;
-    sessionVideos: SessionVideo[];
     onChange: (patch: Partial<GeneratorAttachments>) => void;
 }
 
 const imageCount = (attachments: GeneratorAttachments): number =>
     attachments.start.length + attachments.end.length + attachments.references.length + attachments.sources.length;
 
-function ModeBody({ mode, attachments, model, sessionVideos, onChange }: Omit<ModeContentProps, "jobCount">) {
+function ModeBody({ mode, attachments, model, onChange }: Omit<ModeContentProps, "jobCount">) {
     switch (mode) {
         case "text-to-video":
             return <TextOnlyContent kind="video" />;
@@ -34,8 +31,6 @@ function ModeBody({ mode, attachments, model, sessionVideos, onChange }: Omit<Mo
             return <ReferenceContent attachments={attachments} model={model} onChange={onChange} />;
         case "image-to-image":
             return <SourcesContent attachments={attachments} onChange={onChange} />;
-        case "extend-video":
-            return <ExtendContent attachments={attachments} videos={sessionVideos} onChange={onChange} />;
     }
 }
 

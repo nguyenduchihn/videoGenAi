@@ -1,4 +1,4 @@
-import { ArrowUpToLine, Clapperboard, Film, Image as ImageIcon, Images, Sparkles, Video, type LucideIcon } from "lucide-react";
+import { ArrowUpToLine, Film, Image as ImageIcon, Images, Sparkles, Video, type LucideIcon } from "lucide-react";
 import type { PricingWorker } from "@/types/api";
 
 export type WorkerKind = "video" | "image";
@@ -16,7 +16,6 @@ export const WORKER_ORDER = [
     "image-to-video",
     "reference-images-to-video",
     "start-end-image-to-video",
-    "extend-video",
     "text-to-image",
     "image-to-image",
     "upscale-image",
@@ -29,7 +28,6 @@ export const WORKER_INFO: Record<string, WorkerInfo> = {
     "image-to-video": { label: "Image → Video", description: "Thổi chuyển động vào một bức ảnh tĩnh.", icon: ImageIcon, kind: "video" },
     "reference-images-to-video": { label: "Reference Images → Video", description: "Giữ nhân vật, sản phẩm nhất quán từ tối đa 3 ảnh tham chiếu.", icon: Images, kind: "video" },
     "start-end-image-to-video": { label: "Start / End Image → Video", description: "Chỉ định khung hình đầu và cuối, AI dựng chuyển cảnh ở giữa.", icon: Film, kind: "video" },
-    "extend-video": { label: "Extend Video", description: "Kéo dài video đã tạo thêm một đoạn liền mạch.", icon: Clapperboard, kind: "video" },
     "text-to-image": { label: "Text → Image", description: "Tạo ảnh từ prompt văn bản.", icon: Sparkles, kind: "image" },
     "image-to-image": { label: "Image → Image", description: "Biến đổi ảnh có sẵn theo mô tả.", icon: ImageIcon, kind: "image" },
     "upscale-image": { label: "Upscale ảnh", description: "Nâng độ phân giải ảnh lên 2K hoặc 4K.", icon: ArrowUpToLine, kind: "image" },

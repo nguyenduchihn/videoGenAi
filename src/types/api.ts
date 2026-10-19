@@ -257,7 +257,6 @@ export type TaskWorker =
     | "image-to-video"
     | "reference-images-to-video"
     | "start-end-image-to-video"
-    | "extend-video"
     | "text-to-image"
     | "image-to-image";
 
@@ -289,8 +288,6 @@ export interface CreateTaskItem {
     params: Record<string, unknown>;
 
     images?: CreateTaskImages;
-
-    sourceMediaId?: string;
 
     upscale?: CreateTaskUpscale;
 }

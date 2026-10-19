@@ -4,14 +4,13 @@ import { GeneratorError } from "./errors";
 import { frameAt } from "./frameJobs";
 import type { GeneratorMode } from "./modes";
 
-/** Ảnh đã upload (imageId) + tham số đính kèm, đủ để dựng `images`/`sourceMediaId`. */
+/** Ảnh đã upload (imageId) + tham số đính kèm, đủ để dựng `images`. */
 export interface ResolvedAttachments {
     start: ImageRef[];
     end: ImageRef[];
     references: ImageRef[];
     sources: ImageRef[];
     voice?: string;
-    sourceMediaId?: string;
 }
 
 export const EMPTY_RESOLVED: ResolvedAttachments = {
@@ -31,13 +30,6 @@ function needImage(images: ImageRef[], index: number, role: string): ImageRef {
         );
     }
     return first;
-}
-
-function need<T>(value: T | undefined, role: string): T {
-    if (value === undefined || value === null || value === "") {
-        throw new GeneratorError("ATTACHMENT_MISSING", `Thiếu ảnh/video cho vai trò "${role}".`);
-    }
-    return value;
 }
 
 function upscaleOf(settings: GeneratorSettingsState): { upscale?: CreateTaskUpscale } {
@@ -86,13 +78,6 @@ export function buildTasks(
                     images: { references: resolved.references },
                     ...upscale,
                 };
-            case "extend-video":
-                return {
-                    worker: mode,
-                    params: { prompt, model: settings.model },
-                    sourceMediaId: need(resolved.sourceMediaId, "sourceMediaId"),
-                    ...upscale,
-                };
             case "text-to-image":
                 return {
                     worker: mode,
@@ -101,6 +86,9 @@ export function buildTasks(
                 };
             case "image-to-image":
                 return { worker: mode, params: { prompt, ...image }, images: { sources: resolved.sources }, ...upscale };
+
+            default:
+                throw new Error(`Chế độ tạo nội dung không được hỗ trợ: ${mode}`);
         }
     });
 }

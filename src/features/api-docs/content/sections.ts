@@ -159,7 +159,7 @@ export const SECTIONS: DocSection[] = [
             {
                 kind: "params",
                 params: [
-                    { name: "tasks", type: "array", required: true, description: "1–20 phần tử `{ worker, params, images?, sourceMediaId?, upscale? }`." },
+                    { name: "tasks", type: "array", required: true, description: "1–20 phần tử `{ worker, params, images?, upscale? }`." },
                     { name: "tasks[].worker", type: "string", required: true, description: "Chế độ tạo, xem 7 thẻ bên dưới." },
                     { name: "tasks[].params", type: "object", required: true, description: "Tham số theo worker (`prompt`, `model`, `ratio`…)." },
                     { name: "tasks[].images", type: "object", description: "Ảnh đầu vào theo vai trò, giá trị là `imageId` từ `POST /v1/images`." },
@@ -217,7 +217,6 @@ export const SECTIONS: DocSection[] = [
                 kind: "list",
                 items: [
                     "`result.url` để xem / nhúng, `result.downloadUrl` để tải về đúng tên file. Cả hai **hết hạn sau 1 giờ**: gọi lại GET để lấy link mới.",
-                    "`result.mediaId` dùng làm `sourceMediaId` cho `extend-video`.",
                     "Task `failed` có `error: { code, message }` và được hoàn credit tự động.",
                 ],
             },

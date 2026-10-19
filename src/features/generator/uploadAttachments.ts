@@ -75,9 +75,6 @@ export function resolveFromCache(
         references: refsOf(cache, attachments.references),
         sources: refsOf(cache, attachments.sources),
         ...(voice ? { voice } : {}),
-        ...(attachments.sourceMediaId
-            ? { sourceMediaId: attachments.sourceMediaId }
-            : {}),
     };
 }
 

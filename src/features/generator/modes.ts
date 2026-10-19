@@ -1,7 +1,6 @@
 import {
     ArrowLeftRight,
     Clapperboard,
-    FastForward,
     Film,
     ImagePlay,
     Images,
@@ -115,15 +114,6 @@ export const MODES: readonly ModeSpec[] = [
         icon: Film,
         roles: { references: true, voice: true },
         settings: VIDEO_SETTINGS,
-    },
-    {
-        value: "extend-video",
-        kind: "video",
-        label: "Tiếp tục video",
-        description: "Nối dài video đã tạo",
-        icon: FastForward,
-        roles: { sourceVideo: true },
-        settings: { ratio: false, duration: false, audio: false, seed: false },
     },
 ];
 

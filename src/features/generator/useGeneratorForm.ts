@@ -67,8 +67,6 @@ export interface UseGeneratorFormReturn {
     showValidation: boolean;
     setShowValidation: (value: boolean) => void;
     handleModeChange: (nextMode: GeneratorMode) => void;
-    /** "Tiếp tục video" từ thẻ kết quả: chuyển sang extend-video với video nguồn đã chọn. */
-    startExtendFrom: (mediaId: string, label: string) => void;
     /** Khôi phục bản nháp tự lưu (prompt + chế độ + tỷ lệ + cài đặt). */
     applyDraft: (draft: { prompt: string; mode: GeneratorMode; ratio: string; settings: GeneratorSettingsState }) => void;
 }
@@ -160,11 +158,6 @@ export function useGeneratorForm({ variant = "advanced" }: { variant?: "quick" |
         setAttachments(EMPTY_ATTACHMENTS);
     }, [attachments, catalog, spec.kind]);
 
-    const startExtendFrom = useCallback((mediaId: string, label: string) => {
-        handleModeChange("extend-video");
-        setAttachments({ ...EMPTY_ATTACHMENTS, sourceMediaId: mediaId, sourceLabel: label });
-    }, [handleModeChange]);
-
     const applyDraft = useCallback((draft: { prompt: string; mode: GeneratorMode; ratio: string; settings: GeneratorSettingsState }) => {
         handleModeChange(draft.mode);
         setPrompt(draft.prompt);
@@ -177,6 +170,6 @@ export function useGeneratorForm({ variant = "advanced" }: { variant?: "quick" |
         prompt, setPrompt, attachments, updateAttachments, uploadCache,
         promptSplitMode, setPromptSplitMode, settingsOpen, setSettingsOpen, settings, setSettings,
         jobs, creditPerJob, estimatedCredits, balance, chargesCredits, fairUse, validation,
-        showValidation, setShowValidation, handleModeChange, startExtendFrom, applyDraft,
+        showValidation, setShowValidation, handleModeChange, applyDraft,
     };
 }

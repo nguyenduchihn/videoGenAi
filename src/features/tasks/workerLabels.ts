@@ -7,7 +7,6 @@ export const WORKER_LABELS: Record<string, string> = {
     "image-to-video": "Ảnh → Video",
     "reference-images-to-video": "Ảnh tham chiếu → Video",
     "start-end-image-to-video": "Khung đầu/cuối → Video",
-    "extend-video": "Kéo dài video",
     "text-to-image": "Văn bản → Ảnh",
     "image-to-image": "Ảnh → Ảnh",
 };
@@ -17,7 +16,6 @@ export const VIDEO_WORKERS: ReadonlySet<string> = new Set([
     "image-to-video",
     "reference-images-to-video",
     "start-end-image-to-video",
-    "extend-video",
 ]);
 
 export function workerLabel(worker: string): string {

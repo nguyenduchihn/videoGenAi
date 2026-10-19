@@ -46,7 +46,6 @@ export default function RunDetailPage() {
         onRetry: (task) => actions.retryFailed.mutate([task.id], { onError: (e) => toast.error(getErrorMessage(e)) }),
         onCancel: (task) => actions.cancelOne.mutate(task.id, { onError: (e) => toast.error(getErrorMessage(e)) }),
         onDownload: (task) => { if (task.result?.url) window.open(task.result.url, "_blank", "noopener"); },
-        onExtend: (task) => { if (task.result?.mediaId) navigate(`/dashboard?extend=${encodeURIComponent(task.result.mediaId)}&label=${encodeURIComponent(`Job #${(task.runIndex ?? 0) + 1}`)}`); },
         onRefresh: () => void tasksQuery.refetch(),
     }), [actions.cancelOne, actions.retryFailed, navigate, tasksQuery, toast]);
 

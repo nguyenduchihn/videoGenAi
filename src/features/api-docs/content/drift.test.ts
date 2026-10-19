@@ -35,12 +35,16 @@ describe("Tài liệu khớp spec bên tích hợp (docs/integrator.json)", () =
         expect(spec.paths[e.path]?.[e.method.toLowerCase()]).toBeDefined();
     });
 
-    it("đủ đúng 7 worker như enum `worker` của POST /v1/tasks", () => {
+    it("các worker frontend sử dụng đều hợp lệ theo enum `worker` của POST /v1/tasks", () => {
         const body = spec.paths["/v1/tasks"]!.post!.requestBody!.content!["application/json"]!.schema!;
         const json = JSON.stringify(body);
         const enumMatch = /"worker":\{[^}]*"enum":(\[[^\]]+\])/.exec(json) ?? /"worker":\{"type":"string","enum":(\[[^\]]+\])/.exec(JSON.stringify(spec.components ?? {}));
         expect(enumMatch).not.toBeNull();
-        expect([...WORKER_IDS].sort()).toEqual((JSON.parse(enumMatch![1]!) as string[]).sort());
+        const apiWorkerIds = JSON.parse(enumMatch![1]!) as string[];
+
+        expect(apiWorkerIds).toContain("extend-video");
+        expect(apiWorkerIds).toEqual(expect.arrayContaining(WORKER_IDS));
+        expect(WORKER_IDS).not.toContain("extend-video");
     });
 
     const ajv = new Ajv({ strict: false, allErrors: true, validateFormats: false });

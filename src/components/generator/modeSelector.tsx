@@ -1,7 +1,7 @@
 import { Check, ChevronDown } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
-import { MODES, modeSpec, modesOfKind, type ModeKind } from "@/features/generator/modes";
+import { modeSpec, modesOfKind, type ModeKind } from "@/features/generator/modes";
 import type { GeneratorMode } from "./types";
 
 interface ModeSelectorProps {
@@ -95,9 +95,8 @@ export default function ModeSelector({ value, onChange }: ModeSelectorProps) {
                 aria-expanded={open}
                 aria-controls={open ? listId : undefined}
                 aria-labelledby={`${listId}-label ${listId}-value`}
-                className={`flex h-11 w-full items-center justify-between rounded-xl border bg-[var(--app-surface)] px-3 text-left transition ${
-                    open ? "border-[var(--app-accent)] ring-1 ring-[var(--app-accent)]/20" : "border-[var(--app-border)] hover:border-[var(--app-accent)]/50"
-                }`}
+                className={`flex h-11 w-full items-center justify-between rounded-xl border bg-[var(--app-surface)] px-3 text-left transition ${open ? "border-[var(--app-accent)] ring-1 ring-[var(--app-accent)]/20" : "border-[var(--app-border)] hover:border-[var(--app-accent)]/50"
+                    }`}
             >
                 <span className="flex min-w-0 items-center gap-2.5">
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--app-accent-soft)] text-[var(--app-accent)]">
@@ -124,7 +123,7 @@ export default function ModeSelector({ value, onChange }: ModeSelectorProps) {
                             <div aria-hidden="true" className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
                                 {group.title}
                             </div>
-                            {MODES.filter((spec) => spec.kind === group.kind).map((spec) => {
+                            {modesOfKind(group.kind).map((spec) => {
                                 const isSelected = spec.value === value;
                                 const isActive = spec.value === active;
                                 const Icon = spec.icon;
@@ -136,9 +135,8 @@ export default function ModeSelector({ value, onChange }: ModeSelectorProps) {
                                         aria-selected={isSelected}
                                         onClick={() => select(spec.value)}
                                         onMouseEnter={() => setActive(spec.value)}
-                                        className={`flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition ${
-                                            isSelected ? "bg-[var(--app-accent-soft)]" : isActive ? "bg-[var(--app-surface-soft)]" : ""
-                                        }`}
+                                        className={`flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition ${isSelected ? "bg-[var(--app-accent-soft)]" : isActive ? "bg-[var(--app-surface-soft)]" : ""
+                                            }`}
                                     >
                                         <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${isSelected ? "bg-[var(--app-accent)]/15 text-[var(--app-accent)]" : "bg-[var(--app-surface-soft)] text-[var(--app-text-secondary)]"}`}>
                                             <Icon className="h-4 w-4" aria-hidden="true" />

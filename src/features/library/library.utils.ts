@@ -12,8 +12,6 @@ export function getMediaKind(task: PortalTask): MediaKind | null {
         case "image-to-video":
         case "reference-images-to-video":
         case "start-end-image-to-video":
-        case "extend-video":
-            return "video";
 
         default:
             return null;

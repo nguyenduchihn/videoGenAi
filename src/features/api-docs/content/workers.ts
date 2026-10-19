@@ -65,18 +65,6 @@ export const WORKERS: WorkerDoc[] = [
         },
     },
     {
-        id: "extend-video",
-        title: "Tiếp tục video",
-        kind: "video",
-        summary: "Nối thêm cảnh vào một video đã tạo thành công.",
-        imageRoles: ["Không dùng ảnh. Gửi `sourceMediaId` = `result.mediaId` của task video trước."],
-        params: [
-            prompt,
-            { name: "ratio", type: "string", description: "`16:9` hoặc `9:16`, nên trùng video nguồn." },
-        ],
-        example: { method: "POST", path: "/v1/tasks", body: { tasks: [{ worker: "extend-video", params: { prompt: "Chú mèo lên bờ và vẫy đuôi" }, sourceMediaId: "3f6c2a8e-1b4d-4c7a-9e2f-5a6b7c8d9e0f" }] } },
-    },
-    {
         id: "text-to-image",
         title: "Văn bản → Ảnh",
         kind: "image",

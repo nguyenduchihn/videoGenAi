@@ -22,7 +22,6 @@ export type ValidationField =
     | "end"
     | "references"
     | "sources"
-    | "sourceMediaId"
     | "model"
     | "handle"
     | "voice"
@@ -92,7 +91,6 @@ function validateRoles(spec: ModeSpec, model: string, attachments: GeneratorAtta
         if (count === 0) return fail("Vui lòng chọn ít nhất 1 ảnh nguồn.", "sources");
         if (count > MAX_SOURCES) return fail(`Tối đa ${MAX_SOURCES} ảnh nguồn (đang chọn ${count}).`, "sources");
     }
-    if (spec.roles.sourceVideo && !attachments.sourceMediaId) return fail("Vui lòng chọn video cần tiếp tục.", "sourceMediaId");
     return null;
 }
 

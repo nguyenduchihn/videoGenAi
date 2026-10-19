@@ -44,14 +44,6 @@ export const mockPricingResponse: PortalPricingResponse = {
             },
         },
 
-        "extend-video": {
-            credits: 100,
-
-            models: {
-                "veo-3": 100,
-            },
-        },
-
         "text-to-image": {
             credits: 20,
 

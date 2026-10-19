@@ -51,15 +51,15 @@ describe("uploadAttachments", () => {
         expect(resolved.sources).toEqual(["cached_id", "new_id"]);
     });
 
-    it("does not call the API when everything is cached and still resolves voice + sourceMediaId", async () => {
+    it("does not call the API when everything is cached and still resolves voice", async () => {
         const item = image();
         const cache: UploadCache = new Map([[item.file, "id1"]]);
         const upload = vi.fn();
 
-        const resolved = await uploadAttachments(attachments({ references: [item], voice: "  giọng nữ ", sourceMediaId: "m1" }), cache, { upload });
+        const resolved = await uploadAttachments(attachments({ references: [item], voice: "  giọng nữ " }), cache, { upload });
 
         expect(upload).not.toHaveBeenCalled();
-        expect(resolved).toEqual({ start: [], end: [], references: ["id1"], sources: [], voice: "giọng nữ", sourceMediaId: "m1" });
+        expect(resolved).toEqual({ start: [], end: [], references: ["id1"], sources: [], voice: "giọng nữ" });
     });
 
     it("throws UPLOAD_INCOMPLETE when the server omits a part", async () => {

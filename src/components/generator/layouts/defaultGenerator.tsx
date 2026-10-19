@@ -30,7 +30,7 @@ export default function DefaultGenerator(props: GeneratorLayoutProps) {
                     jobCount={jobs.length}
                     singleJob={false}
                 />
-                <ModeContent mode={mode} attachments={attachments} model={settings.model} jobCount={jobs.length} sessionVideos={props.sessionVideos} onChange={props.updateAttachments} />
+                <ModeContent mode={mode} attachments={attachments} model={settings.model} jobCount={jobs.length} onChange={props.updateAttachments} />
                 <GeneratorFooter
                     spec={spec}
                     jobCount={jobs.length}

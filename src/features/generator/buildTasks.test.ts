@@ -36,7 +36,7 @@ describe("buildTasks", () => {
     it("start-end-image-to-video: both frames, throws ATTACHMENT_MISSING when end is absent", () => {
         const [task] = buildTasks("start-end-image-to-video", ["p"], settings, "16:9", { ...EMPTY_RESOLVED, start: ["s"], end: ["e"] });
         expect(task).toMatchObject({ worker: "start-end-image-to-video", images: { start: "s", end: "e" } });
-        expect(() => buildTasks("start-end-image-to-video", ["p"], settings, "16:9", { ...EMPTY_RESOLVED, start: ["s"] })).toThrow(/sourceMediaId|end/);
+        expect(() => buildTasks("start-end-image-to-video", ["p"], settings, "16:9", { ...EMPTY_RESOLVED, start: ["s"] })).toThrow(/end/);
     });
 
     it("nhiều khung: job thứ i dùng ảnh thứ i; một khung chỉ 1 ảnh ⇒ dùng chung; luôn gửi MỘT ảnh mỗi task", () => {
@@ -56,12 +56,6 @@ describe("buildTasks", () => {
         });
         const [noVoice] = buildTasks("reference-images-to-video", ["p"], settings, "16:9", { ...EMPTY_RESOLVED, references: refs });
         expect("audio" in (noVoice?.params ?? {})).toBe(false);
-    });
-
-    it("extend-video: sourceMediaId at task level, params only prompt + model (no duration/audio/ratio)", () => {
-        const [task] = buildTasks("extend-video", ["tiếp"], settings, "16:9", { ...EMPTY_RESOLVED, sourceMediaId: "media_1" });
-        expect(task).toEqual({ worker: "extend-video", params: { prompt: "tiếp", model: "Veo_3.1-Lite" }, sourceMediaId: "media_1" });
-        expect(() => buildTasks("extend-video", ["p"], settings, "16:9", EMPTY_RESOLVED)).toThrow("sourceMediaId");
     });
 
     it("text-to-image: ratio + optional seed, never duration/audio", () => {

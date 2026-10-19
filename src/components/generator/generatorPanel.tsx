@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useCallback, useMemo, useState } from "react";
 import ActiveRunBlock from "@/components/runs/ActiveRunBlock";
 import ConfirmGenerateDialog from "@/components/runs/ConfirmGenerateDialog";
 import DraftRestoreBanner from "@/components/runs/DraftRestoreBanner";
@@ -12,23 +11,19 @@ import { forgetImageId, uploadAttachments, type UploadProgress } from "@/feature
 import { useAutoDraft } from "@/features/generator/useAutoDraft";
 import { useGeneratorForm } from "@/features/generator/useGeneratorForm";
 import { runAutoName } from "@/features/runs/runCopy";
-import { scrollToTop } from "@/lib/scroll";
 import { useRunActions } from "@/features/runs/useRuns";
 import { useRunSubmitter } from "@/features/runs/useRunSubmitter";
-import { VIDEO_WORKERS, workerLabel } from "@/features/tasks/workerLabels";
 import { useFeedback } from "@/hooks/useFeedback";
-import { useTasksHistory } from "@/hooks/useTasksHistory";
 import { getErrorMessage } from "@/lib/errors";
 import { useAuthStore } from "@/stores/auth.store";
-import type { CreateTaskItem, PortalTask } from "@/types/api";
+import type { CreateTaskItem } from "@/types/api";
 import GeneratorSettings from "./generatorSettings";
 import DefaultGenerator from "./layouts/defaultGenerator";
-import type { SessionVideo } from "./sourceVideoPicker";
 
 const CONFIRM_THRESHOLD = 20;
 
 /** Khối hành động của lượt đang hiện ở Trang chủ (huỷ/thử lại/hủy từng task). */
-function ActiveRunSection({ runId, remainingLocal, ratio, onExtend }: { runId: string; remainingLocal: number; ratio: string; onExtend: (task: PortalTask) => void }) {
+function ActiveRunSection({ runId, remainingLocal, ratio }: { runId: string; remainingLocal: number; ratio: string; }) {
     const { toast, confirm } = useFeedback();
     const actions = useRunActions(runId);
     const taskActions: RunTaskActions = useMemo(() => ({
@@ -203,8 +198,7 @@ function ActiveRunSection({ runId, remainingLocal, ratio, onExtend }: { runId: s
                 );
             }
         },
-        onExtend,
-    }), [actions.cancelOne, actions.retryFailed, onExtend, toast]);
+    }), [actions.cancelOne, actions.retryFailed, toast]);
     const cancelRemaining = async () => {
         if (await confirm({ title: "Huỷ phần còn lại?", body: "Task đang chờ/đang tạo và job xếp hàng sẽ bị huỷ, credit hoàn lại.", confirmLabel: "Huỷ còn lại", danger: true })) {
             actions.cancel.mutate(undefined, { onError: (e) => toast.error(getErrorMessage(e)) });
@@ -226,8 +220,6 @@ export default function GeneratorPanel() {
     const form = useGeneratorForm();
     const submitter = useRunSubmitter();
     const userId = useAuthStore((s) => s.user?.user.id ?? "");
-    const [searchParams, setSearchParams] = useSearchParams();
-    const history = useTasksHistory({ status: "succeeded" }, { enabled: form.mode === "extend-video" }); // 30 video gần nhất đủ cho danh sách "tiếp tục video"
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [isPreparing, setIsPreparing] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
@@ -236,19 +228,6 @@ export default function GeneratorPanel() {
 
     const draftSnapshot = useMemo(() => ({ prompt: form.prompt, mode: form.mode, ratio: form.aspectRatio, settings: form.settings }), [form.aspectRatio, form.mode, form.prompt, form.settings]);
     const draft = useAutoDraft(userId, draftSnapshot, form.applyDraft);
-
-    // "Tiếp tục video" từ trang lượt tạo: /dashboard?extend=<mediaId>&label=…
-    useEffect(() => {
-        const mediaId = searchParams.get("extend");
-        if (!mediaId) return;
-        form.startExtendFrom(mediaId, searchParams.get("label") ?? `mediaId ${mediaId.slice(0, 8)}…`);
-        setSearchParams({}, { replace: true });
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ chạy khi query đổi
-    }, [searchParams]);
-
-    const sessionVideos = useMemo<SessionVideo[]>(() => (history.data?.tasks ?? [])
-        .filter((task) => VIDEO_WORKERS.has(task.worker) && task.result?.mediaId)
-        .map((task): SessionVideo => ({ mediaId: task.result!.mediaId, label: `${workerLabel(task.worker)}${task.prompt ? ` · ${task.prompt.slice(0, 40)}` : ""}`, url: task.result?.url ?? undefined, createdAt: task.createdAt, source: "history" })), [history.data]);
 
     const prepareTasks = useCallback(async (jobs: string[]): Promise<CreateTaskItem[]> => {
         const resolved = await uploadAttachments(form.attachments, form.uploadCache, { onProgress: setUploadProgress });
@@ -287,12 +266,6 @@ export default function GeneratorPanel() {
         if (form.jobs.length > CONFIRM_THRESHOLD) setConfirmOpen(true);
         else void submitRun(null);
     };
-
-    const handleExtend = useCallback((task: PortalTask) => {
-        if (!task.result?.mediaId) return;
-        form.startExtendFrom(task.result.mediaId, `Job #${(task.runIndex ?? 0) + 1}: ${(task.prompt ?? "").slice(0, 60)}`);
-        scrollToTop();
-    }, [form]);
 
     const remainingLocal = submitter.progress && submitter.progress.runId === activeRunId ? submitter.progress.total - submitter.progress.sent : 0;
     const maxPending = useAuthStore((s) => s.user?.plan?.maxPending ?? null);
@@ -339,7 +312,6 @@ export default function GeneratorPanel() {
                         jobs={form.jobs}
                         attachments={form.attachments}
                         updateAttachments={form.updateAttachments}
-                        sessionVideos={sessionVideos}
                         showValidation={form.showValidation}
                         validation={form.validation}
                         submitError={submitError ?? submitter.progress?.error ?? null}
@@ -367,7 +339,6 @@ export default function GeneratorPanel() {
                             runId={activeRunId}
                             remainingLocal={remainingLocal}
                             ratio={form.aspectRatio}
-                            onExtend={handleExtend}
                         />
                     ) : (
                         <div className="flex min-h-64 items-center justify-center rounded-2xl border border-dashed border-[var(--app-border)] p-6 text-center text-sm text-[var(--app-text-muted)]">

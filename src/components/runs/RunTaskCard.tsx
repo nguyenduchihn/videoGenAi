@@ -1,4 +1,4 @@
-import { Download, FastForward, Image as ImageIcon, Loader2, Maximize2, RefreshCw, Video, X, XCircle } from "lucide-react";
+import { Download, Image as ImageIcon, Loader2, Maximize2, RefreshCw, Video, X, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getRatioPreviewClass } from "@/components/generator/ratioPreview";
 import { LazyImage, LazyVideo } from "@/components/media";
@@ -159,12 +159,6 @@ export default function RunTaskCard({
 }) {
     const [previewOpen, setPreviewOpen] = useState(false);
 
-    const canExtend =
-        task.status === "succeeded" &&
-        isVideoTask(task) &&
-        Boolean(task.result?.mediaId) &&
-        Boolean(actions.onExtend);
-
     const url = task.result?.url;
     const n = taskNumber(task);
 
@@ -250,25 +244,14 @@ export default function RunTaskCard({
                         </button>
                     )}
 
-                    {task.status === "succeeded" && canExtend && (
-                        <button
-                            type="button"
-                            onClick={() => actions.onExtend?.(task)}
-                            className={ICON_BUTTON}
-                            aria-label={`Tiếp tục video #${n}`}
-                            title="Tiếp tục video"
-                        >
-                            <FastForward
-                                className="h-3.5 w-3.5"
-                                aria-hidden="true"
-                            />
-                        </button>
-                    )}
-
                     {task.status === "succeeded" && url && (
                         <button
                             type="button"
-                            onClick={() => setPreviewOpen(true)}
+                            onClick={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                setPreviewOpen(true);
+                            }}
                             className={ICON_BUTTON}
                             aria-label={`Phóng to ${taskAlt(task)}`}
                             title="Xem lớn"
@@ -283,7 +266,11 @@ export default function RunTaskCard({
                     {task.status === "succeeded" && actions.onDownload && (
                         <button
                             type="button"
-                            onClick={() => actions.onDownload?.(task)}
+                            onClick={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                actions.onDownload?.(task);
+                            }}
                             disabled={!url}
                             className={ICON_BUTTON_PRIMARY}
                             aria-label={`Tải xuống ${taskAlt(task)}`}

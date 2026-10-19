@@ -29,7 +29,6 @@ export interface RunTaskActions {
     onRetry?: (task: PortalTask) => void;
     onCancel?: (task: PortalTask) => void;
     onDownload?: (task: PortalTask) => void;
-    onExtend?: (task: PortalTask) => void;
     /** URL presigned hết hạn ⇒ tải lại task. */
     onRefresh?: (task: PortalTask) => void;
 }

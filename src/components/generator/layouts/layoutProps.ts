@@ -2,7 +2,6 @@ import type { Dispatch, SetStateAction } from "react";
 import type { ModeSpec } from "@/features/generator/modes";
 import type { UploadProgress } from "@/features/generator/uploadAttachments";
 import type { ValidationResult } from "@/features/generator/validation";
-import type { SessionVideo } from "../sourceVideoPicker";
 import type { GeneratorAttachments, GeneratorMode, GeneratorSettingsState, PromptSplitMode } from "../types";
 
 /** Props của layout trình tạo (form) — GeneratorPanel nối với form; kết quả hiển thị ở khối lượt tạo bên ngoài. */
@@ -22,7 +21,6 @@ export interface GeneratorLayoutProps {
     jobs: string[];
     attachments: GeneratorAttachments;
     updateAttachments: (patch: Partial<GeneratorAttachments>) => void;
-    sessionVideos: SessionVideo[];
     showValidation: boolean;
     validation: ValidationResult;
     submitError: string | null;

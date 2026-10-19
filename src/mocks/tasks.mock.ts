@@ -395,13 +395,12 @@ export interface MockTaskError {
 const OMNI = "Veo_3.1-Omni";
 const HANDLE_RE = /^[a-z][a-z0-9_-]{0,29}$/;
 const MENTION_RE = /(?:^|[^a-z0-9@])@([a-z][a-z0-9_-]{0,29})/gi;
-const VIDEO_WORKERS = new Set<TaskWorker>(["text-to-video", "image-to-video", "reference-images-to-video", "start-end-image-to-video", "extend-video"]);
+const VIDEO_WORKERS = new Set<TaskWorker>(["text-to-video", "image-to-video", "reference-images-to-video", "start-end-image-to-video",]);
 const ROLE_RULES: Record<TaskWorker, { required: string[]; allowed: string[] }> = {
     "text-to-video": { required: [], allowed: [] },
     "image-to-video": { required: ["start"], allowed: ["start"] },
     "start-end-image-to-video": { required: ["start", "end"], allowed: ["start", "end"] },
     "reference-images-to-video": { required: ["references"], allowed: ["references"] },
-    "extend-video": { required: [], allowed: [] },
     "text-to-image": { required: [], allowed: [] },
     "image-to-image": { required: [], allowed: ["source", "sources"] },
 };
@@ -451,9 +450,6 @@ export function validateMockTask(item: CreateTaskItem): MockTaskError | null {
     }
     if (item.worker === "start-end-image-to-video" && model === OMNI) {
         return { status: 400, code: "VALIDATION_FAILED", message: "start-end-image-to-video: Veo_3.1-Omni không hỗ trợ" };
-    }
-    if (item.worker === "extend-video" && !item.sourceMediaId) {
-        return { status: 404, code: "SOURCE_MEDIA_NOT_FOUND", message: "extend-video: sourceMediaId không tồn tại" };
     }
     const allRefs = [...refsOf(images.start), ...refsOf(images.end), ...refsOf(images.references), ...refsOf(images.source), ...refsOf(images.sources)];
     return checkHandles(item.worker, allRefs, item.params.prompt);
