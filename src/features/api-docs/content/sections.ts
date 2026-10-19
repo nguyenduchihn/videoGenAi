@@ -392,6 +392,7 @@ export const SECTIONS: DocSection[] = [
                 kind: "table",
                 head: ["Ngày", "Thay đổi"],
                 rows: [
+                    ["2026-10-19", "`GET /v1/voices`. `reference-images-to-video`: `params.audio` (alias `voice`) chỉ nhận id giọng từ danh sách này, kiểm ngay lúc tạo; mô tả tự do bị từ chối 400 (trước đây task lỗi sau khi đã giữ credit). Task trả thêm `voice`."],
                     ["2026-10-16", "Chấp nhận `Authorization: Bearer`. Webhook ký bằng khoá riêng của từng khách (`whsec_…`). Có Postman collection và `llms.txt`."],
                     ["2026-10-15", "Upload ảnh trả `name`, `filename`, `duplicateOf`; `references` nhận `handle`."],
                 ],
